@@ -48,6 +48,26 @@ export default function AdminAttendeesList({ params }: { params: { id: string } 
       // Create new PDF document
       const doc = new jsPDF();
       
+      // Add Nairobi County logo centered at the top
+      const nairobiLogoPath = `data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjA0NDAwIDIwNTkwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxTcGFjZT0icHJlc2VydmUiIHZlcnNpb249IjEuMSIgc2hhcGVSZW5kZXJpbmc9Imdlb21ldHJpY1ByZWNpc2lvbiIgdGV4dFJlbmRlcmluZz0iZ2VvbWV0cmljUHJlY2lzaW9uIiBpbWFnZVJlbmRlcmluZz0ib3B0aW1pemVRdWFsaXR5IiBmaWxsUnVsZT0iZXZlbm9kZCIgY2xpcFJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGZpbGw9IiNGRkRDMDAiIGQ9Ik0xMDIyMDAgMjExMmM1NTY5MSwwIDEwMDgzOCw0NTE0NyAxMDA4MzgsMTAwODM4IDAsNTU2OTEgLTQ1MTQ3LDEwMDgzOCAtMTAwODM4LDEwMDgzOCAtNTU2OTEsMCAtMTAwODM4LC00NTE0NyAtMTAwODM4LC0xMDA4MzggMCwtNTU2OTEgNDUxNDcsLTEwMDgzOCAxMDA4MzgsLTEwMDgzOHptMCA0NTgxYzUzMTYxLDAgOTYyNTcsNDMwOTYgOTYyNTcsOTYyNTcgMCw1MzE2MSAtNDMwOTYsOTYyNTcgLTk2MjU3LDk2MjU3IC01MzE2MSwwIC05NjI1NywtNDMwOTYgLTk2MjU3LC05NjI1NyAwLC01MzE2MSA0MzA5NiwtOTYyNTcgOTYyNTcsLTk2MjU3em0tMTYzNyAxMzM4OTBjLTIyMjU4MywwIDIwMDg1MywwIDAsMHoiLz48Y2lyY2xlIGZpbGw9IndoaXRlIiBjeD0iMTAyOTc3IiBjeT0iMTAyMzc0IiByPSI4NTAzMSIvPjxwYXRoIGZpbGw9IiMwMDQzMUQiIGQ9Ik0xMDIyMDAgNjY5M2M1MzE2MSwwIDk2MjU3LDQzMDk2IDk2MjU3LDk2MjU3IDAsNTMxNjEgLTQzMDk2LDk2MjU3IC05NjI1Nyw5NjI1NyAtNTMxNjEsMCAtOTYyNTcsLTQzMDk2IC05NjI1NywtOTYyNTcgMCwtNTMxNjEgNDMwOTYsLTk2MjU3IDk2MjU3LC05NjI1N3ptNzcxNTAgOTYyNjBjMCwyMjMyMiAtOTQ2Niw0MjQ0NyAtMjQ2MTMsNTY1NDIgLTI1NiwyMzggMzI5MSwyNzY5IDI4NjMsNDQ5OCAtMjUwLDEwMTMgLTYxNSwxMTc0IC00MTAwLDU5MyA3MjEsMjMwMCAxMTg2LDE1NzggMTU1MSw0ODI4IDU1LDQ4MyA1NSwxNDc3IC0zNzAsMTkzNCAtNDA2LDQzNyAtMTIzMywzNTMgLTE0NjEsMTc2IC01ODQ0LC00NTM4IC05NDkwLC0zNDk2IC05ODQ1LC0zMjcyIC0xMTkxMCw3NTI3IC0yNjAyOCwxMTg3NiAtNDExNzUsMTE4NTEgLTE1Nzg3LC0yNyAtMzA0NjQsLTQ3NzYgLTQyNjg2LC0xMjkwNCAtMTg5LC0xMjYgLTMzOSwtMzk1IC01NjUsLTM4MCAtMTA2NzgsNzM1IC0xMTc1OSwtMjE1OSAtMTE0ODgsLTM0MDQgMzksLTE3OCA1MDg2LC0xNzgzIDQ5MzksLTE4OTkgLTM5MCwtMzA3IC0yMDQyLC0xMzY1IC0yNTg4LC0xNzEzIC0xMjE4LC03NzYgLTE0ODksLTg5NCAtMjI0OCwtMTYzNiAtMTcwLC0xNjYgLTM2NywtODA2IC0yNTEsLTEyNzIgMTIzLC00OTcgNTYyLC04MjAgMzg1LC0xMDAxIC0xMzcwOCwtMTM5MjUgLTIyNjcyLC0zMTg5NSAtMjI2NTAsLTUyOTQ0IDEwNCwtMTAxNTAyIDE1NDMwMiwtMTAxNDU1IDE1NDMwMiwzeiIvPjwvc3ZnPg==`;
+
+      // Add the logo centered at the top
+      try {
+        // Get page dimensions
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        
+        // Logo dimensions (keeping 1:1 aspect ratio)
+        const logoSize = 30; // Size of logo in mm
+        const logoX = (pageWidth - logoSize) / 2; // Center horizontally
+        const logoY = 10; // Top margin
+        
+        doc.addImage(nairobiLogoPath, 'SVG', logoX, logoY, logoSize, logoSize);
+      } catch (logoErr) {
+        console.error('Error adding logo:', logoErr);
+        // Continue with the PDF even if logo fails
+      }
+      
       // Add header with meeting information
       doc.setFontSize(18);
       doc.setTextColor(1, 74, 47); // #014a2f

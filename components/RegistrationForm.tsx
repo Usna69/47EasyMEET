@@ -1,8 +1,15 @@
 'use client';
 
-import React from 'react';
-const { useState } = React;
+import * as React from 'react';
+const { useState, useRef } = React;
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+
+// Import our client-side only SignaturePad component
+const SignaturePad = dynamic(
+  () => import('./SignaturePad'),
+  { ssr: false }
+);
 
 interface RegistrationFormProps {
   meetingId: string;
@@ -14,12 +21,18 @@ export default function RegistrationForm({ meetingId }: RegistrationFormProps) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    organization: '',
     designation: '',
+    signatureData: '',
   });
+  
+  const signatureRef = useRef<any>(null);
   const [errors, setErrors] = useState({
     name: '',
     email: '',
+    organization: '',
     designation: '',
+    signatureData: '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,11 +51,45 @@ export default function RegistrationForm({ meetingId }: RegistrationFormProps) {
     }
   };
 
+  // Clear the signature pad
+  const clearSignature = () => {
+    if (signatureRef.current) {
+      signatureRef.current.clear();
+      setFormData({
+        ...formData,
+        signatureData: '',
+      });
+    }
+  };
+  
+  // Save signature data when completed
+  const saveSignature = () => {
+    if (signatureRef.current && !signatureRef.current.isEmpty()) {
+      // Get signature as base64 encoded string (PNG format)
+      const signatureData = signatureRef.current.toDataURL('image/png');
+      console.log('Signature saved');
+      setFormData({
+        ...formData,
+        signatureData,
+      });
+      
+      // Clear error when user adds a signature
+      if (errors.signatureData) {
+        setErrors({
+          ...errors,
+          signatureData: '',
+        });
+      }
+    }
+  };
+
   const validateForm = () => {
     const newErrors = {
       name: '',
       email: '',
+      organization: '',
       designation: '',
+      signature: '',
     };
     let isValid = true;
 
@@ -59,10 +106,18 @@ export default function RegistrationForm({ meetingId }: RegistrationFormProps) {
       isValid = false;
     }
 
+    if (!formData.organization.trim()) {
+      newErrors.organization = 'Organization is required';
+      isValid = false;
+    }
+
     if (!formData.designation.trim()) {
       newErrors.designation = 'Designation is required';
       isValid = false;
     }
+
+    // Signature is optional
+    // No validation required
 
     setErrors(newErrors);
     return isValid;
@@ -78,15 +133,20 @@ export default function RegistrationForm({ meetingId }: RegistrationFormProps) {
     setIsSubmitting(true);
 
     try {
+      // Create a FormData object
+      const data = new FormData();
+      data.append('meetingId', meetingId);
+      data.append('name', formData.name);
+      data.append('email', formData.email);
+      data.append('organization', formData.organization);
+      data.append('designation', formData.designation);
+      if (formData.signatureData) {
+        data.append('signatureData', formData.signatureData);
+      }
+
       const response = await fetch('/api/attendees', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          meetingId,
-          ...formData,
-        }),
+        body: data,
       });
 
       if (!response.ok) {
@@ -142,6 +202,24 @@ export default function RegistrationForm({ meetingId }: RegistrationFormProps) {
       </div>
 
       <div>
+        <label htmlFor="organization" className="block text-sm font-medium text-[#014a2f] mb-1">
+          Organization
+        </label>
+        <input
+          type="text"
+          id="organization"
+          name="organization"
+          value={formData.organization}
+          onChange={handleChange}
+          className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+            errors.organization ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-[#014a2f]/20'
+          }`}
+          placeholder="Enter your organization"
+        />
+        {errors.organization && <p className="mt-1 text-sm text-red-600">{errors.organization}</p>}
+      </div>
+
+      <div>
         <label htmlFor="designation" className="block text-sm font-medium text-[#014a2f] mb-1">
           Designation
         </label>
@@ -157,6 +235,32 @@ export default function RegistrationForm({ meetingId }: RegistrationFormProps) {
           placeholder="Enter your designation"
         />
         {errors.designation && <p className="mt-1 text-sm text-red-600">{errors.designation}</p>}
+      </div>
+
+      <div>
+        <label htmlFor="signature" className="block text-sm font-medium text-[#014a2f] mb-1">
+          Signature (Optional)
+        </label>
+        <div className="border rounded-md p-1 border-gray-300">
+          <div className="bg-gray-50 flex flex-col items-center border border-gray-200 rounded">
+            {/* Use our dedicated client component */}
+            <SignaturePad 
+              ref={signatureRef}
+              onEnd={saveSignature}
+            />
+            <div className="flex w-full p-2 bg-gray-50 justify-between">
+              <p className="text-xs text-gray-500">Sign above using finger or stylus</p>
+              <button 
+                type="button" 
+                onClick={clearSignature}
+                className="text-xs text-[#014a2f] font-medium hover:text-[#014a2f]/80"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        </div>
+        {errors.signatureData && <p className="mt-1 text-sm text-red-600">{errors.signatureData}</p>}
       </div>
 
       <div className="mt-8">
