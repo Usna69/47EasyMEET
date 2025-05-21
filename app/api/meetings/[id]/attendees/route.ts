@@ -1,0 +1,104 @@
+import { NextRequest } from 'next/server';
+import { prisma } from '../../../../../lib/prisma';
+
+interface RouteContext {
+  params: {
+    id: string;
+  };
+}
+
+// Helper function for consistent JSON responses (from memory)
+function jsonResponse(data: any, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+// GET /api/meetings/[id]/attendees - Get all attendees for a meeting
+export async function GET(request: NextRequest, context: RouteContext) {
+  try {
+    const { id } = context.params;
+
+    // Validate that the meeting exists
+    const meeting = await prisma.meeting.findUnique({
+      where: { id },
+    });
+
+    if (!meeting) {
+      return jsonResponse({ error: 'Meeting not found' }, 404);
+    }
+
+    // Get all attendees for the meeting
+    const attendees = await prisma.attendee.findMany({
+      where: {
+        meetingId: id,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return jsonResponse(attendees);
+  } catch (error) {
+    console.error('Error fetching attendees:', error);
+    return jsonResponse({ error: 'Failed to fetch attendees' }, 500);
+  }
+}
+
+// POST /api/meetings/[id]/attendees - Add an attendee to a meeting
+export async function POST(request: NextRequest, context: RouteContext) {
+  try {
+    const { id } = context.params;
+    const body = await request.json();
+
+    // Validate required fields
+    const { name, email, phoneNumber, designation, organization } = body;
+
+    if (!name || !email) {
+      return jsonResponse({ error: 'Name and email are required' }, 400);
+    }
+
+    // Validate that the meeting exists
+    const meeting = await prisma.meeting.findUnique({
+      where: { id },
+    });
+
+    if (!meeting) {
+      return jsonResponse({ error: 'Meeting not found' }, 404);
+    }
+
+    // Check if the attendee is already registered
+    const existingAttendee = await prisma.attendee.findFirst({
+      where: {
+        email,
+        meetingId: id,
+      },
+    });
+
+    if (existingAttendee) {
+      return jsonResponse({ error: 'You are already registered for this meeting' }, 409);
+    }
+
+    // Create the attendee
+    const attendee = await prisma.attendee.create({
+      data: {
+        name,
+        email,
+        phoneNumber: phoneNumber || '',
+        designation: designation || '',
+        organization: organization || '',
+        meeting: {
+          connect: {
+            id,
+          },
+        },
+      },
+    });
+
+    return jsonResponse(attendee, 201);
+  } catch (error) {
+    console.error('Error creating attendee:', error);
+    return jsonResponse({ error: 'Failed to register for the meeting' }, 500);
+  }
+}

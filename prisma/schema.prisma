@@ -1,0 +1,33 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Meeting {
+  id           String     @id @default(cuid())
+  title        String
+  description  String
+  date         DateTime
+  location     String
+  creatorEmail String?
+  sector       String?
+  creatorType  String?
+  meetingId    String?
+  attendees    Attendee[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Attendee {
+  id          String    @id @default(cuid())
+  meeting     Meeting   @relation(fields: [meetingId], references: [id])
+  meetingId   String
+  name        String
+  email       String
+  designation String
+  createdAt   DateTime  @default(now())
+}
