@@ -10,9 +10,10 @@ module.exports = {
         poppins: ['Poppins', 'sans-serif'],
       },
       colors: {
-        primary: '#003366',
-        secondary: '#006699',
-        accent: '#FFD700',
+        primary: '#006400',     /* Dark green */
+        secondary: '#228B22',   /* Forest green */
+        accent: '#FFD700',     /* Gold/yellow */
+        dark: '#1A1A1A',       /* Almost black */
       },
     },
   },

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
+const { useState } = React;
 import { useRouter } from 'next/navigation';
 
 interface RegistrationFormProps {
@@ -102,9 +103,9 @@ export default function RegistrationForm({ meetingId }: RegistrationFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 font-poppins">
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="name" className="block text-sm font-medium text-primary mb-1">
           Full Name
         </label>
         <input
@@ -122,7 +123,7 @@ export default function RegistrationForm({ meetingId }: RegistrationFormProps) {
       </div>
 
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="email" className="block text-sm font-medium text-primary mb-1">
           Email Address
         </label>
         <input
@@ -140,7 +141,7 @@ export default function RegistrationForm({ meetingId }: RegistrationFormProps) {
       </div>
 
       <div>
-        <label htmlFor="designation" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="designation" className="block text-sm font-medium text-primary mb-1">
           Designation
         </label>
         <input
@@ -157,11 +158,11 @@ export default function RegistrationForm({ meetingId }: RegistrationFormProps) {
         {errors.designation && <p className="mt-1 text-sm text-red-600">{errors.designation}</p>}
       </div>
 
-      <div>
+      <div className="mt-8">
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full btn-primary py-2 flex items-center justify-center"
+          className="w-full btn-primary py-3 flex items-center justify-center font-poppins font-medium rounded-md shadow-md hover:shadow-lg transition-all"
         >
           {isSubmitting ? (
             <>
