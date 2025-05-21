@@ -193,6 +193,8 @@ export default function AdminMeetingDetails({ params }: { params: { id: string }
             </div>
           </div>
           
+          {/* Meeting card component removed */}
+          
           <div className="bg-white shadow-md rounded-lg p-6 border border-gray-100 mt-6">
             <h2 className="text-lg font-semibold mb-4 text-[#014a2f]">Meeting ID</h2>
             <p className="text-gray-600 mb-4">Use this ID for reference:</p>

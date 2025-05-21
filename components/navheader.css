@@ -1,0 +1,61 @@
+/* Animation styles for the MEET text in the header */
+.meet-text {
+  transition: transform 0.3s ease-out;
+  user-select: none;
+}
+
+/* Zoom right animation with pop effect - first phase */
+.meet-text.zoom-right {
+  animation: zoom-right-anim 0.5s forwards;
+}
+
+@keyframes zoom-right-anim {
+  0% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+  40% {
+    transform: translateX(0) scale(1.5);
+    opacity: 1;
+  }
+  60% {
+    transform: translateX(50px) scale(1.2);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateX(300px) scale(0);
+    opacity: 0;
+  }
+}
+
+/* Drop and bounce animation with pop effects - second phase */
+.meet-text.drop-bounce {
+  animation: drop-bounce-anim 1.5s forwards;
+}
+
+@keyframes drop-bounce-anim {
+  0% {
+    transform: translateY(-100px) translateX(0) scale(0.5);
+    opacity: 0;
+  }
+  20% {
+    transform: translateY(0) translateX(0) scale(1.2);
+    opacity: 1;
+  }
+  30% {
+    transform: translateY(0) translateX(0) scale(0.9);
+  }
+  40% {
+    transform: translateY(-20px) translateX(0) scale(1);
+  }
+  60% {
+    transform: translateY(0) translateX(0) scale(1.1);
+  }
+  80% {
+    transform: translateY(-5px) translateX(0) scale(0.95);
+  }
+  100% {
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 1;
+  }
+}

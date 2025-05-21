@@ -3,12 +3,15 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import './navheader.css';
 
 export default function NavHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [sector, setSector] = React.useState('');
+  const [meetClickCount, setMeetClickCount] = React.useState(0);
+  const [meetAnimation, setMeetAnimation] = React.useState('');
   const isAdmin = pathname?.startsWith('/admin');
   
   // Initialize sector from URL on component mount
@@ -35,6 +38,29 @@ export default function NavHeader() {
     // Navigate to home with filter
     router.push(`/${params.toString() ? `?${params.toString()}` : ''}`);
   };
+  
+  // Handle MEET click animation
+  const handleMeetClick = () => {
+    // Increment click counter
+    const newClickCount = meetClickCount + 1;
+    setMeetClickCount(newClickCount);
+    
+    // On 5th click, trigger the animation sequence
+    if (newClickCount === 5) {
+      // First zoom away to the right
+      setMeetAnimation('zoom-right');
+      
+      // After zoom completes, drop from above and bounce
+      setTimeout(() => {
+        setMeetAnimation('drop-bounce');
+        // Reset click counter after animation completes
+        setTimeout(() => {
+          setMeetClickCount(0);
+          setMeetAnimation('');
+        }, 1500); // Animation duration
+      }, 500); // Zoom duration
+    }
+  };
 
   return (
     <header className="bg-[#014a2f] text-white shadow-md">
@@ -43,7 +69,13 @@ export default function NavHeader() {
           <div className="flex items-center">
             <Link href="/" className="text-2xl font-semibold flex items-center">
               <span className="text-[#FFC107] mr-1">Easy</span>
-              <span>MEET</span>
+              <span 
+                className={`meet-text ${meetAnimation}`} 
+                onClick={handleMeetClick}
+                style={{ cursor: 'pointer', position: 'relative', display: 'inline-block' }}
+              >
+                MEET
+              </span>
               <span className="text-xs ml-2 text-white/80">NCCG</span>
             </Link>
           </div>

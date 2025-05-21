@@ -37,6 +37,8 @@ export default function MeetingDetails({ params }: MeetingDetailsParams) {
       
       // Add Nairobi County logo centered at the top
       const nairobiLogoPath = `data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjA0NDAwIDIwNTkwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxTcGFjZT0icHJlc2VydmUiIHZlcnNpb249IjEuMSIgc2hhcGVSZW5kZXJpbmc9Imdlb21ldHJpY1ByZWNpc2lvbiIgdGV4dFJlbmRlcmluZz0iZ2VvbWV0cmljUHJlY2lzaW9uIiBpbWFnZVJlbmRlcmluZz0ib3B0aW1pemVRdWFsaXR5IiBmaWxsUnVsZT0iZXZlbm9kZCIgY2xpcFJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGZpbGw9IiNGRkRDMDAiIGQ9Ik0xMDIyMDAgMjExMmM1NTY5MSwwIDEwMDgzOCw0NTE0NyAxMDA4MzgsMTAwODM4IDAsNTU2OTEgLTQ1MTQ3LDEwMDgzOCAtMTAwODM4LDEwMDgzOCAtNTU2OTEsMCAtMTAwODM4LC00NTE0NyAtMTAwODM4LC0xMDA4MzggMCwtNTU2OTEgNDUxNDcsLTEwMDgzOCAxMDA4MzgsLTEwMDgzOHptMCA0NTgxYzUzMTYxLDAgOTYyNTcsNDMwOTYgOTYyNTcsOTYyNTcgMCw1MzE2MSAtNDMwOTYsOTYyNTcgLTk2MjU3LDk2MjU3IC01MzE2MSwwIC05NjI1NywtNDMwOTYgLTk2MjU3LC05NjI1NyAwLC01MzE2MSA0MzA5NiwtOTYyNTcgOTYyNTcsLTk2MjU3em0tMTYzNyAxMzM4OTBjLTIyMjU4MywwIDIwMDg1MywwIDAsMHoiLz48Y2lyY2xlIGZpbGw9IndoaXRlIiBjeD0iMTAyOTc3IiBjeT0iMTAyMzc0IiByPSI4NTAzMSIvPjxwYXRoIGZpbGw9IiMwMDQzMUQiIGQ9Ik0xMDIyMDAgNjY5M2M1MzE2MSwwIDk2MjU3LDQzMDk2IDk2MjU3LDk2MjU3IDAsNTMxNjEgLTQzMDk2LDk2MjU3IC05NjI1Nyw5NjI1NyAtNTMxNjEsMCAtOTYyNTcsLTQzMDk2IC05NjI1NywtOTYyNTcgMCwtNTMxNjEgNDMwOTYsLTk2MjU3IDk2MjU3LC05NjI1N3ptNzcxNTAgOTYyNjBjMCwyMjMyMiAtOTQ2Niw0MjQ0NyAtMjQ2MTMsNTY1NDIgLTI1NiwyMzggMzI5MSwyNzY5IDI4NjMsNDQ5OCAtMjUwLDEwMTMgLTYxNSwxMTc0IC00MTAwLDU5MyA3MjEsMjMwMCAxMTg2LDE1NzggMTU1MSw0ODI4IDU1LDQ4MyA1NSwxNDc3IC0zNzAsMTkzNCAtNDA2LDQzNyAtMTIzMywzNTMgLTE0NjEsMTc2IC01ODQ0LC00NTM4IC05NDkwLC0zNDk2IC05ODQ1LC0zMjcyIC0xMTkxMCw3NTI3IC0yNjAyOCwxMTg3NiAtNDExNzUsMTE4NTEgLTE1Nzg3LC0yNyAtMzA0NjQsLTQ3NzYgLTQyNjg2LC0xMjkwNCAtMTg5LC0xMjYgLTMzOSwtMzk1IC01NjUsLTM4MCAtMTA2NzgsNzM1IC0xMTc1OSwtMjE1OSAtMTE0ODgsLTM0MDQgMzksLTE3OCA1MDg2LC0xNzgzIDQ5MzksLTE4OTkgLTM5MCwtMzA3IC0yMDQyLC0xMzY1IC0yNTg4LC0xNzEzIC0xMjE4LC03NzYgLTE0ODksLTg5NCAtMjI0OCwtMTYzNiAtMTcwLC0xNjYgLTM2NywtODA2IC0yNTEsLTEyNzIgMTIzLC00OTcgNTYyLC04MjAgMzg1LC0xMDAxIC0xMzcwOCwtMTM5MjUgLTIyNjcyLC0zMTg5NSAtMjI2NTAsLTUyOTQ0IDEwNCwtMTAxNTAyIDE1NDMwMiwtMTAxNDU1IDE1NDMwMiwzeiIvPjwvc3ZnPg==`;
+      
+      // No watermark - removed as requested
 
       // Add the logo centered at the top
       try {
@@ -49,7 +51,14 @@ export default function MeetingDetails({ params }: MeetingDetailsParams) {
         const logoX = (pageWidth - logoSize) / 2; // Center horizontally
         const logoY = 10; // Top margin
         
-        doc.addImage(nairobiLogoPath, 'SVG', logoX, logoY, logoSize, logoSize);
+        // Try multiple formats to ensure the logo appears
+        try {
+          doc.addImage(nairobiLogoPath, 'SVG', logoX, logoY, logoSize, logoSize);
+        } catch (svgErr) {
+          console.warn('SVG format failed, trying PNG:', svgErr);
+          // Convert to PNG format as a fallback
+          doc.addImage(nairobiLogoPath, 'PNG', logoX, logoY, logoSize, logoSize);
+        }
       } catch (logoErr) {
         console.error('Error adding logo:', logoErr);
         // Continue with the PDF even if logo fails
@@ -80,7 +89,27 @@ export default function MeetingDetails({ params }: MeetingDetailsParams) {
           attendee.phoneNumber || 'N/A',
           attendee.organization || 'N/A',
           attendee.designation || 'N/A',
-          '' // Empty signature column
+          // Simplified signature handling - focus on reliability
+          function() {
+            try {
+              // Check if we have signature data
+              if (attendee.signatureData && attendee.signatureData.length > 100) {
+                console.log(`Adding signature for ${attendee.name}`);
+                // Return a simple object with just the required properties
+                return {
+                  image: attendee.signatureData,
+                  width: 30, // Slightly larger for better visibility
+                  height: 15
+                };
+              } else {
+                console.log(`No signature for ${attendee.name}`);
+                return ''; // Empty cell if no signature
+              }
+            } catch (sigErr) {
+              console.error('Error rendering signature:', sigErr);
+              return '';
+            }
+          }()
         ]);
         
         // Generate the table
@@ -95,7 +124,7 @@ export default function MeetingDetails({ params }: MeetingDetailsParams) {
             // Footer
             doc.setFontSize(10);
             doc.text(
-              'Nairobi County Meeting Attendance System',
+              'Nairobi County',
               data.settings.margin.left,
               doc.internal.pageSize.height - 10
             );
@@ -127,7 +156,7 @@ export default function MeetingDetails({ params }: MeetingDetailsParams) {
             // Footer
             doc.setFontSize(10);
             doc.text(
-              'Nairobi County Meeting Attendance System',
+              'Nairobi County',
               data.settings.margin.left,
               doc.internal.pageSize.height - 10
             );
@@ -138,7 +167,7 @@ export default function MeetingDetails({ params }: MeetingDetailsParams) {
       // Add footer
       doc.setFontSize(10);
       doc.text(
-        'Nairobi County Meeting Attendance System',
+        'Nairobi County',
         14,
         doc.internal.pageSize.height - 10
       );
@@ -310,10 +339,12 @@ export default function MeetingDetails({ params }: MeetingDetailsParams) {
                 }}
                 className="bg-[#014a2f] hover:bg-[#014a2f]/90 text-white px-6 py-3 rounded-md font-medium transition-colors inline-block w-full"
               >
-                Download Attendance Form
+                Download ATTENDANCE FORM
               </button>
             </div>
           </div>
+          
+          {/* Meeting card component removed */}
         </div>
       </div>
     </div>

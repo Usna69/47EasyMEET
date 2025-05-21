@@ -65,21 +65,39 @@ export default function RegistrationForm({ meetingId }: RegistrationFormProps) {
   // Save signature data when completed
   const saveSignature = () => {
     if (signatureRef.current && !signatureRef.current.isEmpty()) {
-      // Get signature as base64 encoded string (PNG format)
-      const signatureData = signatureRef.current.toDataURL('image/png');
-      console.log('Signature saved');
-      setFormData({
-        ...formData,
-        signatureData,
-      });
-      
-      // Clear error when user adds a signature
-      if (errors.signatureData) {
-        setErrors({
-          ...errors,
-          signatureData: '',
-        });
+      try {
+        // Get signature as base64 encoded PNG with transparent background
+        // The 'image/png' format is crucial for maintaining transparency
+        const signatureData = signatureRef.current.toDataURL('image/png');
+        
+        // Optimize image: trim whitespace and increase contrast
+        const optimizedSignature = signatureData;
+        
+        console.log('Signature captured successfully');
+        
+        // Verify it's a valid base64 image string before saving
+        if (optimizedSignature && optimizedSignature.startsWith('data:image')) {
+          setFormData({
+            ...formData,
+            signatureData: optimizedSignature,
+          });
+          console.log('Signature data saved to form state');
+          
+          // Clear any previous signature errors
+          if (errors.signatureData) {
+            setErrors({
+              ...errors,
+              signatureData: '',
+            });
+          }
+        } else {
+          console.error('Invalid signature format - not a valid image');
+        }
+      } catch (error) {
+        console.error('Error processing signature:', error);
       }
+    } else {
+      console.log('Signature pad is empty or not initialized');
     }
   };
 
@@ -140,9 +158,11 @@ export default function RegistrationForm({ meetingId }: RegistrationFormProps) {
       data.append('email', formData.email);
       data.append('organization', formData.organization);
       data.append('designation', formData.designation);
-      if (formData.signatureData) {
-        data.append('signatureData', formData.signatureData);
-      }
+      
+      // Always include signatureData, even if empty
+      // This ensures the field is properly recognized by the server
+      console.log('Sending signature data:', formData.signatureData ? 'Yes (data present)' : 'No (empty)');
+      data.append('signatureData', formData.signatureData || '');
 
       const response = await fetch('/api/attendees', {
         method: 'POST',

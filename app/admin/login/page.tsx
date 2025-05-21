@@ -83,10 +83,7 @@ export default function LoginPage() {
           </button>
         </form>
         
-        <div className="mt-4 text-center text-sm text-gray-600">
-          <p>Default credentials: ADMIN / MEETM@st@047</p>
-          <p className="mt-1">For demonstration purposes only</p>
-        </div>
+        {/* Login form footer removed */}
       </div>
     </div>
   );

@@ -15,6 +15,20 @@ export async function POST(request: NextRequest) {
     const designation = formData.get('designation') as string;
     const signatureData = formData.get('signatureData') as string | null;
     
+    // Improved signature data debugging and handling
+    if (signatureData && signatureData.trim() !== '') {
+      // Only log if signature data exists and isn't empty
+      console.log('Received signature data: ' + signatureData.substring(0, 30) + '...');
+      // Verify it's a valid image format
+      if (!signatureData.startsWith('data:image')) {
+        console.warn('Warning: Signature data received but not in expected image format');
+      }
+    } else {
+      console.log('No signature data received - this is normal for forms without signatures');
+      // Ensure signatureData is at least an empty string, not null
+      // This prevents database issues when saving
+    }
+    
     // Validate required fields
     if (!meetingId || !name || !email || !organization || !designation) {
       return Response.json(
@@ -62,7 +76,8 @@ export async function POST(request: NextRequest) {
           email,
           organization,
           designation,
-          signatureData,
+          // Ensure signatureData is always a string, never null
+          signatureData: signatureData || '',
         },
       });
       return Response.json(attendee, { status: 201 });

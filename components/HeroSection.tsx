@@ -3,11 +3,14 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import './navheader.css';
 
 export default function HeroSection() {
   const router = useRouter();
   const [meetPosition, setMeetPosition] = React.useState({ x: 0, y: 0 });
   const [isEscaping, setIsEscaping] = React.useState(false);
+  const [meetClickCount, setMeetClickCount] = React.useState(0);
+  const [meetAnimation, setMeetAnimation] = React.useState('');
   const logoRef = React.useRef<HTMLSpanElement>(null);
   const titleRef = React.useRef<HTMLHeadingElement>(null);
   
@@ -15,6 +18,35 @@ export default function HeroSection() {
   const handleMouseLeave = () => {
     setMeetPosition({ x: 0, y: 0 });
     setIsEscaping(false);
+  };
+  
+  // Handle MEET click animation
+  const handleMeetClick = () => {
+    // Don't count clicks while animation is active
+    if (meetAnimation) return;
+    
+    // Increment click counter
+    const newClickCount = meetClickCount + 1;
+    setMeetClickCount(newClickCount);
+    
+    // On 5th click, trigger the animation sequence
+    if (newClickCount === 5) {
+      // Temporarily disable mouse escape behavior
+      setIsEscaping(false);
+      
+      // First zoom away to the right
+      setMeetAnimation('zoom-right');
+      
+      // After zoom completes, drop from above and bounce
+      setTimeout(() => {
+        setMeetAnimation('drop-bounce');
+        // Reset click counter after animation completes
+        setTimeout(() => {
+          setMeetClickCount(0);
+          setMeetAnimation('');
+        }, 1500); // Animation duration
+      }, 500); // Zoom duration
+    }
   };
   
   // Handle mouse movement to make the MEET text escape
@@ -97,12 +129,15 @@ export default function HeroSection() {
             <span className="text-[#FFC107]">Easy</span>
             <span 
               ref={logoRef}
+              className={`meet-text ${meetAnimation}`}
+              onClick={handleMeetClick}
               style={{
                 display: 'inline-block',
-                transform: `translate(${meetPosition.x}px, ${meetPosition.y}px)`,
+                transform: meetAnimation ? 'none' : `translate(${meetPosition.x}px, ${meetPosition.y}px)`,
                 transition: isEscaping ? 'transform 0.1s ease-out' : 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
                 position: 'relative',
-                zIndex: 10
+                zIndex: 10,
+                cursor: 'pointer'
               }}
             >MEET</span>
           </h1>

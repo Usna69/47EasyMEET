@@ -62,7 +62,14 @@ export default function AdminAttendeesList({ params }: { params: { id: string } 
         const logoX = (pageWidth - logoSize) / 2; // Center horizontally
         const logoY = 10; // Top margin
         
-        doc.addImage(nairobiLogoPath, 'SVG', logoX, logoY, logoSize, logoSize);
+        // Try multiple formats to ensure the logo appears
+        try {
+          doc.addImage(nairobiLogoPath, 'SVG', logoX, logoY, logoSize, logoSize);
+        } catch (svgErr) {
+          console.warn('SVG format failed, trying PNG:', svgErr);
+          // Convert to PNG format as a fallback
+          doc.addImage(nairobiLogoPath, 'PNG', logoX, logoY, logoSize, logoSize);
+        }
       } catch (logoErr) {
         console.error('Error adding logo:', logoErr);
         // Continue with the PDF even if logo fails
@@ -94,7 +101,29 @@ export default function AdminAttendeesList({ params }: { params: { id: string } 
       
       // Add signature column to the table
       tableColumn.push('Signature');
-      tableRows.forEach((row: any[]) => row.push(''));
+      
+      // Update the rows to include signature images if available
+      tableRows.forEach((row: any[], index: number) => {
+        const attendee = attendees[index];
+        try {
+          // Simplified signature handling - focus on reliability
+          if (attendee.signatureData && attendee.signatureData.length > 100) {
+            console.log(`Admin PDF - Adding signature for ${attendee.name}`);
+            // Just include the minimal required properties
+            row.push({
+              image: attendee.signatureData,
+              width: 30, // Slightly larger for better visibility
+              height: 15
+            });
+          } else {
+            console.log(`Admin PDF - No signature for ${attendee.name}`);
+            row.push(''); // Empty cell if no signature
+          }
+        } catch (sigErr) {
+          console.error('Error rendering signature in admin PDF:', sigErr);
+          row.push('');
+        }
+      });
       
       // Generate the table
       autoTable(doc, {
