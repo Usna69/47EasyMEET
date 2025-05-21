@@ -14,7 +14,7 @@ export default function NavHeader() {
         <div className="flex justify-between items-center py-4">
           <div className="flex items-center">
             <Link href="/" className="text-2xl font-semibold flex items-center">
-              <span className="text-yellow-400 mr-1">Easy</span><span>MEET</span>
+              <span className="text-[#FFC107] mr-1">Easy</span><span>MEET</span>
               <span className="text-xs ml-2 text-white/80">NCCG</span>
             </Link>
           </div>
@@ -22,8 +22,8 @@ export default function NavHeader() {
           <nav className="flex items-center space-x-6">
             <Link 
               href="/" 
-              className={`hover:text-yellow-400 transition-colors ${
-                pathname === '/' ? 'text-yellow-400 font-medium' : ''
+              className={`hover:text-[#FFC107] transition-colors ${
+                pathname === '/' ? 'text-[#FFC107] font-medium' : ''
               }`}
             >
               Home

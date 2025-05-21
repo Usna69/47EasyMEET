@@ -16,7 +16,13 @@ export default async function Home() {
       <HeroSection />
       <StatsSection />
       
-      <section className="container py-16">
+      <section id="meetings" className="py-16" style={{ 
+          background: `url('/background-pattern.svg')`,
+          backgroundSize: 'cover',
+          position: 'relative',
+        }}>
+        <div className="absolute inset-0 bg-white bg-opacity-60 z-0"></div>
+        <div className="container relative z-10">
         <div className="flex justify-between items-center mb-12">
           <h2 className="text-3xl font-semibold">Upcoming Meetings</h2>
           <div className="text-gray-500">Showing {meetings.length} meetings</div>
@@ -34,6 +40,7 @@ export default async function Home() {
             <p className="text-gray-500 mb-6">Check back later or visit the admin dashboard to create a new meeting</p>
           </div>
         )}
+        </div>
       </section>
     </main>
   );

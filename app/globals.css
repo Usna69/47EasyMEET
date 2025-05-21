@@ -5,6 +5,8 @@
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-rgb: 255, 255, 255;
+  --nccg-green: #014a2f;
+  --nccg-yellow: #FFC107;
 }
 
 body {

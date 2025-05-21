@@ -103,9 +103,9 @@ export default function RegistrationForm({ meetingId }: RegistrationFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 font-poppins">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-primary mb-1">
+        <label htmlFor="name" className="block text-sm font-medium text-[#014a2f] mb-1">
           Full Name
         </label>
         <input
@@ -115,7 +115,7 @@ export default function RegistrationForm({ meetingId }: RegistrationFormProps) {
           value={formData.name}
           onChange={handleChange}
           className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-            errors.name ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-primary/20'
+            errors.name ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-[#014a2f]/20'
           }`}
           placeholder="Enter your full name"
         />
@@ -123,7 +123,7 @@ export default function RegistrationForm({ meetingId }: RegistrationFormProps) {
       </div>
 
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-primary mb-1">
+        <label htmlFor="email" className="block text-sm font-medium text-[#014a2f] mb-1">
           Email Address
         </label>
         <input
@@ -133,7 +133,7 @@ export default function RegistrationForm({ meetingId }: RegistrationFormProps) {
           value={formData.email}
           onChange={handleChange}
           className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-            errors.email ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-primary/20'
+            errors.email ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-[#014a2f]/20'
           }`}
           placeholder="Enter your email address"
         />
@@ -141,7 +141,7 @@ export default function RegistrationForm({ meetingId }: RegistrationFormProps) {
       </div>
 
       <div>
-        <label htmlFor="designation" className="block text-sm font-medium text-primary mb-1">
+        <label htmlFor="designation" className="block text-sm font-medium text-[#014a2f] mb-1">
           Designation
         </label>
         <input
@@ -151,7 +151,7 @@ export default function RegistrationForm({ meetingId }: RegistrationFormProps) {
           value={formData.designation}
           onChange={handleChange}
           className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-            errors.designation ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-primary/20'
+            errors.designation ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-[#014a2f]/20'
           }`}
           placeholder="Enter your designation"
         />
@@ -162,7 +162,7 @@ export default function RegistrationForm({ meetingId }: RegistrationFormProps) {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full btn-primary py-3 flex items-center justify-center font-poppins font-medium rounded-md shadow-md hover:shadow-lg transition-all"
+          className="w-full bg-[#014a2f] text-white py-3 flex items-center justify-center font-medium rounded-md shadow-md hover:bg-[#014a2f]/90 hover:shadow-lg transition-all"
         >
           {isSubmitting ? (
             <>

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import QRCodeDisplay from '../../../components/QRCodeDisplay';
 import { format } from 'date-fns';
@@ -130,7 +131,7 @@ export default function MeetingDetails({ params }: MeetingDetailsParams) {
     }
   };
 
-  useEffect(() => {
+  React.useEffect(() => {
     const fetchMeeting = async () => {
       try {
         setLoading(true);
@@ -175,7 +176,13 @@ export default function MeetingDetails({ params }: MeetingDetailsParams) {
   }
 
   return (
-    <div className="container py-8">
+    <div className="py-8" style={{ 
+        background: `url('/background-pattern.svg')`,
+        backgroundSize: 'cover',
+        position: 'relative',
+      }}>
+      <div className="absolute inset-0 bg-white bg-opacity-60 z-0"></div>
+      <div className="container relative z-10">
       <div className="mb-6">
         <Link href="/" className="text-gray-800 hover:text-[#014a2f] flex items-center">
           <svg className="w-4 h-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -289,6 +296,7 @@ export default function MeetingDetails({ params }: MeetingDetailsParams) {
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }
