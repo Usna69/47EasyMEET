@@ -2,11 +2,39 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 export default function NavHeader() {
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [sector, setSector] = React.useState('');
   const isAdmin = pathname?.startsWith('/admin');
+  
+  // Initialize sector from URL on component mount
+  React.useEffect(() => {
+    const sectorParam = searchParams.get('sector');
+    if (sectorParam) {
+      setSector(sectorParam);
+    }
+  }, [searchParams]);
+
+  // Handle sector change
+  const handleSectorChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newSector = e.target.value;
+    setSector(newSector);
+    
+    // Update URL with sector filter
+    const params = new URLSearchParams(searchParams.toString());
+    if (newSector) {
+      params.set('sector', newSector);
+    } else {
+      params.delete('sector');
+    }
+    
+    // Navigate to home with filter
+    router.push(`/${params.toString() ? `?${params.toString()}` : ''}`);
+  };
 
   return (
     <header className="bg-[#014a2f] text-white shadow-md">
@@ -20,14 +48,29 @@ export default function NavHeader() {
           </div>
           
           <nav className="flex items-center space-x-6">
-            <Link 
-              href="/" 
-              className={`hover:text-[#FFC107] transition-colors ${
-                pathname === '/' ? 'text-[#FFC107] font-medium' : ''
-              }`}
-            >
-              Home
-            </Link>
+            <div className="relative">
+              <select
+                value={sector}
+                onChange={handleSectorChange}
+                className="appearance-none bg-[#014a2f] border border-[#014a2f] hover:border-[#FFC107] text-white px-4 py-2 pr-8 rounded-md focus:outline-none focus:ring-2 focus:ring-[#FFC107]/50 transition-colors cursor-pointer"
+              >
+                <option value="">All Sectors</option>
+                <option value="IDE">ICT & Digital Economy</option>
+                <option value="FIN">Finance</option>
+                <option value="EDU">Education</option>
+                <option value="HEA">Health</option>
+                <option value="AGR">Agriculture</option>
+                <option value="TRA">Transport</option>
+                <option value="ENV">Environment</option>
+                <option value="SEC">Security</option>
+                <option value="OTH">Other</option>
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-white">
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                  <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" fillRule="evenodd"></path>
+                </svg>
+              </div>
+            </div>
           </nav>
         </div>
       </div>

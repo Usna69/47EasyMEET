@@ -11,6 +11,12 @@ export default function NewPublicMeetingPage() {
   const handleSuccess = (id: string) => {
     setMeetingId(id);
     setSubmitted(true);
+    
+    // Scroll to top when showing success message
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
   };
 
   // Show success screen after submission

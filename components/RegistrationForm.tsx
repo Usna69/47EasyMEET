@@ -93,7 +93,8 @@ export default function RegistrationForm({ meetingId }: RegistrationFormProps) {
         throw new Error('Failed to register');
       }
 
-      router.push(`/meetings/${meetingId}/register/success`);
+      // Navigate to success page with hash to force scroll reset
+      window.location.href = `/meetings/${meetingId}/register/success`;
     } catch (error) {
       console.error('Registration error:', error);
       alert('An error occurred while registering. Please try again.');
