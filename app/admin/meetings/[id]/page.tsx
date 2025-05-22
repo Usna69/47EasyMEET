@@ -44,6 +44,7 @@ export default function AdminMeetingDetails({ params }: { params: { id: string }
   const [error, setError] = useState('');
   const [meetingUrl, setMeetingUrl] = useState<string>('');
 
+  // First useEffect to fetch meeting data
   useEffect(() => {
     if (auth.isLoggedIn) {
       const fetchMeeting = async () => {
@@ -67,6 +68,13 @@ export default function AdminMeetingDetails({ params }: { params: { id: string }
       fetchMeeting();
     }
   }, [id, auth.isLoggedIn]);
+  
+  // Second useEffect to set meeting URL safely on the client side
+  useEffect(() => {
+    if (meeting) {
+      setMeetingUrl(`${window.location.origin}/meetings/${meeting.id}/register`);
+    }
+  }, [meeting]);
 
   // Show authentication message if not logged in
   if (!auth.isLoggedIn) {
@@ -112,12 +120,7 @@ export default function AdminMeetingDetails({ params }: { params: { id: string }
     );
   }
 
-  // Set meeting URL safely on the client side - link directly to registration form
-  useEffect(() => {
-    if (meeting) {
-      setMeetingUrl(`${window.location.origin}/meetings/${meeting.id}/register`);
-    }
-  }, [meeting]);
+  // URL is now set in the useEffect hook above
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -266,12 +269,22 @@ export default function AdminMeetingDetails({ params }: { params: { id: string }
             )}
             
             <div className="flex flex-wrap gap-3">
-              <Link 
-                href={`/admin/meetings/${meeting.id}/edit`}
-                className="bg-[#014a2f] hover:bg-[#014a2f]/90 text-white px-4 py-2 rounded-md font-medium transition-colors"
-              >
-                Edit Meeting
-              </Link>
+              {auth.user?.role === 'ADMIN' && (
+                <Link 
+                  href={`/admin/meetings/${meeting.id}/edit`}
+                  className="bg-[#014a2f] hover:bg-[#014a2f]/90 text-white px-4 py-2 rounded-md font-medium transition-colors"
+                >
+                  Edit Meeting
+                </Link>
+              )}
+              {auth.user?.role === 'CREATOR' && (
+                <Link 
+                  href={`/admin/meetings/${meeting.id}/resources`}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
+                >
+                  Add Resources
+                </Link>
+              )}
               <Link 
                 href={`/admin/meetings/${meeting.id}/attendees`}
                 className="bg-yellow-400 hover:bg-yellow-500 text-[#014a2f] px-4 py-2 rounded-md font-medium transition-colors"

@@ -19,8 +19,12 @@ export async function GET(request: NextRequest, context: RouteContext) {
       },
       include: {
         attendees: true,
+        resources: true,
         _count: {
-          select: { attendees: true }
+          select: { 
+            attendees: true,
+            resources: true
+          }
         }
       },
     });

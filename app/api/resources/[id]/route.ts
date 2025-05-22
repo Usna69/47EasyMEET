@@ -40,9 +40,17 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'Resource not found' }, { status: 404 });
     }
     
-    // Construct the file path based on the resource data
-    // For this example, we assume files are stored in a 'public/uploads' directory
-    const filePath = path.join(process.cwd(), 'public', 'uploads', resource.fileName);
+    // Use the fileUrl from the resource to determine the correct path
+    // The fileUrl is typically stored as '/resources/filename.ext'
+    let filePath;
+    if (resource.fileUrl) {
+      // Remove the leading slash if present
+      const relativePath = resource.fileUrl.startsWith('/') ? resource.fileUrl.substring(1) : resource.fileUrl;
+      filePath = path.join(process.cwd(), 'public', relativePath);
+    } else {
+      // Fallback to a direct path based on filename
+      filePath = path.join(process.cwd(), 'public', 'resources', resource.fileName);
+    }
     
     try {
       // Try to read the file

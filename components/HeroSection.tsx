@@ -155,7 +155,7 @@ export default function HeroSection() {
               href="/admin/login"
               className="bg-white/10 hover:bg-white/20 text-white font-medium px-8 py-3 rounded-md transition-colors"
             >
-              Admin Login
+              Creator Login
             </Link>
           </div>
         </div>

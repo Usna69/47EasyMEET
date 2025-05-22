@@ -53,15 +53,17 @@ model MeetingResource {
 }
 
 model User {
-  id           String     @id @default(cuid())
-  email        String     @unique
-  name         String
-  password     String     // Hashed password
-  role         String     @default("ADMIN") // ADMIN, DIRECTOR, ASSISTANT_DIRECTOR, CCO, CECM, CREATOR
-  department   String?
-  designation  String?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id                      String     @id @default(cuid())
+  email                   String     @unique
+  name                    String
+  password                String     // Hashed password
+  role                    String     @default("ADMIN") // ADMIN, DIRECTOR, ASSISTANT_DIRECTOR, CCO, CECM, CREATOR
+  department              String?
+  designation             String?
+  passwordResetRequested  Boolean    @default(false)
+  passwordResetRequestedAt DateTime?
+  createdAt               DateTime   @default(now())
+  updatedAt               DateTime   @updatedAt
 }
 
 // Note: SQLite doesn't support enums, so we use string fields instead

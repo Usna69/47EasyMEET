@@ -186,13 +186,24 @@ export default function MeetingsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {meetings.map((meeting: Meeting) => (
-            <div 
-              key={meeting.id} 
-              className={`border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow 
+            <div
+              key={meeting.id}
+              className={`bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow relative
                 ${getMeetingStatus(meeting.date) === 'upcoming' ? 'border-[#014a2f]/20' : 
                   getMeetingStatus(meeting.date) === 'ongoing' ? 'border-blue-400/30' : 
                   'border-gray-200'}`}
             >
+              {/* Resources badge (if available) */}
+              {meeting._count?.resources && meeting._count.resources > 0 && (
+                <div className="absolute top-0 right-0 mt-2 mr-2 z-10">
+                  <span className="inline-flex items-center px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    {meeting._count.resources} Resource{meeting._count.resources !== 1 ? 's' : ''}
+                  </span>
+                </div>
+              )}
               <div className="p-4">
                 <div className="flex justify-between items-start mb-2">
                   <h2 className="text-lg font-semibold truncate">{meeting.title}</h2>
@@ -252,14 +263,14 @@ export default function MeetingsPage() {
                     </div>
                   )}
                   
-                  {meeting.resources && meeting.resources.length > 0 && (
+                  {(meeting.resources && meeting.resources.length > 0) || (meeting._count?.resources && meeting._count.resources > 0) ? (
                     <div className="flex items-center text-sm">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
-                      <span>{meeting.resources.length} resource{meeting.resources.length !== 1 ? 's' : ''}</span>
+                      <span>{(meeting.resources && meeting.resources.length) || meeting._count?.resources || 0} resource{((meeting.resources && meeting.resources.length) || meeting._count?.resources || 0) !== 1 ? 's' : ''}</span>
                     </div>
-                  )}
+                  ) : null}
                   
                   <div className="flex items-center text-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">

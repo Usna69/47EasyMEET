@@ -1,6 +1,6 @@
 'use client';
 
-import * as React from 'react';
+import React from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '../../lib/auth';
 
@@ -37,16 +37,13 @@ export default function AdminLayout({
   return (
     <div>
       <div className="bg-green-100 py-2 px-4">
-        <div className="container mx-auto flex justify-between items-center">
-          <p className="text-green-800">
-            Logged in as <span className="font-medium">{auth.username}</span>
-          </p>
+        <div className="container mx-auto flex justify-end items-center">
           <button 
             onClick={() => {
               auth.logout();
               router.push('/admin/login');
             }}
-            className="text-green-700 hover:text-green-900"
+            className="text-red-600 hover:text-red-800 font-medium"
           >
             Logout
           </button>

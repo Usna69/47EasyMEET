@@ -39,7 +39,7 @@ export default function RestrictedMeetingCreationPage() {
                 href="/admin/login"
                 className="bg-[#014a2f] hover:bg-[#014a2f]/90 text-white px-6 py-3 rounded-md font-medium transition-colors"
               >
-                Admin Login
+                Creator Login
               </Link>
               <Link 
                 href="/"
