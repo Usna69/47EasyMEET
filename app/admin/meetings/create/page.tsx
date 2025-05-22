@@ -63,13 +63,7 @@ export default function CreateMeetingPage() {
     fetchSectors();
   }, []);
 
-  // Check authentication
-  useEffect(() => {
-    if (!auth.isLoggedIn) {
-      // Use direct navigation to avoid client-side routing conflicts
-      window.location.href = '/admin/login';
-    }
-  }, [auth.isLoggedIn]);
+  // No automatic redirects - we'll handle authentication in the render logic
 
   // Authorized roles for meeting creation
   const authorizedRoles = ['ADMIN', 'CREATOR'];
@@ -198,6 +192,24 @@ export default function CreateMeetingPage() {
     }
   };
 
+  // If not logged in, show login message instead of redirecting
+  if (!auth?.isLoggedIn) {
+    return (
+      <div className="container mx-auto py-8 px-4 text-center">
+        <div className="bg-white shadow-md rounded-lg p-8 border border-gray-100 max-w-md mx-auto">
+          <h1 className="text-2xl font-semibold mb-6 text-[#014a2f]">Authentication Required</h1>
+          <p className="text-gray-600 mb-6">Please log in to create meetings.</p>
+          <a 
+            href="/admin/login"
+            className="bg-yellow-400 hover:bg-yellow-500 text-[#014a2f] px-6 py-3 rounded-md font-medium transition-colors inline-block"
+          >
+            Go to Login
+          </a>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="flex justify-between items-center mb-6">

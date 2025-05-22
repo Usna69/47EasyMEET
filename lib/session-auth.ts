@@ -46,24 +46,45 @@ export const useSessionAuth = () => {
     router.replace('/admin/login');
   };
 
-  // Login function
-  const login = (email: string, password: string): boolean => {
-    // Hardcoded credentials check for admin
-    if (email === 'Adminmeets@nairobi.go.ke' && password === 'MEETM@st@123') {
-      const newAuthState = {
-        isLoggedIn: true,
-        username: email,
-        user: {
-          role: 'ADMIN',
-          email: email,
-          name: 'Admin User'
-        }
-      };
-      sessionStorage.setItem('authState', JSON.stringify(newAuthState));
-      setAuthState(newAuthState);
-      return true;
+  // Login function that works with API authentication
+  const login = async (email: string, password: string): Promise<boolean> => {
+    try {
+      // Call the authentication API
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
+      });
+      
+      if (!response.ok) {
+        console.error('Login failed:', response.statusText);
+        return false;
+      }
+      
+      const data = await response.json();
+      
+      if (data.success && data.user) {
+        const newAuthState = {
+          isLoggedIn: true,
+          username: email,
+          user: {
+            role: data.user.role,
+            email: data.user.email,
+            name: data.user.name
+          }
+        };
+        sessionStorage.setItem('authState', JSON.stringify(newAuthState));
+        setAuthState(newAuthState);
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
     }
-    return false;
   };
 
   // Check if user is authorized for specific roles

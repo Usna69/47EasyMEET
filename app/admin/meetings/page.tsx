@@ -176,17 +176,28 @@ export default function MeetingsPage() {
   
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Meetings Management</h1>
+      <div className="mb-6 flex justify-between items-center">
+        <div>
+          <Link href="/admin" className="text-gray-700 hover:text-gray-900 flex items-center mb-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Dashboard
+          </Link>
+          <h1 className="text-2xl font-semibold text-[#014a2f]">Meetings Management</h1>
+        </div>
         
-        {auth.isLoggedIn && auth.isAuthorized(authorizedRoles) && (
+        <div className="flex space-x-3">
           <Link 
-            href="/admin/meetings/create"
-            className="px-4 py-2 bg-[#014a2f] text-white rounded-md hover:bg-[#014a2f]/90"
+            href="/admin/meetings/create" 
+            className="bg-[#014a2f] hover:bg-[#014a2f]/90 text-white font-medium py-2 px-4 rounded-md transition-colors flex items-center"
           >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
             Create New Meeting
           </Link>
-        )}
+        </div>
       </div>
 
       {!auth.isLoggedIn ? (

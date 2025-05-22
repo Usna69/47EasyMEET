@@ -37,7 +37,7 @@ export default function LoginPage() {
     }
 
     try {
-      // Use email as username for auth hook
+      // Use the async login function
       const loginSuccess = await auth.login(email, password);
       if (loginSuccess) {
         // Simple redirect to admin dashboard

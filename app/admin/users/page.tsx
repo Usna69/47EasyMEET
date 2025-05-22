@@ -36,6 +36,11 @@ export default function UserManagement() {
   const [showResetForm, setShowResetForm] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [clearingData, setClearingData] = useState(false);
+  const [clearDataSuccess, setClearDataSuccess] = useState('');
+  const [clearDataError, setClearDataError] = useState('');
   const [newUser, setNewUser] = useState<NewUser>({
     name: '',
     email: '',
@@ -65,11 +70,9 @@ export default function UserManagement() {
     { value: 'OTH', label: 'Other' }
   ];
 
-  // Redirect to login if not authenticated
+  // Only fetch users if authenticated and admin
   useEffect(() => {
-    if (!auth.isLoggedIn) {
-      window.location.href = '/admin/login';
-    } else if (auth.isLoggedIn && auth.user?.role === 'ADMIN') {
+    if (auth.isLoggedIn && auth.user?.role === 'ADMIN') {
       fetchUsers();
     }
   }, [auth.isLoggedIn, auth.user]);
@@ -213,19 +216,92 @@ export default function UserManagement() {
     }
   };
 
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+    
+    try {
+      setError('');
+      setSuccess('');
+      
+      const response = await fetch(`/api/users/${userToDelete.id}`, {
+        method: 'DELETE'
+      });
+      
+      if (response.ok) {
+        setSuccess(`User ${userToDelete.name} deleted successfully`);
+        setShowDeleteConfirm(false);
+        setUserToDelete(null);
+        fetchUsers(); // Refresh the user list
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Failed to delete user');
+      }
+    } catch (err) {
+      console.error('Error deleting user:', err);
+      setError('An error occurred while deleting the user');
+    }
+  };
+
+  const handleClearAllData = async () => {
+    if (!confirm('WARNING: This will permanently delete ALL meetings, attendees, and resources data. This action cannot be undone. Continue?')) {
+      return;
+    }
+    
+    try {
+      setClearingData(true);
+      setClearDataError('');
+      setClearDataSuccess('');
+      
+      const response = await fetch('/api/admin/clear-data', {
+        method: 'POST'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setClearDataSuccess(data.message || 'All data cleared successfully');
+      } else {
+        const data = await response.json();
+        setClearDataError(data.error || 'Failed to clear data');
+      }
+    } catch (err) {
+      console.error('Error clearing data:', err);
+      setClearDataError('An error occurred while clearing data');
+    } finally {
+      setClearingData(false);
+    }
+  };
+
   // Show authentication message if not logged in or not admin
-  if (!auth.isLoggedIn || auth.user?.role !== 'ADMIN') {
+  if (!auth?.isLoggedIn) {
     return (
       <div className="container mx-auto py-8 px-4 text-center">
         <div className="bg-white shadow-md rounded-lg p-8 border border-gray-100 max-w-md mx-auto">
-          <h1 className="text-2xl font-semibold mb-6 text-[#014a2f]">Admin Authentication Required</h1>
-          <p className="text-gray-600 mb-6">You must be logged in as an administrator to access this page.</p>
-          <Link 
+          <h1 className="text-2xl font-semibold mb-6 text-[#014a2f]">Authentication Required</h1>
+          <p className="text-gray-600 mb-6">Please log in to manage users.</p>
+          <a 
             href="/admin/login"
             className="bg-yellow-400 hover:bg-yellow-500 text-[#014a2f] px-6 py-3 rounded-md font-medium transition-colors inline-block"
           >
             Go to Login
-          </Link>
+          </a>
+        </div>
+      </div>
+    );
+  }
+  
+  // If logged in but not admin, show permission error
+  if (auth.isLoggedIn && auth.user?.role !== 'ADMIN') {
+    return (
+      <div className="container mx-auto py-8 px-4 text-center">
+        <div className="bg-white shadow-md rounded-lg p-8 border border-gray-100 max-w-md mx-auto">
+          <h1 className="text-2xl font-semibold mb-6 text-red-600">Permission Denied</h1>
+          <p className="text-gray-600 mb-6">You do not have permission to access the user management page. Only administrators can manage users.</p>
+          <a 
+            href="/admin"
+            className="bg-[#014a2f] hover:bg-[#014a2f]/90 text-white px-6 py-3 rounded-md font-medium transition-colors inline-block"
+          >
+            Back to Dashboard
+          </a>
         </div>
       </div>
     );
@@ -233,6 +309,20 @@ export default function UserManagement() {
 
   return (
     <div className="container mx-auto py-8 px-4">
+
+      
+      {clearDataSuccess && (
+        <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-md">
+          {clearDataSuccess}
+        </div>
+      )}
+      
+      {clearDataError && (
+        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
+          {clearDataError}
+        </div>
+      )}
+      
       <div className="mb-6 flex justify-between items-center">
         <div>
           <Link href="/admin" className="text-gray-700 hover:text-gray-900 flex items-center mb-4">
@@ -243,15 +333,24 @@ export default function UserManagement() {
           </Link>
           <h1 className="text-3xl font-semibold text-[#014a2f]">User Management</h1>
         </div>
-        <button
-          onClick={() => setShowCreateForm(!showCreateForm)}
-          className="bg-[#014a2f] hover:bg-[#014a2f]/90 text-white font-medium py-2 px-4 rounded-md transition-colors flex items-center"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-          {showCreateForm ? 'Cancel' : 'Create New User'}
-        </button>
+        <div className="flex space-x-3">
+          <button
+            onClick={handleClearAllData}
+            disabled={clearingData}
+            className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md transition-colors disabled:opacity-50 flex items-center"
+          >
+            {clearingData ? 'Clearing...' : 'Clear All Meeting Data'}
+          </button>
+          <button
+            onClick={() => setShowCreateForm(!showCreateForm)}
+            className="bg-[#014a2f] hover:bg-[#014a2f]/90 text-white font-medium py-2 px-4 rounded-md transition-colors flex items-center"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            {showCreateForm ? 'Cancel' : 'Create New User'}
+          </button>
+        </div>
       </div>
 
       {/* Create User Form */}
@@ -373,6 +472,33 @@ export default function UserManagement() {
       {error && (
         <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6">
           <p>{error}</p>
+        </div>
+      )}
+      
+      {/* Delete User Confirmation Dialog */}
+      {showDeleteConfirm && userToDelete && (
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white shadow-md rounded-lg p-6 border border-gray-200 max-w-md mx-auto">
+            <h2 className="text-xl font-semibold text-[#014a2f] mb-4">Delete User Confirmation</h2>
+            <p className="text-gray-600 mb-6">Are you sure you want to delete this user?</p>
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setUserToDelete(null);
+                }}
+                className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteUser}
+                className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
+              >
+                Delete User
+              </button>
+            </div>
+          </div>
         </div>
       )}
       
@@ -549,7 +675,7 @@ export default function UserManagement() {
                       )}
                     </td>
                     <td className="px-4 py-2 flex space-x-2">
-                      {/* Only show password reset buttons for admins */}
+                      {/* Only show user management buttons for admins */}
                       {auth.user?.role === 'ADMIN' && (
                         <>
                           <button
@@ -576,6 +702,20 @@ export default function UserManagement() {
                               Clear Request
                             </button>
                           )}
+                          
+                          {/* Delete user button */}
+                          <button
+                            onClick={() => {
+                              setUserToDelete(user);
+                              setShowDeleteConfirm(true);
+                            }}
+                            className="text-red-600 hover:text-red-800 flex items-center text-sm"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Delete
+                          </button>
                         </>
                       )}
                     </td>

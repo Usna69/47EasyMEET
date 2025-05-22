@@ -135,6 +135,7 @@ export default function Dashboard() {
   
   return (
     <div className="container mx-auto py-8 px-4">
+      
       {/* Password reset notification for admins */}
       {auth.user?.role === 'ADMIN' && showPasswordResetNotification && passwordResetRequests.length > 0 && (
         <div className="mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded shadow-sm">
@@ -146,13 +147,23 @@ export default function Dashboard() {
               <div>
                 <h3 className="font-medium text-yellow-700">Password Reset Requests</h3>
                 <p className="text-sm text-yellow-600">
-                  {passwordResetRequests.length} user{passwordResetRequests.length !== 1 ? 's' : ''} {passwordResetRequests.length !== 1 ? 'have' : 'has'} requested password resets.
+                  {passwordResetRequests.length} user{passwordResetRequests.length !== 1 ? 's' : ''} {passwordResetRequests.length !== 1 ? 'have' : 'has'} requested password resets:
                 </p>
+                <ul className="mt-2 mb-2 text-sm text-yellow-600">
+                  {passwordResetRequests.slice(0, 3).map((user: User) => (
+                    <li key={user.id} className="mb-1">
+                      • {user.name} ({user.email})
+                    </li>
+                  ))}
+                  {passwordResetRequests.length > 3 && (
+                    <li>• And {passwordResetRequests.length - 3} more...</li>
+                  )}
+                </ul>
                 <Link
-                  href="/admin/users/password-resets"
+                  href="/admin/users"
                   className="text-sm text-yellow-800 hover:text-yellow-900 underline mt-1 inline-block"
                 >
-                  View details
+                  Manage Users
                 </Link>
               </div>
             </div>
@@ -171,16 +182,20 @@ export default function Dashboard() {
       {/* Admin dashboard content */}
 
       {/* Quick Management Links */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 gap-6 mb-8">
         {/* Meetings Management Card */}
-        <div className="bg-white shadow-md rounded-lg p-6 border border-gray-100 flex flex-col items-center justify-center text-center hover:shadow-lg transition-shadow">
-          <div className="bg-blue-100 p-4 rounded-full mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+        <div className="bg-white shadow-md rounded-lg p-6 border border-gray-100 hover:shadow-lg transition-shadow">
+          <div className="flex items-center mb-4">
+            <div className="bg-blue-100 p-3 rounded-full mr-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-[#014a2f]">Meetings Management</h2>
+              <p className="text-gray-600">Create, view, and manage all meetings in the system.</p>
+            </div>
           </div>
-          <h2 className="text-xl font-semibold mb-2 text-[#014a2f]">Meetings Management</h2>
-          <p className="text-gray-600 mb-4">Create, view, and manage all meetings in the system.</p>
           <div className="flex space-x-3">
             <Link
               href="/admin/meetings"
