@@ -50,6 +50,29 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       );
     }
+    
+    // Check if registration is open based on meeting start time
+    const now = new Date();
+    const meetingStartTime = new Date(meeting.date);
+    const registrationEndTime = meeting.registrationEnd 
+      ? new Date(meeting.registrationEnd) 
+      : new Date(meetingStartTime.getTime() + 2 * 60 * 60 * 1000); // 2 hours after meeting start
+    
+    // Check if meeting has started
+    if (now < meetingStartTime) {
+      return Response.json(
+        { error: 'Registration is not yet open. Registration opens when the meeting starts.' },
+        { status: 400 }
+      );
+    }
+    
+    // Check if registration period is closed (2 hours after meeting start)
+    if (now > registrationEndTime) {
+      return Response.json(
+        { error: 'Registration period has ended. Registration closes 2 hours after the meeting starts.' },
+        { status: 400 }
+      );
+    }
 
     // Check if attendee already registered with this email for this meeting
     const existingAttendee = await prisma.attendee.findFirst({

@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { useAuth } from '../../../../../lib/auth';
+
+const { useState, useEffect } = React;
 
 // We'll use direct imports within the function for better reliability
 
@@ -304,7 +306,7 @@ export default function AdminAttendeesList({ params }: { params: { id: string } 
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {attendees.map((attendee) => (
+                {attendees.map((attendee: Attendee) => (
                   <tr key={attendee.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3">{attendee.name}</td>
                     <td className="px-4 py-3">{attendee.email}</td>

@@ -1,0 +1,469 @@
+'use client';
+
+import React from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../../../../lib/auth';
+
+// Using React hooks directly from React import
+const { useState, useEffect } = React;
+
+export default function CreateMeetingPage() {
+  const router = useRouter();
+  const auth = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  // Form state
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [date, setDate] = useState('');
+  const [time, setTime] = useState('');
+  const [location, setLocation] = useState('');
+  const [sector, setSector] = useState('');
+  const [meetingType, setMeetingType] = useState('PHYSICAL');
+  const [meetingCategory, setMeetingCategory] = useState('INTERNAL');  // INTERNAL, EXTERNAL, STAKEHOLDER
+  const [onlineMeetingUrl, setOnlineMeetingUrl] = useState('');
+  const [resources, setResources] = useState<File[]>([]);
+  
+  // Sectors data
+  const [sectors, setSectors] = useState<string[]>([
+    'Finance',
+    'Health',
+    'Education',
+    'Infrastructure',
+    'Agriculture',
+    'Environment',
+    'ICT & Innovation',
+    'Trade & Commerce',
+    'Security',
+    'Social Services',
+    'Other'
+  ]);
+
+  // Check authentication
+  useEffect(() => {
+    if (!auth.isLoggedIn) {
+      router.push('/admin/login');
+    }
+  }, [auth.isLoggedIn, router]);
+
+  // Authorized roles for meeting creation
+  const authorizedRoles = ['ADMIN', 'DIRECTOR', 'ASSISTANT_DIRECTOR', 'CCO', 'CECM', 'CREATOR'];
+
+  // Check if user is authorized to create meetings
+  useEffect(() => {
+    if (auth.isLoggedIn && !auth.isAuthorized(authorizedRoles)) {
+      setError('You do not have permission to create meetings');
+    }
+  }, [auth]);
+
+  // Calculate registration end time (2 hours after meeting start)
+  const calculateRegistrationEnd = () => {
+    if (!date || !time) return null;
+    
+    const meetingDateTime = new Date(`${date}T${time}`);
+    const registrationEnd = new Date(meetingDateTime);
+    registrationEnd.setHours(registrationEnd.getHours() + 2);
+    
+    return registrationEnd.toISOString();
+  };
+
+  // Handle resource file uploads
+  const handleResourceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      setResources((prev: File[]) => [...prev, ...newFiles]);
+    }
+  };
+
+  // Remove a resource file
+  const removeResource = (index: number) => {
+    setResources((prev: File[]) => prev.filter((_, i: number) => i !== index));
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSuccess(false);
+    setLoading(true);
+
+    try {
+      // Validate form
+      if (!title || !description || !date || !time || !location || !sector) {
+        setError('Please fill in all required fields');
+        setLoading(false);
+        return;
+      }
+
+      // Validate online meeting URL if meeting type is ONLINE
+      if (meetingType === 'ONLINE' && !onlineMeetingUrl) {
+        setError('Please provide a meeting URL for online meetings');
+        setLoading(false);
+        return;
+      }
+
+      // Combine date and time into a single DateTime
+      const meetingDateTime = new Date(`${date}T${time}`);
+      const registrationEnd = calculateRegistrationEnd();
+
+      // Create form data for file uploads
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('description', description);
+      formData.append('date', meetingDateTime.toISOString());
+      formData.append('location', location);
+      formData.append('sector', sector);
+      formData.append('meetingType', meetingType);
+      formData.append('meetingCategory', meetingCategory);
+      formData.append('registrationEnd', registrationEnd || '');
+      
+      if (meetingType === 'ONLINE' && onlineMeetingUrl) {
+        formData.append('onlineMeetingUrl', onlineMeetingUrl);
+      }
+
+      // Add creator information
+      if (auth.user) {
+        formData.append('creatorEmail', auth.user.email);
+        formData.append('creatorType', auth.user.role);
+      }
+
+      // Add resource files
+      resources.forEach((file: File, index: number) => {
+        formData.append(`resource-${index}`, file);
+      });
+
+      // Submit meeting data
+      const response = await fetch('/api/meetings', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        setSuccess(true);
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Failed to create meeting');
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred');
+      console.error('Error creating meeting:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="container mx-auto py-8 px-4">
+      <h1 className="text-2xl font-semibold mb-6 text-[#014a2f]">Create New Meeting</h1>
+      
+      {!auth.isAuthorized(authorizedRoles) ? (
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-yellow-700">
+                You do not have permission to create meetings. Please contact an administrator.
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : error ? (
+        <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          </div>
+        </div>
+      ) : success ? (
+        <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-6">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-green-700">Meeting created successfully!</p>
+              <div className="mt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSuccess(false);
+                    setTitle('');
+                    setDescription('');
+                    setDate('');
+                    setTime('');
+                    setLocation('');
+                    setSector('');
+                    setMeetingType('PHYSICAL');
+                    setMeetingCategory('INTERNAL');
+                    setOnlineMeetingUrl('');
+                    setResources([]);
+                  }}
+                  className="bg-green-100 hover:bg-green-200 text-green-800 px-3 py-1 rounded-md text-sm font-medium"
+                >
+                  Create Another Meeting
+                </button>
+                <button
+                  type="button"
+                  onClick={() => router.push('/admin/meetings')}
+                  className="ml-2 bg-white hover:bg-gray-100 text-gray-800 border border-gray-300 px-3 py-1 rounded-md text-sm font-medium"
+                >
+                  View All Meetings
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-sm">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Meeting Title *
+            </label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-md"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Description *
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-md h-32"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Date *
+              </label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded-md"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Time *
+              </label>
+              <input
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded-md"
+                required
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                Registration will close 2 hours after the meeting start time.
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Sector/Department *
+            </label>
+            <select
+              value={sector}
+              onChange={(e) => setSector(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-md"
+              required
+            >
+              <option value="">Select a sector</option>
+              {sectors.map((sectorOption: string) => (
+                <option key={sectorOption} value={sectorOption}>
+                  {sectorOption}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Meeting Category *
+            </label>
+            <select
+              value={meetingCategory}
+              onChange={(e) => setMeetingCategory(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-md"
+              required
+            >
+              <option value="">Select a category</option>
+              <option value="INTERNAL">Internal</option>
+              <option value="EXTERNAL">External</option>
+              <option value="STAKEHOLDER">Stakeholder</option>
+            </select>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Meeting Type*
+              </label>
+              <select
+                value={meetingType}
+                onChange={(e) => setMeetingType(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded-md"
+                required
+              >
+                <option value="PHYSICAL">Physical Meeting</option>
+                <option value="ONLINE">Online Meeting</option>
+                <option value="HYBRID">Hybrid Meeting</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Meeting Category*
+              </label>
+              <select
+                value={meetingCategory}
+                onChange={(e) => setMeetingCategory(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded-md"
+                required
+              >
+                <option value="INTERNAL">Internal Meeting</option>
+                <option value="EXTERNAL">External Meeting</option>
+                <option value="STAKEHOLDER">Stakeholder Meeting</option>
+              </select>
+              <p className="text-sm text-gray-500 mt-1">
+                Used for generating unique meeting IDs
+              </p>
+            </div>
+          </div>
+
+          {meetingType === 'PHYSICAL' ? (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Location *
+              </label>
+              <input
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded-md"
+                required
+              />
+            </div>
+          ) : (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Online Meeting URL *
+              </label>
+              <div className="flex space-x-2">
+                <input
+                  type="url"
+                  value={onlineMeetingUrl}
+                  onChange={(e) => setOnlineMeetingUrl(e.target.value)}
+                  placeholder="https://meet.google.com/... or https://zoom.us/..."
+                  className="flex-1 p-2 border border-gray-300 rounded-md"
+                  required
+                />
+                <select 
+                  className="w-40 p-2 border border-gray-300 rounded-md"
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      setOnlineMeetingUrl(e.target.value);
+                    }
+                  }}
+                >
+                  <option value="">Platform</option>
+                  <option value="https://meet.google.com/">Google Meet</option>
+                  <option value="https://teams.microsoft.com/l/meetup-join/">MS Teams</option>
+                  <option value="https://zoom.us/j/">Zoom</option>
+                </select>
+              </div>
+          </div>
+        )}
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Meeting Resources
+          </label>
+          <div className="border border-dashed border-gray-300 rounded-md p-4">
+            <input
+              type="file"
+              onChange={handleResourceUpload}
+              className="hidden"
+              id="resource-upload"
+              multiple
+            />
+            <label
+              htmlFor="resource-upload"
+              className="cursor-pointer bg-gray-100 hover:bg-gray-200 p-2 rounded-md inline-block"
+            >
+              Select Files
+            </label>
+            <p className="text-sm text-gray-500 mt-1">
+              Upload presentations, documents, or other meeting materials (PDF, PPTX, DOCX, etc.)
+            </p>
+
+            {resources.length > 0 && (
+              <div className="mt-4 space-y-2">
+                <p className="font-medium">Selected Files:</p>
+                <ul className="list-disc pl-5">
+                  {resources.map((file: File, index: number) => (
+                    <li key={index} className="flex justify-between items-center">
+                      <span>{file.name} ({(file.size / 1024).toFixed(1)} KB)</span>
+                      <button
+                        type="button"
+                        onClick={() => removeResource(index)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        Remove
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex justify-end space-x-3">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            disabled={loading}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-2 bg-[#014a2f] text-white rounded-md hover:bg-[#014a2f]/90 disabled:opacity-50"
+            disabled={loading}
+          >
+            {loading ? 'Creating...' : 'Create Meeting'}
+          </button>
+        </div>
+      </form>
+    )}
+  </div>
+  );
+}

@@ -2,71 +2,14 @@
 
 import React from 'react';
 import Link from 'next/link';
-import PublicMeetingForm from '../../../components/PublicMeetingForm';
 
-export default function NewPublicMeetingPage() {
-  const [submitted, setSubmitted] = React.useState(false);
-  const [meetingId, setMeetingId] = React.useState('');
-
-  const handleSuccess = (id: string) => {
-    setMeetingId(id);
-    setSubmitted(true);
-    
-    // Scroll to top when showing success message
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  };
-
-  // Show success screen after submission
-  if (submitted) {
-    return (
-      <div className="py-16 px-4" style={{ 
-        background: `url('/background-pattern.svg')`,
-        backgroundSize: 'cover',
-        position: 'relative',
-      }}>
-        <div className="absolute inset-0 bg-white bg-opacity-60 z-0"></div>
-        <div className="container mx-auto relative z-10">
-          <div className="max-w-3xl mx-auto text-center">
-            <div className="bg-white shadow-md rounded-lg p-8 border border-gray-100">
-              <div className="text-[#014a2f] mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h1 className="text-2xl font-bold text-gray-800 mb-4">Meeting Created Successfully!</h1>
-              <p className="text-gray-600 mb-8">Your meeting has been successfully created. You can now view its details or return to the home page.</p>
-              
-              <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4">
-                <Link 
-                  href={`/meetings/${meetingId}`}
-                  className="bg-[#FFC107] hover:bg-[#E0A800] text-[#014a2f] px-6 py-3 rounded-md font-medium transition-colors"
-                >
-                  View Meeting Details
-                </Link>
-                <Link 
-                  href="/"
-                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-md font-medium transition-colors"
-                >
-                  Return to Home
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show the form if not yet submitted
+export default function RestrictedMeetingCreationPage() {
   return (
-    <div className="py-8 px-4" style={{ 
-        background: `url('/background-pattern.svg')`,
-        backgroundSize: 'cover',
-        position: 'relative',
-      }}>
+    <div className="py-16 px-4" style={{ 
+      background: `url('/background-pattern.svg')`,
+      backgroundSize: 'cover',
+      position: 'relative',
+    }}>
       <div className="absolute inset-0 bg-white bg-opacity-60 z-0"></div>
       <div className="container mx-auto relative z-10">
         <div className="mb-6">
@@ -78,13 +21,33 @@ export default function NewPublicMeetingPage() {
           </Link>
         </div>
 
-        <div className="max-w-3xl mx-auto">
-          <div className="bg-white shadow-md rounded-lg p-6 border border-gray-100">
-            <h1 className="text-2xl font-semibold mb-6 text-gray-800">Create New Meeting</h1>
-            <p className="text-gray-600 mb-6">
-              Fill out the form below to create a new meeting. You'll receive a confirmation once your meeting has been created.
+        <div className="max-w-3xl mx-auto text-center">
+          <div className="bg-white shadow-md rounded-lg p-8 border border-gray-100">
+            <div className="text-[#014a2f] mb-6">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-800 mb-4">Restricted Access</h1>
+            <p className="text-gray-600 mb-8">
+              Meeting creation is restricted to authorized administrators only. Please contact an administrator 
+              or log in with appropriate credentials to create meetings.
             </p>
-            <PublicMeetingForm onSuccess={handleSuccess} />
+            
+            <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4">
+              <Link 
+                href="/admin/login"
+                className="bg-[#014a2f] hover:bg-[#014a2f]/90 text-white px-6 py-3 rounded-md font-medium transition-colors"
+              >
+                Admin Login
+              </Link>
+              <Link 
+                href="/"
+                className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-md font-medium transition-colors"
+              >
+                Return to Home
+              </Link>
+            </div>
           </div>
         </div>
       </div>

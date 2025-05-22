@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import * as React from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '../../lib/auth';
+
+const { useEffect } = React;
 
 export default function AdminLayout({
   children,
@@ -13,6 +15,7 @@ export default function AdminLayout({
   const router = useRouter();
   const pathname = usePathname();
 
+  // Handle authentication redirects on the client side only
   useEffect(() => {
     // Skip auth check if already on login page
     if (pathname === '/admin/login') {
@@ -25,7 +28,7 @@ export default function AdminLayout({
     }
   }, [auth.isLoggedIn, router, pathname]);
 
-  // If on login page or not logged in, just show the children
+  // If on login page or not logged in, just show the children without the admin layout
   if (pathname === '/admin/login' || !auth.isLoggedIn) {
     return <>{children}</>;
   }

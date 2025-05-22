@@ -1,6 +1,7 @@
 datasource db {
   provider = "sqlite"
   url      = "file:./dev.db"
+  // Note: For production, consider using a more robust database like PostgreSQL
 }
 
 generator client {
@@ -8,29 +9,61 @@ generator client {
 }
 
 model Meeting {
+  id               String            @id @default(cuid())
+  title            String
+  description      String
+  date             DateTime
+  location         String
+  creatorEmail     String?
+  sector           String?
+  creatorType      String?
+  meetingId        String?
+  meetingType      String            @default("PHYSICAL") // Can be PHYSICAL or ONLINE
+  onlineMeetingUrl String?           // For online meetings (Zoom, Teams, Google Meet)
+  registrationEnd  DateTime?         // When registration closes (default: 2 hours after meeting start)
+  resources        MeetingResource[] // Attached documents, presentations, etc.
+  attendees        Attendee[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+model Attendee {
+  id            String    @id @default(cuid())
+  meeting       Meeting   @relation(fields: [meetingId], references: [id])
+  meetingId     String
+  name          String
+  email         String
+  organization  String?
+  designation   String
+  signatureData String?
+  phoneNumber   String?
+  createdAt     DateTime  @default(now())
+}
+
+model MeetingResource {
+  id          String   @id @default(cuid())
+  meeting     Meeting  @relation(fields: [meetingId], references: [id])
+  meetingId   String
+  fileName    String   // Original filename
+  fileType    String   // MIME type (e.g., application/pdf)
+  fileSize    Int      // Size in bytes
+  fileUrl     String   // Path to stored file
+  description String?  // Optional description
+  uploadedAt  DateTime @default(now())
+}
+
+model User {
   id           String     @id @default(cuid())
-  title        String
-  description  String
-  date         DateTime
-  location     String
-  creatorEmail String?
-  sector       String?
-  creatorType  String?
-  meetingId    String?
-  attendees    Attendee[]
+  email        String     @unique
+  name         String
+  password     String     // Hashed password
+  role         String     @default("ADMIN") // ADMIN, DIRECTOR, ASSISTANT_DIRECTOR, CCO, CECM, CREATOR
+  department   String?
+  designation  String?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 }
 
-model Attendee {
-  id           String    @id @default(cuid())
-  meeting      Meeting   @relation(fields: [meetingId], references: [id])
-  meetingId    String
-  name         String
-  email        String
-  organization String?
-  designation  String
-  signatureData String?
-  phoneNumber  String?
-  createdAt    DateTime  @default(now())
-}
+// Note: SQLite doesn't support enums, so we use string fields instead
+// Valid meeting types: PHYSICAL, ONLINE
+// Valid user roles: ADMIN, DIRECTOR, ASSISTANT_DIRECTOR, CCO, CECM, CREATOR

@@ -2,46 +2,90 @@
 
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 
+interface UserData {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  department?: string;
+  designation?: string;
+}
+
 interface AuthContextType {
   isLoggedIn: boolean;
-  login: (username: string, password: string) => boolean;
+  user: UserData | null;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
+  isAuthorized: (allowedRoles: string[]) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
   isLoggedIn: false,
-  login: () => false,
+  user: null,
+  login: async () => false,
   logout: () => {},
+  isAuthorized: () => false,
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<UserData | null>(null);
 
   // Check if user is logged in on initial load
   useEffect(() => {
-    const loggedIn = localStorage.getItem('adminLoggedIn') === 'true';
-    setIsLoggedIn(loggedIn);
+    const userData = localStorage.getItem('userData');
+    if (userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
+        setIsLoggedIn(true);
+      } catch (error) {
+        console.error('Failed to parse user data:', error);
+        localStorage.removeItem('userData');
+      }
+    }
   }, []);
 
-  const login = (username: string, password: string) => {
-    // Simple authentication for demo purposes
-    // In a real application, this would be a server request
-    // For the demo, any non-empty username and password combination works
-    if (username && password) {
+  const login = async (email: string, password: string) => {
+    try {
+      // In a real application, this would be a server request to verify credentials
+      // For demo purposes, we'll make a request to our API
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        return false;
+      }
+
+      const userData = await response.json();
+      
+      setUser(userData);
       setIsLoggedIn(true);
-      localStorage.setItem('adminLoggedIn', 'true');
+      localStorage.setItem('userData', JSON.stringify(userData));
       return true;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
     }
-    return false;
   };
 
   const logout = () => {
     setIsLoggedIn(false);
-    localStorage.removeItem('adminLoggedIn');
+    setUser(null);
+    localStorage.removeItem('userData');
+  };
+
+  // Check if current user has one of the allowed roles
+  const isAuthorized = (allowedRoles: string[]) => {
+    if (!isLoggedIn || !user) return false;
+    return allowedRoles.includes(user.role);
   };
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn, user, login, logout, isAuthorized }}>
       {children}
     </AuthContext.Provider>
   );

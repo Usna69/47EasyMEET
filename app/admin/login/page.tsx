@@ -1,35 +1,52 @@
 'use client';
 
-import React from 'react';
+import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../lib/auth';
 
+const { useState, useEffect } = React;
+
 export default function LoginPage() {
-  const [username, setUsername] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [error, setError] = React.useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const auth = useAuth();
 
   // If already logged in, redirect to admin dashboard
-  React.useEffect(() => {
+  useEffect(() => {
     if (auth.isLoggedIn) {
       router.push('/admin');
     }
   }, [auth.isLoggedIn, router]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !password) {
-      setError('Username and password are required');
+    setError('');
+    setLoading(true);
+    
+    if (!email || !password) {
+      setError('Email and password are required');
+      setLoading(false);
       return;
     }
 
-    const loginSuccess = auth.login(username, password);
-    if (loginSuccess) {
-      router.push('/admin');
-    } else {
-      setError('Invalid username or password');
+    try {
+      // Use email as username for auth hook (matches ADMIN_CREDENTIALS in auth.ts)
+      const loginSuccess = await auth.login(email, password);
+      if (loginSuccess) {
+        console.log('Login successful, redirecting to admin dashboard');
+        router.push('/admin');
+      } else {
+        setError('Invalid credentials - please check your email and password');
+        console.log('Login failed: Invalid credentials');
+      }
+    } catch (err) {
+      setError('An error occurred during login. Please try again.');
+      console.error('Login error:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -50,15 +67,16 @@ export default function LoginPage() {
         
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-gray-700 mb-2" htmlFor="username">
-              Username
+            <label className="block text-gray-700 mb-2" htmlFor="email">
+              Email
             </label>
             <input
-              type="text"
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#014a2f]/30"
+              disabled={loading}
             />
           </div>
           
@@ -71,15 +89,17 @@ export default function LoginPage() {
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#014a2f]/30"
             />
           </div>
           
           <button
             type="submit"
-            className="w-full bg-[#014a2f] hover:bg-[#014a2f]/90 text-white font-medium py-2 px-4 rounded-md transition-colors"
+            className="w-full bg-[#014a2f] hover:bg-[#014a2f]/90 text-white font-medium py-2 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={loading}
           >
-            Login
+            {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
         

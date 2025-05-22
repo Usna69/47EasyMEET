@@ -51,7 +51,7 @@ export default async function Home({
         ) : (
           <div className="text-center py-16 bg-gray-50 rounded-lg">
             <h3 className="text-xl font-medium text-gray-600 mb-4">No meetings scheduled yet</h3>
-            <p className="text-gray-500 mb-6">Create your first meeting!</p>
+            <p className="text-gray-500 mb-6">Please check back later or contact an administrator for more information.</p>
           </div>
         )}
         </div>

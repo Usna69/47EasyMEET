@@ -1,7 +1,9 @@
 // Simple authentication for admin access
 'use client';
 
-import { useState, useEffect } from 'react';
+import * as React from 'react';
+
+const { useState, useEffect } = React;
 
 export interface AuthState {
   isLoggedIn: boolean;
@@ -10,8 +12,8 @@ export interface AuthState {
 
 // In a real application, this would use a more secure approach
 const ADMIN_CREDENTIALS = {
-  username: 'ADMIN',
-  password: 'MEETM@st@047'
+  email: 'admin@example.com', // Matches what we're using in the login page
+  password: 'admin123'
 };
 
 // Initialize auth state from session storage if available
@@ -30,9 +32,9 @@ export const useAuth = () => {
   }, []);
 
   // Login function
-  const login = (username: string, password: string): boolean => {
-    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-      const newAuthState = { isLoggedIn: true, username };
+  const login = (email: string, password: string): boolean => {
+    if (email === ADMIN_CREDENTIALS.email && password === ADMIN_CREDENTIALS.password) {
+      const newAuthState = { isLoggedIn: true, username: email };
       sessionStorage.setItem('authState', JSON.stringify(newAuthState));
       setAuthState(newAuthState);
       return true;

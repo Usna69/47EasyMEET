@@ -145,17 +145,17 @@ export default function HeroSection() {
             A comprehensive solution for managing meetings and tracking attendee participation in NCCG
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <button
-              onClick={() => router.push('/meetings/new')}
-              className="bg-[#FFC107] hover:bg-[#E0A800] text-[#014a2f] font-medium px-8 py-3 rounded-md transition-colors"
-            >
-              Create Meeting
-            </button>
             <Link 
               href="#meetings"
-              className="bg-white/10 hover:bg-white/20 text-white font-medium px-8 py-3 rounded-md transition-colors"
+              className="bg-[#FFC107] hover:bg-[#E0A800] text-[#014a2f] font-medium px-8 py-3 rounded-md transition-colors"
             >
               Browse Meetings
+            </Link>
+            <Link 
+              href="/admin/login"
+              className="bg-white/10 hover:bg-white/20 text-white font-medium px-8 py-3 rounded-md transition-colors"
+            >
+              Admin Login
             </Link>
           </div>
         </div>
