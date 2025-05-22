@@ -54,9 +54,15 @@ export async function POST(request: NextRequest) {
     // Check if registration is open based on meeting start time
     const now = new Date();
     const meetingStartTime = new Date(meeting.date);
+    
+    // Calculate registration end time (2 hours after meeting start)
     const registrationEndTime = meeting.registrationEnd 
       ? new Date(meeting.registrationEnd) 
-      : new Date(meetingStartTime.getTime() + 2 * 60 * 60 * 1000); // 2 hours after meeting start
+      : new Date(new Date(meeting.date).getTime() + 2 * 60 * 60 * 1000);
+    
+    console.log('Current time:', now);
+    console.log('Meeting start time:', meetingStartTime);
+    console.log('Registration end time:', registrationEndTime);
     
     // Check if meeting has started
     if (now < meetingStartTime) {
@@ -73,6 +79,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+    
+    console.log('Registration check passed: Meeting is ongoing and within registration window')
 
     // Check if attendee already registered with this email for this meeting
     const existingAttendee = await prisma.attendee.findFirst({

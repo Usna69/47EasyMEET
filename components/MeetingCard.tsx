@@ -172,14 +172,18 @@ export default function MeetingCard({ meeting }: { meeting: Meeting }) {
             View Details
           </Link>
           
-          {status !== 'ended' && (
+          {status === 'ongoing' ? (
             <Link
               href={`/meetings/${meeting.id}/register`}
               className="text-sm font-medium bg-yellow-400 text-[#014a2f] px-3 py-1 rounded hover:bg-yellow-500 transition-colors"
             >
               Register
             </Link>
-          )}
+          ) : status === 'upcoming' ? (
+            <span className="text-sm font-medium bg-gray-300 text-gray-600 px-3 py-1 rounded cursor-not-allowed">
+              Opens Soon
+            </span>
+          ) : null}
         </div>
       </div>
     </article>

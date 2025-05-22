@@ -50,6 +50,20 @@ export default function UserManagement() {
     { value: 'ADMIN', label: 'Administrator' },
     { value: 'CREATOR', label: 'Meeting Creator' }
   ];
+  
+  // Define sector options for department dropdown
+  const sectorOptions = [
+    { value: '', label: 'Select Department' },
+    { value: 'IDE', label: 'ICT & Digital Economy' },
+    { value: 'FIN', label: 'Finance' },
+    { value: 'EDU', label: 'Education' },
+    { value: 'HEA', label: 'Health' },
+    { value: 'AGR', label: 'Agriculture' },
+    { value: 'TRA', label: 'Transport' },
+    { value: 'ENV', label: 'Environment' },
+    { value: 'SEC', label: 'Security' },
+    { value: 'OTH', label: 'Other' }
+  ];
 
   // Fetch users on component mount
   useEffect(() => {
@@ -300,16 +314,22 @@ export default function UserManagement() {
                 </select>
               </div>
               
-              <div>
-                <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                <input
-                  type="text"
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-2" htmlFor="department">
+                  Department/Sector
+                </label>
+                <select
                   id="department"
                   name="department"
-                  value={newUser.department}
+                  value={newUser.department || ''}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#014a2f] focus:border-transparent"
-                />
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#014a2f]/30"
+                  required
+                >
+                  {sectorOptions.map(option => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
               </div>
               
               <div>
@@ -382,7 +402,7 @@ export default function UserManagement() {
                 required
               >
                 <option value="">Select a user</option>
-                {users.map((user) => (
+                {users.map((user: User) => (
                   <option key={user.id} value={user.id}>
                     {user.name} ({user.email}) {user.passwordResetRequested ? '- Reset Requested' : ''}
                   </option>
@@ -415,6 +435,43 @@ export default function UserManagement() {
         </div>
       )}
 
+      {/* Password Reset Notification Banner */}
+      {users.filter((user: User) => user.passwordResetRequested).length > 0 && (
+        <div className="mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md shadow-sm">
+          <div className="flex items-center">
+            <div className="flex-shrink-0 text-yellow-500">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-lg font-medium text-yellow-800">
+                {users.filter((user: User) => user.passwordResetRequested).length} {users.filter((user: User) => user.passwordResetRequested).length === 1 ? 'User' : 'Users'} {users.filter((user: User) => user.passwordResetRequested).length === 1 ? 'Requires' : 'Require'} Password Reset
+              </h3>
+              <div className="mt-2 text-yellow-700">
+                <p>The following {users.filter((user: User) => user.passwordResetRequested).length === 1 ? 'user has' : 'users have'} requested a password reset:</p>
+                <ul className="list-disc list-inside mt-1">
+                  {users.filter((user: User) => user.passwordResetRequested).map((user: User) => (
+                    <li key={user.id} className="mt-1">
+                      <span className="font-medium">{user.name}</span> ({user.email}) - 
+                      <button
+                        onClick={() => {
+                          setSelectedUserId(user.id);
+                          setShowResetForm(true);
+                        }}
+                        className="text-blue-600 hover:text-blue-800 underline ml-2"
+                      >
+                        Reset Now
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Users Table */}
       <div className="bg-white shadow-md rounded-lg p-6 border border-gray-200">
         <div className="flex justify-between items-center mb-4">
@@ -431,7 +488,7 @@ export default function UserManagement() {
         </div>
         
         {/* Pending reset requests notification */}
-        {users.some(user => user.passwordResetRequested) && (
+        {users.some((user: User) => user.passwordResetRequested) && (
           <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 flex items-start">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-400 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -487,29 +544,34 @@ export default function UserManagement() {
                       )}
                     </td>
                     <td className="px-4 py-2 flex space-x-2">
-                      <button
-                        onClick={() => {
-                          setSelectedUserId(user.id);
-                          setShowResetForm(true);
-                        }}
-                        className="text-yellow-600 hover:text-yellow-800 flex items-center text-sm"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                        </svg>
-                        Reset Password
-                      </button>
-                      
-                      {user.passwordResetRequested && (
-                        <button
-                          onClick={() => handleClearResetRequest(user.id)}
-                          className="text-gray-600 hover:text-gray-800 flex items-center text-sm"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                          Clear Request
-                        </button>
+                      {/* Only show password reset buttons for admins */}
+                      {auth.user?.role === 'ADMIN' && (
+                        <>
+                          <button
+                            onClick={() => {
+                              setSelectedUserId(user.id);
+                              setShowResetForm(true);
+                            }}
+                            className="text-yellow-600 hover:text-yellow-800 flex items-center text-sm"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                            </svg>
+                            Reset Password
+                          </button>
+                          
+                          {user.passwordResetRequested && (
+                            <button
+                              onClick={() => handleClearResetRequest(user.id)}
+                              className="text-gray-600 hover:text-gray-800 flex items-center text-sm"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                              Clear Request
+                            </button>
+                          )}
+                        </>
                       )}
                     </td>
                   </tr>

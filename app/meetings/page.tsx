@@ -304,14 +304,18 @@ export default function MeetingsPage() {
                     View Details
                   </Link>
                   
-                  {(getMeetingStatus(meeting.date) === 'upcoming' || getMeetingStatus(meeting.date) === 'ongoing') && (
+                  {getMeetingStatus(meeting.date) === 'ongoing' ? (
                     <Link 
                       href={`/meetings/${meeting.id}/register`}
                       className="text-sm text-[#014a2f] hover:text-[#014a2f]/80"
                     >
                       Register
                     </Link>
-                  )}
+                  ) : getMeetingStatus(meeting.date) === 'upcoming' ? (
+                    <span className="text-sm text-gray-400 cursor-not-allowed">
+                      Registration Pending
+                    </span>
+                  ) : null}
                 </div>
               </div>
             </div>

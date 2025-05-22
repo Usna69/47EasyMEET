@@ -23,13 +23,13 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user) {
-      // Don't reveal if user exists for security reasons, but log the issue
-      console.log(`Password reset attempted for non-existent user: ${email}`);
+      // Log the attempt for non-existent user
+      console.log(`Password reset rejected for non-existent user: ${email}`);
       
-      // Always return a 200 status with generic message to prevent email enumeration
+      // Return a 400 status to indicate the user doesn't exist
       return Response.json(
-        { success: true, message: 'If your email is registered, a password reset request has been sent to the admin' },
-        { status: 200 }
+        { success: false, message: 'No user is registered with this email address' },
+        { status: 400 }
       );
     }
     

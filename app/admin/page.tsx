@@ -170,36 +170,7 @@ export default function Dashboard() {
         </div>
       )}
       
-      {/* Request password reset button for creators */}
-      {auth.user?.role === 'CREATOR' && (
-        <div className="mb-6 text-right">
-          <button
-            onClick={async () => {
-              try {
-                const response = await fetch('/api/users/request-password-reset', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({ email: auth.user.email }),
-                });
-                
-                if (response.ok) {
-                  alert('Password reset request sent successfully. An admin will reset your password soon.');
-                } else {
-                  alert('Failed to request password reset. Please try again later.');
-                }
-              } catch (err) {
-                console.error('Error requesting password reset:', err);
-                alert('An error occurred while requesting password reset.');
-              }
-            }}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
-          >
-            Request Password Reset
-          </button>
-        </div>
-      )}
+      {/* Password reset button for creators removed as requested */}
       
       <div className="flex justify-between items-center mb-8">
         {auth.user?.role === 'ADMIN' ? (
@@ -295,7 +266,26 @@ export default function Dashboard() {
             {error}
           </div>
         ) : meetings.length === 0 ? (
-          <p className="text-center py-4">No meetings found. Create your first meeting!</p>
+          <div className="text-center py-8 bg-gray-50 rounded-lg">
+            {auth.user?.role === 'CREATOR' ? (
+              <>
+                <h3 className="text-xl font-medium text-gray-600 mb-4">You haven't created any meetings yet</h3>
+                <p className="text-gray-500 mb-6">Create your first meeting to get started!</p>
+                
+                <Link 
+                  href="/admin/meetings/create"
+                  className="bg-[#014a2f] hover:bg-[#014a2f]/90 text-white px-6 py-3 rounded-md font-medium transition-colors inline-flex items-center"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Create New Meeting
+                </Link>
+              </>
+            ) : (
+              <p className="text-center py-4">No meetings found. Create your first meeting!</p>
+            )}
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full table-auto">

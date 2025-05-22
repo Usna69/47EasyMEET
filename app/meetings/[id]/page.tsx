@@ -322,12 +322,20 @@ export default function MeetingDetails({ params }: MeetingDetailsParams) {
               <QRCodeDisplay url={`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/meetings/${meeting.id}/register`} />
             </div>
             <div className="text-center space-y-3">
-              <Link 
-                href={`/meetings/${meeting.id}/register`}
-                className="bg-yellow-400 hover:bg-yellow-500 text-[#014a2f] px-6 py-3 rounded-md font-medium transition-colors inline-block w-full"
-              >
-                Register for this Meeting
-              </Link>
+              {new Date() >= new Date(meeting.startTime) ? (
+                <Link 
+                  href={`/meetings/${meeting.id}/register`}
+                  className="bg-yellow-400 hover:bg-yellow-500 text-[#014a2f] px-6 py-3 rounded-md font-medium transition-colors inline-block w-full"
+                >
+                  Register for this Meeting
+                </Link>
+              ) : (
+                <div 
+                  className="bg-gray-300 text-gray-600 px-6 py-3 rounded-md font-medium inline-block w-full cursor-not-allowed"
+                >
+                  Registration opens when meeting starts
+                </div>
+              )}
               <button
                 onClick={() => {
                   try {

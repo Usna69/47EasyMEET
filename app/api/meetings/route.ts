@@ -77,9 +77,14 @@ export async function POST(request: Request) {
       return json({ error: 'Missing required fields' }, { status: 400 });
     }
     
-    // For online meetings, require a meeting URL
-    if (meetingType === 'ONLINE' && !onlineMeetingUrl) {
-      return json({ error: 'Online meeting URL is required for online meetings' }, { status: 400 });
+    // For online or hybrid meetings, require a meeting URL
+    if ((meetingType === 'ONLINE' || meetingType === 'HYBRID') && !onlineMeetingUrl) {
+      return json({ error: 'Online meeting URL is required for online and hybrid meetings' }, { status: 400 });
+    }
+    
+    // For hybrid meetings, also require a physical location
+    if (meetingType === 'HYBRID' && !location) {
+      return json({ error: 'Physical location is required for hybrid meetings' }, { status: 400 });
     }
     
     // Convert date strings to Date objects
@@ -121,7 +126,7 @@ export async function POST(request: Request) {
         meetingId,
         // Add these fields only if they are defined in the schema
         ...(meetingType && { meetingType }),
-        ...(meetingType === 'ONLINE' && onlineMeetingUrl ? { onlineMeetingUrl } : {}),
+        ...((meetingType === 'ONLINE' || meetingType === 'HYBRID') && onlineMeetingUrl ? { onlineMeetingUrl } : {}),
         ...(registrationEnd ? { registrationEnd } : {}),
       },
     });

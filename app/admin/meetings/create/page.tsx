@@ -24,6 +24,7 @@ export default function CreateMeetingPage() {
   const [meetingType, setMeetingType] = useState('PHYSICAL');
   const [meetingCategory, setMeetingCategory] = useState('INTERNAL');  // INTERNAL, EXTERNAL, STAKEHOLDER
   const [onlineMeetingUrl, setOnlineMeetingUrl] = useState('');
+  const [physicalLocation, setPhysicalLocation] = useState('');
   const [resources, setResources] = useState<File[]>([]);
   
   // Sectors data
@@ -91,15 +92,29 @@ export default function CreateMeetingPage() {
 
     try {
       // Validate form
-      if (!title || !description || !date || !time || !location || !sector) {
+      if (!title || !description || !date || !time || !sector) {
         setError('Please fill in all required fields');
         setLoading(false);
         return;
       }
+      
+      // Validate based on meeting type
+      if (meetingType === 'PHYSICAL' && !location) {
+        setError('Please provide a physical location for the meeting');
+        setLoading(false);
+        return;
+      }
 
-      // Validate online meeting URL if meeting type is ONLINE
-      if (meetingType === 'ONLINE' && !onlineMeetingUrl) {
-        setError('Please provide a meeting URL for online meetings');
+      // Validate online meeting URL if meeting type is ONLINE or HYBRID
+      if ((meetingType === 'ONLINE' || meetingType === 'HYBRID') && !onlineMeetingUrl) {
+        setError('Please provide a meeting URL for online or hybrid meetings');
+        setLoading(false);
+        return;
+      }
+      
+      // For hybrid meetings, validate both physical location and online URL
+      if (meetingType === 'HYBRID' && !location) {
+        setError('Please provide a physical location for hybrid meetings');
         setLoading(false);
         return;
       }
@@ -113,13 +128,20 @@ export default function CreateMeetingPage() {
       formData.append('title', title);
       formData.append('description', description);
       formData.append('date', meetingDateTime.toISOString());
-      formData.append('location', location);
       formData.append('sector', sector);
       formData.append('meetingType', meetingType);
       formData.append('meetingCategory', meetingCategory);
       formData.append('registrationEnd', registrationEnd || '');
       
-      if (meetingType === 'ONLINE' && onlineMeetingUrl) {
+      // Handle different meeting types
+      if (meetingType === 'PHYSICAL') {
+        formData.append('location', location);
+      } else if (meetingType === 'ONLINE') {
+        // For online meetings, use the URL as location too for compatibility
+        formData.append('location', 'Online Meeting');
+        formData.append('onlineMeetingUrl', onlineMeetingUrl);
+      } else if (meetingType === 'HYBRID') {
+        formData.append('location', location);
         formData.append('onlineMeetingUrl', onlineMeetingUrl);
       }
 
@@ -357,10 +379,11 @@ export default function CreateMeetingPage() {
             </div>
           </div>
 
-          {meetingType === 'PHYSICAL' ? (
+          {/* Show physical location for PHYSICAL and HYBRID meeting types */}
+          {(meetingType === 'PHYSICAL' || meetingType === 'HYBRID') && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Location *
+                Physical Location *
               </label>
               <input
                 type="text"
@@ -370,8 +393,11 @@ export default function CreateMeetingPage() {
                 required
               />
             </div>
-          ) : (
-            <div>
+          )}
+          
+          {/* Show online meeting URL for ONLINE and HYBRID meeting types */}
+          {(meetingType === 'ONLINE' || meetingType === 'HYBRID') && (
+            <div className={meetingType === 'HYBRID' ? 'mt-4' : ''}>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Online Meeting URL *
               </label>
@@ -398,8 +424,8 @@ export default function CreateMeetingPage() {
                   <option value="https://zoom.us/j/">Zoom</option>
                 </select>
               </div>
-          </div>
-        )}
+            </div>
+          )}
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
