@@ -1,14 +1,14 @@
 'use client';
 
 import React from 'react';
+const { useState, useEffect } = React;
 import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import './navheader.css';
 
 export default function NavHeader() {
   const pathname = usePathname();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [meetClickCount, setMeetClickCount] = React.useState(0);
   const [meetAnimation, setMeetAnimation] = React.useState('');
   const isAdmin = pathname?.startsWith('/admin');
@@ -55,7 +55,7 @@ export default function NavHeader() {
           </div>
           
           <nav className="flex items-center space-x-6">
-            {/* Sectors dropdown removed */}
+            {/* Navigation items can be added here if needed */}
           </nav>
         </div>
       </div>

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../../lib/auth';
+import { useSessionAuth } from '../../../lib/session-auth';
 
 const { useState, useEffect } = React;
 
@@ -14,14 +14,15 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [forgotPassword, setForgotPassword] = useState(false);
   const router = useRouter();
-  const auth = useAuth();
+  const auth = useSessionAuth();
 
-  // If already logged in, redirect to admin dashboard
+  // Simple check for already logged in users
   useEffect(() => {
-    if (auth.isLoggedIn) {
-      router.push('/admin');
+    // If already logged in, redirect to admin dashboard
+    if (auth?.isLoggedIn) {
+      window.location.href = '/admin';
     }
-  }, [auth.isLoggedIn, router]);
+  }, [auth]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,11 +37,11 @@ export default function LoginPage() {
     }
 
     try {
-      // Use email as username for auth hook (matches ADMIN_CREDENTIALS in auth.ts)
+      // Use email as username for auth hook
       const loginSuccess = await auth.login(email, password);
       if (loginSuccess) {
-        console.log('Login successful, redirecting to admin dashboard');
-        router.push('/admin');
+        // Simple redirect to admin dashboard
+        window.location.href = '/admin';
       } else {
         setError('Invalid credentials - please check your email and password');
         console.log('Login failed: Invalid credentials');
@@ -130,6 +131,7 @@ export default function LoginPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#014a2f]/30"
                 disabled={loading}
                 required
+                autoComplete="email"
               />
             </div>
             
@@ -165,6 +167,7 @@ export default function LoginPage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#014a2f]/30"
                   disabled={loading}
                   required
+                  autoComplete="username"
                 />
               </div>
               
@@ -180,6 +183,7 @@ export default function LoginPage() {
                   disabled={loading}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#014a2f]/30"
                   required
+                  autoComplete="current-password"
                 />
               </div>
               

@@ -46,13 +46,8 @@ export default function MeetingForm({ meeting, isEditing = false }: MeetingFormP
     'LA&C': 'Legal Affairs and Compliance'
   };
 
-  // Creator type options
-  const creatorTypeOptions = [
-    'HOD', // Head of Department
-    'DIR', // Director
-    'ORG', // Organization
-    'OFF'  // Officer
-  ];
+  // Default creator type (since dropdown is being removed)
+  const defaultCreatorType = 'HOD';
   
   // Meeting category options
   const meetingCategoryOptions = [
@@ -68,7 +63,7 @@ export default function MeetingForm({ meeting, isEditing = false }: MeetingFormP
     location: meeting?.location || '',
     creatorEmail: meeting?.creatorEmail || '',
     sector: meeting?.sector || 'IDE',
-    creatorType: meeting?.creatorType || 'HOD',
+    creatorType: meeting?.creatorType || defaultCreatorType, // Use default creator type
     meetingCategory: meeting?.meetingCategory || 'INTERNAL',
   });
   
@@ -335,27 +330,8 @@ export default function MeetingForm({ meeting, isEditing = false }: MeetingFormP
           {errors.sector && <p className="mt-1 text-sm text-red-600">{errors.sector}</p>}
         </div>
         
-        <div>
-          <label htmlFor="creatorType" className="block text-sm font-medium text-gray-700 mb-1">
-            Creator Type
-          </label>
-          <select
-            id="creatorType"
-            name="creatorType"
-            value={formData.creatorType}
-            onChange={handleChange}
-            className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-              errors.creatorType ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-green-300'
-            }`}
-          >
-            {creatorTypeOptions.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
-          {errors.creatorType && <p className="mt-1 text-sm text-red-600">{errors.creatorType}</p>}
-        </div>
+        {/* Creator Type is now fixed as HOD */}
+        <input type="hidden" name="creatorType" value={formData.creatorType} />
       </div>
       
       <div>

@@ -1,9 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../../lib/auth';
+import { useSessionAuth } from '../../../lib/session-auth';
 import Link from 'next/link';
+
+// Using React hooks directly from React import
+const { useState, useEffect } = React;
 
 interface Meeting {
   id: string;
@@ -26,21 +29,16 @@ interface Meeting {
 
 export default function MeetingsPage() {
   const router = useRouter();
-  const auth = useAuth();
+  const auth = useSessionAuth();
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showActive, setShowActive] = useState(false);
 
-  // Check authentication
-  useEffect(() => {
-    if (!auth.isLoggedIn) {
-      router.push('/admin/login');
-    }
-  }, [auth.isLoggedIn, router]);
+  // No redirection in useEffect, we'll handle this in the render logic instead
 
   // Authorized roles for meeting management
-  const authorizedRoles = ['ADMIN', 'DIRECTOR', 'ASSISTANT_DIRECTOR', 'CCO', 'CECM', 'CREATOR'];
+  const authorizedRoles = ['ADMIN', 'CREATOR'];
 
   // Fetch meetings
   const fetchMeetings = async () => {
@@ -158,6 +156,24 @@ export default function MeetingsPage() {
     }
   };
 
+  // If not logged in, show login message instead of redirecting
+  if (!auth?.isLoggedIn) {
+    return (
+      <div className="container mx-auto py-8 px-4 text-center">
+        <div className="bg-white shadow-md rounded-lg p-8 border border-gray-100 max-w-md mx-auto">
+          <h1 className="text-2xl font-semibold mb-6 text-[#014a2f]">Authentication Required</h1>
+          <p className="text-gray-600 mb-6">Please log in to view meetings.</p>
+          <a 
+            href="/admin/login"
+            className="bg-yellow-400 hover:bg-yellow-500 text-[#014a2f] px-6 py-3 rounded-md font-medium transition-colors inline-block"
+          >
+            Go to Login
+          </a>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
@@ -217,7 +233,7 @@ export default function MeetingsPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {meetings.map((meeting) => (
+              {meetings.map((meeting: Meeting) => (
                 <div 
                   key={meeting.id} 
                   className={`border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow 
@@ -310,12 +326,12 @@ export default function MeetingsPage() {
                     </span>
                     
                     <div className="flex space-x-2">
-                      <Link 
-                        href={`/admin/meetings/${meeting.id}`}
-                        className="text-sm text-blue-600 hover:text-blue-800"
+                      <button 
+                        onClick={() => window.location.href = `/admin/meetings/${meeting.id}`}
+                        className="text-sm text-blue-600 hover:text-blue-800 cursor-pointer"
                       >
                         View Details
-                      </Link>
+                      </button>
                       
                       {isUpcoming(meeting.date) && (
                         <Link 

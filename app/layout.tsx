@@ -4,8 +4,8 @@ import './globals.css';
 import React from 'react';
 import NavHeader from '../components/NavHeader';
 import Footer from '../components/Footer';
-import { AuthProvider } from '../lib/auth';
-// Fixing import - we know this exists from checking auth.tsx
+import ScrollPreservation from '../components/ScrollPreservation';
+// Auth provider is in auth.tsx not auth.ts
 
 const poppins = Poppins({
   weight: ['300'],
@@ -26,13 +26,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={poppins.className}>
-        <AuthProvider>
-          <NavHeader />
-          <main className="min-h-screen bg-white">
-            {children}
-          </main>
-          <Footer />
-        </AuthProvider>
+        <ScrollPreservation />
+        <NavHeader />
+        <main className="min-h-screen bg-white">
+          {children}
+        </main>
+        <Footer />
       </body>
     </html>
   );

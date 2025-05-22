@@ -2,14 +2,14 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../../../lib/auth';
+import { useSessionAuth } from '../../../../lib/session-auth';
 
 // Using React hooks directly from React import
 const { useState, useEffect } = React;
 
 export default function CreateMeetingPage() {
   const router = useRouter();
-  const auth = useAuth();
+  const auth = useSessionAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -27,30 +27,52 @@ export default function CreateMeetingPage() {
   const [physicalLocation, setPhysicalLocation] = useState('');
   const [resources, setResources] = useState<File[]>([]);
   
-  // Sectors data
-  const [sectors, setSectors] = useState<string[]>([
-    'Finance',
-    'Health',
-    'Education',
-    'Infrastructure',
-    'Agriculture',
-    'Environment',
-    'ICT & Innovation',
-    'Trade & Commerce',
-    'Security',
-    'Social Services',
-    'Other'
+  // Sectors data with official codes
+  const [sectors, setSectors] = useState<Array<{name: string, code: string}>>([  
+    { name: 'Finance and Economic Planning Affairs', code: 'F&EPA' },
+    { name: 'Innovation and Digital Economy', code: 'IDE' },
+    { name: 'Talents, Skills Development and Care', code: 'TS&DC' },
+    { name: 'Mobility and Works', code: 'M&W' },
+    { name: 'Built Environment and Urban Planning Sector', code: 'BE&UP' },
+    { name: 'Boroughs Administration and Personnel', code: 'BA&P' },
+    { name: 'Business and Hustler Opportunities', code: 'B&HO' },
+    { name: 'Green Nairobi (Environment, Water, Food and Agriculture)', code: 'GN' },
+    { name: 'Health Wellness and Nutrition', code: 'HW&N' },
+    { name: 'Inclusivity, Public Participation and Customer Service Sector', code: 'IPP&CS' }
   ]);
+  
+  // Fetch sectors from API
+  const [apiSectors, setApiSectors] = useState<string[]>([]);
+  
+  // Fetch sectors from API
+  useEffect(() => {
+    const fetchSectors = async () => {
+      try {
+        const response = await fetch('/api/sectors');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.sectors && Array.isArray(data.sectors)) {
+            setApiSectors(data.sectors);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching sectors:', error);
+      }
+    };
+    
+    fetchSectors();
+  }, []);
 
   // Check authentication
   useEffect(() => {
     if (!auth.isLoggedIn) {
-      router.push('/admin/login');
+      // Use direct navigation to avoid client-side routing conflicts
+      window.location.href = '/admin/login';
     }
-  }, [auth.isLoggedIn, router]);
+  }, [auth.isLoggedIn]);
 
   // Authorized roles for meeting creation
-  const authorizedRoles = ['ADMIN', 'DIRECTOR', 'ASSISTANT_DIRECTOR', 'CCO', 'CECM', 'CREATOR'];
+  const authorizedRoles = ['ADMIN', 'CREATOR'];
 
   // Check if user is authorized to create meetings
   useEffect(() => {
@@ -178,21 +200,20 @@ export default function CreateMeetingPage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <h1 className="text-2xl font-semibold mb-6 text-[#014a2f]">Create New Meeting</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-semibold text-[#014a2f]">Create New Meeting</h1>
+        <a href="/admin" className="text-gray-600 hover:text-gray-800 flex items-center">
+          <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Dashboard
+        </a>
+      </div>
       
-      {!auth.isAuthorized(authorizedRoles) ? (
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-yellow-700">
-                You do not have permission to create meetings. Please contact an administrator.
-              </p>
-            </div>
+      {loading ? (
+        <div className="text-center py-12">
+          <div className="spinner-border" role="status">
+            <span className="sr-only">Loading...</span>
           </div>
         </div>
       ) : error ? (
@@ -240,7 +261,7 @@ export default function CreateMeetingPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => router.push('/admin/meetings')}
+                  onClick={() => window.location.href = '/admin/meetings'}
                   className="ml-2 bg-white hover:bg-gray-100 text-gray-800 border border-gray-300 px-3 py-1 rounded-md text-sm font-medium"
                 >
                   View All Meetings
@@ -308,7 +329,7 @@ export default function CreateMeetingPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Sector/Department *
+              Sector *
             </label>
             <select
               value={sector}
@@ -317,11 +338,27 @@ export default function CreateMeetingPage() {
               required
             >
               <option value="">Select a sector</option>
-              {sectors.map((sectorOption: string) => (
-                <option key={sectorOption} value={sectorOption}>
-                  {sectorOption}
-                </option>
-              ))}
+              {/* Show predefined sectors */}
+              <optgroup label="Official Sectors">
+                {sectors.map((sectorOption: {name: string, code: string}) => (
+                  <option key={sectorOption.code} value={sectorOption.code}>
+                    {sectorOption.name} ({sectorOption.code})
+                  </option>
+                ))}
+              </optgroup>
+              
+              {/* Show sectors from API if available */}
+              {apiSectors.length > 0 && (
+                <optgroup label="Other Sectors">
+                  {apiSectors
+                    .filter((apiSector: string) => !sectors.some((s: {name: string, code: string}) => s.code === apiSector))
+                    .map((apiSector: string) => (
+                      <option key={apiSector} value={apiSector}>
+                        {apiSector}
+                      </option>
+                    ))}
+                </optgroup>
+              )}
             </select>
           </div>
 

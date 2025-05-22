@@ -25,6 +25,7 @@ export async function GET(request: Request) {
     const createdBy = searchParams.get('createdBy');
     const creatorEmail = searchParams.get('creatorEmail');
     const department = searchParams.get('department');
+    const sector = searchParams.get('sector');
     const now = new Date();
     
     // Build the where clause based on query parameters
@@ -48,6 +49,11 @@ export async function GET(request: Request) {
     // Filter by department
     if (department) {
       where.sector = department;
+    }
+    
+    // Filter by sector
+    if (sector) {
+      where.sector = sector;
     }
     
     const meetings = await prisma.meeting.findMany({
@@ -88,6 +94,7 @@ export async function POST(request: Request) {
     const creatorEmail = formData.get('creatorEmail') as string;
     const creatorType = formData.get('creatorType') as string;
     const meetingType = formData.get('meetingType') as string || 'PHYSICAL';
+    const meetingCategory = formData.get('meetingCategory') as string || 'INTERNAL';
     const onlineMeetingUrl = formData.get('onlineMeetingUrl') as string;
     const registrationEndStr = formData.get('registrationEnd') as string;
     
@@ -123,13 +130,26 @@ export async function POST(request: Request) {
     
     // For public submissions with no meetingId, generate one
     if (!meetingId && sector && creatorType) {
-      const datePart = date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
-        .replace(/\//g, '');
-      const timePart = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
-        .replace(/:/g, '')
-        .replace(/ /g, '');
+      // Format date as DDMMYYYY
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      const datePart = `${day}${month}${year}`;
       
-      meetingId = `047/${sector}/${creatorType}/${datePart}-${timePart}`;
+      // Format time as HHMM in 24-hour format
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      const timePart = `${hours}${minutes}`;
+      
+      // Create meeting ID in format: 047/SECTOR_CODE/MEETING_TYPE/DDMMYYYY-HHMM
+      // Example: 047/IDE/INT/21052025-1430
+      // Meeting types: INT (INTERNAL), EXT (EXTERNAL), STK (STAKEHOLDER)
+      const meetingTypeCode = 
+        meetingCategory === 'INTERNAL' ? 'INT' :
+        meetingCategory === 'EXTERNAL' ? 'EXT' :
+        meetingCategory === 'STAKEHOLDER' ? 'STK' : 'INT';
+      
+      meetingId = `047/${sector}/${meetingTypeCode}/${datePart}-${timePart}`;
     }
     
     // Create the meeting with all necessary fields

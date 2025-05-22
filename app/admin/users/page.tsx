@@ -4,7 +4,7 @@ import React from 'react';
 
 const { useState, useEffect } = React;
 import Link from 'next/link';
-import { useAuth } from '../../../lib/auth';
+import { useSessionAuth } from '../../../lib/session-auth';
 
 interface User {
   id: string;
@@ -27,7 +27,7 @@ interface NewUser {
 }
 
 export default function UserManagement() {
-  const auth = useAuth();
+  const auth = useSessionAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -65,9 +65,11 @@ export default function UserManagement() {
     { value: 'OTH', label: 'Other' }
   ];
 
-  // Fetch users on component mount
+  // Redirect to login if not authenticated
   useEffect(() => {
-    if (auth.isLoggedIn && auth.user?.role === 'ADMIN') {
+    if (!auth.isLoggedIn) {
+      window.location.href = '/admin/login';
+    } else if (auth.isLoggedIn && auth.user?.role === 'ADMIN') {
       fetchUsers();
     }
   }, [auth.isLoggedIn, auth.user]);
@@ -269,6 +271,7 @@ export default function UserManagement() {
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#014a2f] focus:border-transparent"
                   required
+                  autoComplete="name"
                 />
               </div>
               
@@ -282,6 +285,7 @@ export default function UserManagement() {
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#014a2f] focus:border-transparent"
                   required
+                  autoComplete="email"
                 />
               </div>
               
@@ -295,6 +299,7 @@ export default function UserManagement() {
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#014a2f] focus:border-transparent"
                   required
+                  autoComplete="new-password"
                 />
               </div>
               

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useAuth } from '../../lib/auth';
+import { useSessionAuth } from '../../lib/session-auth';
 
 const { useEffect } = React;
 
@@ -11,23 +11,13 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const auth = useAuth();
+  const auth = useSessionAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [resetRequestCount, setResetRequestCount] = React.useState(0);
 
-  // Handle authentication redirects on the client side only
-  useEffect(() => {
-    // Skip auth check if already on login page
-    if (pathname === '/admin/login') {
-      return;
-    }
-    
-    // Redirect to login if not authenticated
-    if (!auth.isLoggedIn) {
-      router.push('/admin/login');
-    }
-  }, [auth.isLoggedIn, router, pathname]);
+  // Remove all automatic redirects from the layout
+  // Each page will handle its own authentication display
   
   // Fetch password reset request count for admin users
   useEffect(() => {
@@ -73,17 +63,7 @@ export default function AdminLayout({
       <div className="bg-green-100 py-2 px-4">
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-4">
-            {pathname !== '/admin/users' && resetRequestCount > 0 && (
-              <a 
-                href="/admin/users" 
-                className="relative inline-flex items-center text-sm font-medium text-indigo-700 hover:text-indigo-900"
-              >
-                <span>Password Reset Requests</span>
-                <span className="absolute -top-1 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
-                  {resetRequestCount}
-                </span>
-              </a>
-            )}
+            {/* Password reset notification removed as requested */}
           </div>
           <button 
             onClick={() => {

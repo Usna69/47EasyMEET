@@ -67,30 +67,32 @@ export default function MeetingCard({ meeting }: { meeting: Meeting }) {
   
   return (
     <article className="bg-white border border-gray-200 rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full relative">
-      {/* Resources badge (if available) */}
-      {((meeting._count?.resources && meeting._count.resources > 0) || (meeting.resources && meeting.resources.length > 0)) && (
-        <div className="absolute top-0 right-0 mt-2 mr-2 z-10">
-          <span className="inline-flex items-center px-3 py-1.5 bg-yellow-400 text-[#014a2f] text-xs font-bold rounded-full shadow-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            {(meeting._count?.resources || (meeting.resources && meeting.resources.length) || 0)} Resource{(meeting._count?.resources || (meeting.resources && meeting.resources.length) || 0) !== 1 ? 's' : ''}
-          </span>
-        </div>
-      )}
       
       <div className="p-5 flex-grow">
-        {/* Status badge */}
+        {/* Status badge and Resources */}
         <div className="flex justify-between items-start mb-2">
           <h2 className="text-xl font-semibold text-[#014a2f] pr-2">{meeting.title}</h2>
-          <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-            status === 'upcoming' ? 'bg-green-100 text-green-800' : 
-            status === 'ongoing' ? 'bg-blue-100 text-blue-800' : 
-            'bg-gray-100 text-gray-800'
-          }`}>
-            {status === 'upcoming' ? 'Upcoming' : 
-             status === 'ongoing' ? 'Ongoing' : 'Ended'}
-          </span>
+          <div className="flex items-center space-x-2">
+            {/* Resources badge (if available) */}
+            {((meeting._count?.resources && meeting._count.resources > 0) || (meeting.resources && meeting.resources.length > 0)) && (
+              <span className="inline-flex items-center px-2 py-1 bg-yellow-400 text-[#014a2f] text-xs font-medium rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                {(meeting._count?.resources || (meeting.resources && meeting.resources.length) || 0)}
+              </span>
+            )}
+            
+            {/* Status badge */}
+            <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+              status === 'upcoming' ? 'bg-green-100 text-green-800' : 
+              status === 'ongoing' ? 'bg-blue-100 text-blue-800' : 
+              'bg-gray-100 text-gray-800'
+            }`}>
+              {status === 'upcoming' ? 'Upcoming' : 
+               status === 'ongoing' ? 'Ongoing' : 'Ended'}
+            </span>
+          </div>
         </div>
 
         <p className="text-gray-600 mb-4 line-clamp-2">{meeting.description}</p>
@@ -125,15 +127,7 @@ export default function MeetingCard({ meeting }: { meeting: Meeting }) {
             <span>{meeting.meetingType === 'ONLINE' ? 'Online Meeting' : 'Physical Meeting'}</span>
           </div>
           
-          {/* Resources */}
-          {meeting._count?.resources && meeting._count.resources > 0 && (
-            <div className="flex items-center text-sm">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <span>{meeting._count.resources} resource{meeting._count.resources !== 1 ? 's' : ''}</span>
-            </div>
-          )}
+          {/* Resources indicator removed from here and moved to the top of the card */}
           
           {/* Attendees */}
           {meeting._count?.attendees && meeting._count.attendees > 0 && (

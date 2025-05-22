@@ -11,19 +11,26 @@ const INACTIVITY_TIMEOUT = 40 * 60 * 1000;
 export interface AuthState {
   isLoggedIn: boolean;
   username: string | null;
+  user?: {
+    email?: string;
+    name?: string;
+    role?: 'ADMIN' | 'CREATOR';
+  };
 }
 
 // In a real application, this would use a more secure approach
+// Updated credentials per client requirements
 const ADMIN_CREDENTIALS = {
-  email: 'admin@example.com', // Matches what we're using in the login page
-  password: 'admin123'
+  email: 'Adminmeets@nairobi.go.ke', // Official admin email
+  password: 'MEETM@st@123' // Strong password with special characters
 };
 
 // Initialize auth state from session storage if available
 export const useAuth = () => {
   const [authState, setAuthState] = useState<AuthState>({
     isLoggedIn: false,
-    username: null
+    username: null,
+    user: undefined
   });
   const [lastActivity, setLastActivity] = useState<number>(Date.now());
   const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
@@ -36,7 +43,7 @@ export const useAuth = () => {
   // Logout function
   const logout = () => {
     sessionStorage.removeItem('authState');
-    setAuthState({ isLoggedIn: false, username: null });
+    setAuthState({ isLoggedIn: false, username: null, user: undefined });
   };
   
   // Set up activity listeners
@@ -97,21 +104,49 @@ export const useAuth = () => {
 
   // Load auth state from session storage on component mount
   useEffect(() => {
-    const storedAuthState = sessionStorage.getItem('authState');
-    if (storedAuthState) {
-      setAuthState(JSON.parse(storedAuthState));
-      setLastActivity(Date.now()); // Reset activity timer on login
+    if (typeof window !== 'undefined') {
+      const storedAuthState = sessionStorage.getItem('authState');
+      if (storedAuthState) {
+        try {
+          const parsedState = JSON.parse(storedAuthState);
+          setAuthState(parsedState);
+          setLastActivity(Date.now()); // Reset activity timer on login
+        } catch (error) {
+          console.error('Error parsing auth state:', error);
+          sessionStorage.removeItem('authState');
+          setAuthState({ isLoggedIn: false, username: null, user: undefined });
+        }
+      }
+      
+      // Clear any navigation flags to prevent redirect loops
+      sessionStorage.removeItem('redirecting');
     }
   }, []);
 
   // Login function
   const login = (email: string, password: string): boolean => {
+    console.log('Login attempt:', { email, passwordLength: password.length });
+    console.log('Expected:', { expectedEmail: ADMIN_CREDENTIALS.email });
+    
     if (email === ADMIN_CREDENTIALS.email && password === ADMIN_CREDENTIALS.password) {
-      const newAuthState = { isLoggedIn: true, username: email };
+      // Create a proper auth state with user role information
+      const newAuthState: AuthState = { 
+        isLoggedIn: true, 
+        username: email,
+        user: {
+          email: email,
+          name: 'Admin User',
+          role: 'ADMIN' // Set role to ADMIN for admin dashboard functionality
+        }
+      };
+      
+      console.log('Login successful, setting auth state:', newAuthState);
       sessionStorage.setItem('authState', JSON.stringify(newAuthState));
       setAuthState(newAuthState);
       return true;
     }
+    
+    console.log('Login failed: Invalid credentials');
     return false;
   };
 

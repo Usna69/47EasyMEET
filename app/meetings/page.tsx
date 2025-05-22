@@ -1,9 +1,10 @@
 'use client';
 
-import * as React from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { useAuth } from '../../lib/auth';
+import SectorFilter from '../../components/SectorFilter';
 
 const { useState, useEffect } = React;
 
@@ -14,6 +15,8 @@ interface Meeting {
   date: string;
   location: string;
   meetingType: string;
+  meetingId?: string; // Add meetingId field for sector filtering
+  sector?: string;
   onlineMeetingUrl?: string;
   registrationEnd?: string;
   createdAt: string;
@@ -29,17 +32,52 @@ interface Meeting {
   }>;
 }
 
+// Define the sector interface to match our updated format
+interface Sector {
+  name: string;
+  code: string;
+}
+
 export default function MeetingsPage() {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [filteredMeetings, setFilteredMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showActive, setShowActive] = useState(false);
+  // Get sector from URL parameter instead of local state
+  const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+  const [selectedSector, setSelectedSector] = useState(searchParams.get('sector') || '');
+  
+  // List of sectors with their codes (matching the admin sector list)
+  const sectors: Sector[] = [
+    { name: 'Finance and Economic Planning Affairs', code: 'F&EPA' },
+    { name: 'Innovation and Digital Economy', code: 'IDE' },
+    { name: 'Talents, Skills Development and Care', code: 'TS&DC' },
+    { name: 'Mobility and Works', code: 'M&W' },
+    { name: 'Built Environment and Urban Planning Sector', code: 'BE&UP' },
+    { name: 'Boroughs Administration and Personnel', code: 'BA&P' },
+    { name: 'Business and Hustler Opportunities', code: 'B&HO' },
+    { name: 'Green Nairobi (Environment, Water, Food and Agriculture)', code: 'GN' },
+    { name: 'Health Wellness and Nutrition', code: 'HW&N' },
+    { name: 'Inclusivity, Public Participation and Customer Service Sector', code: 'IPP&CS' }
+  ];
 
   // Fetch meetings
   const fetchMeetings = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/meetings${showActive ? '?active=true' : ''}`);
+      
+      // Build query parameters
+      const queryParams = new URLSearchParams();
+      if (showActive) queryParams.set('active', 'true');
+      
+      // If sector is selected, add it to the API query rather than filtering client-side
+      if (selectedSector) {
+        queryParams.set('department', selectedSector);
+      }
+      
+      const queryString = queryParams.toString();
+      const response = await fetch(`/api/meetings${queryString ? `?${queryString}` : ''}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch meetings');
@@ -48,8 +86,9 @@ export default function MeetingsPage() {
       const data = await response.json();
       
       // Filter out meetings that ended more than 24 hours ago
-      const filteredMeetings = data.filter((meeting: Meeting) => !hasEndedOverDay(meeting.date));
-      setMeetings(filteredMeetings);
+      const activeFilteredMeetings = data.filter((meeting: Meeting) => !hasEndedOverDay(meeting.date));
+      setMeetings(activeFilteredMeetings);
+      setFilteredMeetings(activeFilteredMeetings);
     } catch (err: any) {
       setError(err.message || 'An error occurred while fetching meetings');
       console.error('Error fetching meetings:', err);
@@ -57,11 +96,38 @@ export default function MeetingsPage() {
       setLoading(false);
     }
   };
+  
+  // Apply sector filtering based on the selected sector
+  const applyFilters = (meetingsToFilter: Meeting[]) => {
+    if (!selectedSector) {
+      // If no sector selected, show all meetings
+      setFilteredMeetings(meetingsToFilter);
+    } else {
+      // Filter meetings by the selected sector
+      const sectorFiltered = meetingsToFilter.filter((meeting: Meeting) => {
+        // Check if meeting's sector code is in the meeting ID
+        return meeting.meetingId?.includes(`/${selectedSector}/`);
+      });
+      setFilteredMeetings(sectorFiltered);
+    }
+  };
+  
+  // Handle sector selection change
+  const handleSectorChange = (sectorCode: string) => {
+    setSelectedSector(sectorCode);
+  };
 
   // Fetch meetings on component mount and when showActive changes
   useEffect(() => {
     fetchMeetings();
   }, [showActive]);
+  
+  // Re-apply sector filtering when selectedSector changes
+  useEffect(() => {
+    if (meetings.length > 0) {
+      applyFilters(meetings);
+    }
+  }, [selectedSector]);
 
   // Determine meeting status (upcoming, ongoing, or ended)
   const getMeetingStatus = (dateString: string, durationHours: number = 2) => {
@@ -143,49 +209,50 @@ export default function MeetingsPage() {
 
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center">
-          <label className="inline-flex items-center cursor-pointer mr-4">
-            <input 
-              type="checkbox" 
-              className="sr-only peer"
-              checked={showActive}
-              onChange={() => setShowActive(!showActive)}
-            />
-            <div className="relative w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#014a2f]"></div>
-            <span className="ms-3 text-sm font-medium text-gray-900">Show Only Active Meetings</span>
-          </label>
-          
-          <button 
-            onClick={fetchMeetings}
-            className="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50"
-            disabled={loading}
+          <button
+            onClick={() => setShowActive(!showActive)}
+            className={`px-4 py-2 rounded mr-2 ${showActive ? 'bg-[#014a2f] text-white' : 'bg-white text-[#014a2f] border border-[#014a2f]'}`}
           >
-            Refresh
+            {showActive ? 'Showing Active Meetings' : 'Show Active Meetings'}
           </button>
         </div>
-
-        <div className="text-sm text-gray-500">
-          <span>To create a meeting, please contact an administrator</span>
+        
+        {/* Sector filter dropdown */}
+        <div className="w-64">
+          <label className="block text-sm font-medium text-gray-700 mb-1">Filter by Sector</label>
+          <SectorFilter 
+            selectedSector={selectedSector} 
+            onSectorChange={handleSectorChange} 
+            sectors={sectors} 
+            className="w-full"
+          />
         </div>
       </div>
 
-      {error && (
-        <div className="bg-red-100 text-red-700 p-4 rounded-md mb-4">{error}</div>
-      )}
-
+      {error && <div className="p-4 mb-4 text-red-700 bg-red-100 rounded-md">{error}</div>}
+      
       {loading ? (
-        <div className="flex justify-center py-10">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#014a2f]"></div>
+        <div className="flex justify-center items-center h-40">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#014a2f]"></div>
+          <span className="ml-2">Loading meetings...</span>
         </div>
       ) : meetings.length === 0 ? (
-        <div className="bg-gray-50 p-6 rounded-md text-center">
-          <p className="text-gray-600 mb-2">No meetings found</p>
-          <p className="text-sm text-gray-500">
-            {showActive ? 'There are no active meetings scheduled.' : 'No meetings have been created yet.'}
-          </p>
+        <div className="text-center py-10">
+          <p className="text-gray-500">No meetings available.</p>
+        </div>
+      ) : filteredMeetings.length === 0 && selectedSector ? (
+        <div className="text-center py-10">
+          <p className="text-gray-500">No meetings found in the selected sector.</p>
+          <button 
+            onClick={() => setSelectedSector('')} 
+            className="mt-2 text-blue-600 hover:text-blue-800 hover:underline"
+          >
+            Clear filter
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {meetings.map((meeting: Meeting) => (
+          {filteredMeetings.map((meeting: Meeting) => (
             <div
               key={meeting.id}
               className={`bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow relative

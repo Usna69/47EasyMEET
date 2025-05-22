@@ -4,24 +4,38 @@ import React from 'react';
 import HeroSection from '../components/HeroSection';
 import StatsSection from '../components/StatsSection';
 import { getSectorName } from '../utils/sectorUtils';
+import HomeSectorFilter from '../components/HomeSectorFilter';
+// Use dynamic import for ClientMeetings to fix module resolution issue
+import dynamic from 'next/dynamic';
+const ClientMeetings = dynamic(() => import('../components/ClientMeetings'), { ssr: false });
 
 export default async function Home({ 
   searchParams,
 }: {
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  // Get sector filter from URL params
-  const sectorFilter = typeof searchParams.sector === 'string' ? searchParams.sector : undefined;
-  
-  // Query meetings with optional sector filter
-  const meetings = await prisma.meeting.findMany({
-    where: sectorFilter ? {
-      sector: sectorFilter
-    } : undefined,
+  // Get all meetings for initial render
+  const dbMeetings = await prisma.meeting.findMany({
     orderBy: {
       date: 'desc',
     },
+    include: {
+      _count: {
+        select: {
+          attendees: true,
+          resources: true
+        }
+      }
+    }
   });
+  
+  // Transform database meetings to the expected format for MeetingCard
+  const meetings = dbMeetings.map(meeting => ({
+    ...meeting,
+    onlineMeetingUrl: meeting.onlineMeetingUrl || undefined,
+    meetingType: meeting.meetingType || undefined,
+    _count: meeting._count
+  }));
 
   return (
     <main>
@@ -35,25 +49,11 @@ export default async function Home({
         }}>
         <div className="absolute inset-0 bg-white bg-opacity-60 z-0"></div>
         <div className="container relative z-10">
-        <div className="flex justify-between items-center mb-12">
-          <h2 className="text-3xl font-semibold">
-            {sectorFilter ? `${getSectorName(sectorFilter)} Meetings` : 'Upcoming Meetings'}
-          </h2>
-          <div className="text-gray-500">Showing {meetings.length} meeting{meetings.length !== 1 ? 's' : ''}</div>
-        </div>
+        {/* Add sector filter component */}
+        <HomeSectorFilter />
         
-        {meetings.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {meetings.map((meeting) => (
-              <MeetingCard key={meeting.id} meeting={meeting} />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-16 bg-gray-50 rounded-lg">
-            <h3 className="text-xl font-medium text-gray-600 mb-4">No meetings scheduled yet</h3>
-            <p className="text-gray-500 mb-6">Please check back later or contact an administrator for more information.</p>
-          </div>
-        )}
+        {/* Client-side meetings list with filtering */}
+        <ClientMeetings initialMeetings={meetings} />
         </div>
       </section>
     </main>
