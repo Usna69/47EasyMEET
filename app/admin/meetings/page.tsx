@@ -1,12 +1,9 @@
 'use client';
 
-import * as React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../lib/auth';
 import Link from 'next/link';
-
-// Using React hooks directly from React import
-const { useState, useEffect } = React;
 
 interface Meeting {
   id: string;
@@ -49,21 +46,30 @@ export default function MeetingsPage() {
   const fetchMeetings = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/meetings${showActive ? '?active=true' : ''}`);
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch meetings');
+      // Use different API endpoints based on user role
+      let url = '/api/meetings';
+      
+      // For creators, only show meetings they created
+      if (auth.user?.role === 'CREATOR' && auth.user?.email) {
+        url = `/api/meetings?creatorEmail=${encodeURIComponent(auth.user.email)}`;
       }
       
-      const data = await response.json();
-      
-      // If the user is not an admin, filter out meetings that ended more than 24 hours ago
-      if (!auth.isAuthorized(['ADMIN', 'DIRECTOR', 'ASSISTANT_DIRECTOR'])) {
-        const filteredMeetings = data.filter((meeting: Meeting) => !hasEndedOverDay(meeting.date));
-        setMeetings(filteredMeetings);
+      const response = await fetch(url);
+      if (response.ok) {
+        const data = await response.json();
+        
+        // If the user is not an admin, filter out meetings that ended more than 24 hours ago
+        if (!auth.isAuthorized(['ADMIN', 'DIRECTOR', 'ASSISTANT_DIRECTOR'])) {
+          const filteredMeetings = data.filter((meeting: Meeting) => !hasEndedOverDay(meeting.date));
+          setMeetings(filteredMeetings);
+        } else {
+          // For admins, show all meetings
+          setMeetings(data);
+        }
       } else {
-        // For admins, show all meetings
-        setMeetings(data);
+        setError('Failed to fetch meetings');
+        setMeetings([]);
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred while fetching meetings');

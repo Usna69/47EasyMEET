@@ -75,9 +75,12 @@ export default function Dashboard() {
           setLoading(true);
           let url = '/api/meetings';
           
-          // For creators, only fetch their own meetings
+          // For creators, only show their own meetings
           if (auth.user?.role === 'CREATOR') {
-            url = `/api/meetings?createdBy=${auth.user.id}`;
+            // Must use creatorEmail as the filter since we don't have a direct relation to users table
+            if (auth.user.email) {
+              url = `/api/meetings?creatorEmail=${encodeURIComponent(auth.user.email)}`;
+            }
           }
           
           const response = await fetch(url);

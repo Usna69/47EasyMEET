@@ -22,14 +22,33 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const searchParams = url.searchParams;
     const showActive = searchParams.get('active') === 'true';
+    const createdBy = searchParams.get('createdBy');
+    const creatorEmail = searchParams.get('creatorEmail');
+    const department = searchParams.get('department');
     const now = new Date();
     
-    // Filter logic for active meetings (only when requested)
-    const where = showActive ? {
-      date: {
+    // Build the where clause based on query parameters
+    let where: any = {};
+    
+    // Filter by meeting date (active/upcoming meetings)
+    if (showActive) {
+      where.date = {
         gte: now, // Meeting hasn't started yet
-      },
-    } : undefined;
+      };
+    }
+    
+    // Note: There is no createdBy field in the Meeting model
+    // We're not using the createdBy parameter as it doesn't map to our schema
+
+    // Filter by creator email
+    if (creatorEmail) {
+      where.creatorEmail = creatorEmail;
+    }
+    
+    // Filter by department
+    if (department) {
+      where.sector = department;
+    }
     
     const meetings = await prisma.meeting.findMany({
       where,
