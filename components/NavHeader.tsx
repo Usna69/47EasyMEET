@@ -50,7 +50,7 @@ export default function NavHeader() {
               >
                 MEET
               </span>
-              <span className="text-xs ml-2 text-white/80">NCCG</span>
+              <span className="text-[10px] ml-1 text-white/70">NCCG</span>
             </Link>
           </div>
           

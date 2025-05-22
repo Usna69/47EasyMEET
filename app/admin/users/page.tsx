@@ -149,12 +149,12 @@ export default function UserManagement() {
         return;
       }
       
-      const response = await fetch(`/api/users/password-actions`, {
+      const response = await fetch(`/api/users/${selectedUserId}/reset-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userId: selectedUserId, newPassword }),
+        body: JSON.stringify({ newPassword }),
       });
 
       if (response.ok) {
