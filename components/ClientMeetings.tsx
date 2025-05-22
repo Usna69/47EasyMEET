@@ -3,6 +3,7 @@
 import React from 'react';
 const { useState, useEffect } = React;
 import MeetingCard from './MeetingCard';
+import DualColorSpinner from './DualColorSpinner';
 import { getSectorName } from '../utils/sectorUtils';
 
 interface Meeting {
@@ -105,7 +106,10 @@ export default function ClientMeetings({ initialMeetings }: { initialMeetings: M
         </h2>
         <div className="text-gray-500">
           {isLoading ? (
-            "Loading..."
+            <div className="flex items-center">
+              <DualColorSpinner size={20} />
+              <span className="ml-2">Loading...</span>
+            </div>
           ) : (
             `Showing ${meetings.length} meeting${meetings.length !== 1 ? 's' : ''}`
           )}
@@ -115,11 +119,9 @@ export default function ClientMeetings({ initialMeetings }: { initialMeetings: M
       {/* Sector filter component is placed in the parent component */}
       
       {isLoading ? (
-        <div className="flex justify-center py-16">
-          <div className="animate-pulse text-center">
-            <div className="h-8 w-32 bg-gray-200 rounded mb-4 mx-auto"></div>
-            <div className="h-4 w-48 bg-gray-200 rounded mx-auto"></div>
-          </div>
+        <div className="flex flex-col items-center justify-center py-16">
+          <DualColorSpinner size={60} className="mb-4" />
+          <p className="text-gray-600">Loading meetings...</p>
         </div>
       ) : meetings.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

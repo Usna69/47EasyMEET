@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import DualColorSpinner from '../../../components/DualColorSpinner';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import QRCodeDisplay from '../../../components/QRCodeDisplay';
@@ -204,7 +205,8 @@ export default function MeetingDetails({ params }: MeetingDetailsParams) {
   if (loading) {
     return (
       <div className="container mx-auto py-8 px-4 text-center">
-        <p>Loading meeting details...</p>
+        <DualColorSpinner size={60} className="mx-auto mb-4" />
+        <p className="text-gray-600">Loading meeting details...</p>
       </div>
     );
   }

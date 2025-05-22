@@ -391,41 +391,23 @@ export default function CreateMeetingPage() {
             </select>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Meeting Type*
-              </label>
-              <select
-                value={meetingType}
-                onChange={(e) => setMeetingType(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md"
-                required
-              >
-                <option value="PHYSICAL">Physical Meeting</option>
-                <option value="ONLINE">Online Meeting</option>
-                <option value="HYBRID">Hybrid Meeting</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Meeting Category*
-              </label>
-              <select
-                value={meetingCategory}
-                onChange={(e) => setMeetingCategory(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md"
-                required
-              >
-                <option value="INTERNAL">Internal Meeting</option>
-                <option value="EXTERNAL">External Meeting</option>
-                <option value="STAKEHOLDER">Stakeholder Meeting</option>
-              </select>
-              <p className="text-sm text-gray-500 mt-1">
-                Used for generating unique meeting IDs
-              </p>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Meeting Type *
+            </label>
+            <select
+              value={meetingType}
+              onChange={(e) => setMeetingType(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-md"
+              required
+            >
+              <option value="PHYSICAL">Physical Meeting</option>
+              <option value="ONLINE">Online Meeting</option>
+              <option value="HYBRID">Hybrid Meeting</option>
+            </select>
+            <p className="text-sm text-gray-500 mt-1">
+              Select the appropriate meeting format
+            </p>
           </div>
 
           {/* Show physical location for PHYSICAL and HYBRID meeting types */}

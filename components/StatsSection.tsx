@@ -2,6 +2,7 @@
 
 import React from 'react';
 const { useEffect, useState, useRef } = React;
+import DualColorSpinner from './DualColorSpinner';
 
 interface StatItemProps {
   value: number | string;
@@ -105,7 +106,10 @@ export default function StatsSection() {
         <h2 className="text-3xl font-semibold text-center mb-12 text-gray-800">Platform Statistics</h2>
         
         {loading ? (
-          <div className="text-center py-8">Loading statistics...</div>
+          <div className="text-center py-8">
+            <DualColorSpinner size={50} className="mx-auto mb-2" />
+            <p>Loading statistics...</p>
+          </div>
         ) : error ? (
           <div className="text-center text-red-500 py-8">{error}</div>
         ) : (
