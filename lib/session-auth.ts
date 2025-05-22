@@ -9,6 +9,7 @@ export interface AuthUser {
   role: string;
   email: string;
   name: string;
+  department?: string;
 }
 
 export interface AuthState {
@@ -72,7 +73,8 @@ export const useSessionAuth = () => {
           user: {
             role: data.user.role,
             email: data.user.email,
-            name: data.user.name
+            name: data.user.name,
+            department: data.user.department || ''
           }
         };
         sessionStorage.setItem('authState', JSON.stringify(newAuthState));

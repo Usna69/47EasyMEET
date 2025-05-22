@@ -77,7 +77,6 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-
     // Define the fetch function outside the effect to avoid strict mode errors
     const fetchMeetings = async () => {
       try {
@@ -183,6 +182,31 @@ export default function Dashboard() {
 
       {/* Quick Management Links */}
       <div className="grid grid-cols-1 gap-6 mb-8">
+        {/* User Management Card - Only visible to admins */}
+        {auth.user?.role === 'ADMIN' && (
+          <div className="bg-white shadow-md rounded-lg p-6 border border-gray-100 hover:shadow-lg transition-shadow">
+            <div className="flex items-center mb-4">
+              <div className="bg-purple-100 p-3 rounded-full mr-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-[#014a2f]">User Management</h2>
+                <p className="text-gray-600">Create, view, and manage user accounts in the system.</p>
+              </div>
+            </div>
+            <div className="flex space-x-3">
+              <Link
+                href="/admin/users"
+                className="bg-[#014a2f] hover:bg-[#014a2f]/90 text-white px-4 py-2 rounded-md font-medium transition-colors inline-block"
+              >
+                Manage Users
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* Meetings Management Card */}
         <div className="bg-white shadow-md rounded-lg p-6 border border-gray-100 hover:shadow-lg transition-shadow">
           <div className="flex items-center mb-4">
@@ -213,27 +237,6 @@ export default function Dashboard() {
             )}
           </div>
         </div>
-
-        {/* User Management Card - Only visible to admins */}
-        {auth.user?.role === 'ADMIN' && (
-          <div className="bg-white shadow-md rounded-lg p-6 border border-gray-100 flex flex-col items-center justify-center text-center hover:shadow-lg transition-shadow">
-            <div className="bg-purple-100 p-4 rounded-full mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-            </div>
-            <h2 className="text-xl font-semibold mb-2 text-[#014a2f]">User Management</h2>
-            <p className="text-gray-600 mb-4">Create, view, and manage user accounts in the system.</p>
-            <div className="flex space-x-3">
-              <Link
-                href="/admin/users"
-                className="bg-[#014a2f] hover:bg-[#014a2f]/90 text-white px-4 py-2 rounded-md font-medium transition-colors inline-block"
-              >
-                Manage Users
-              </Link>
-            </div>
-          </div>
-        )}
       </div>
 
       <div className="bg-white shadow-md rounded-lg p-6 border border-gray-100">
@@ -254,7 +257,7 @@ export default function Dashboard() {
                 <h3 className="text-xl font-medium text-gray-600 mb-4">You haven't created any meetings yet</h3>
                 <p className="text-gray-500 mb-6">Create your first meeting to get started!</p>
                 <Link
-                  href="/admin/meetings/new"
+                  href="/admin/meetings/create"
                   className="bg-yellow-400 hover:bg-yellow-500 text-[#014a2f] px-6 py-3 rounded-md font-medium transition-colors inline-block"
                 >
                   Create Meeting
@@ -269,22 +272,22 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="min-w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attendees</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attendees</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {meetings.slice(0, 5).map((meeting: Meeting) => (
-                  <tr key={meeting.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-2 font-medium text-gray-900 truncate max-w-[200px]" title={meeting.title}>
-                      {meeting.title}
+                  <tr key={meeting.id}>
+                    <td className="px-4 py-2 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{meeting.title}</div>
                     </td>
                     <td className="px-4 py-2">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${meeting.meetingType === 'ONLINE' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>

@@ -57,29 +57,7 @@ export default function AdminMeetingDetails({ params }: { params: { id: string }
           // Ensure API endpoint exists and is working correctly
           console.log(`Fetching meeting data from /api/meetings/${id}`);
           
-          // Mock data for debugging if needed - remove in production
-          if (id === 'test' || !process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
-            // Use mock data in development if API is not available
-            const mockMeeting = {
-              id: id,
-              title: 'Test Meeting',
-              description: 'This is a test meeting',
-              date: new Date().toISOString(),
-              location: 'Test Location',
-              creatorEmail: 'test@example.com',
-              sector: 'Test',
-              creatorType: 'ADMIN',
-              meetingId: id,
-              meetingType: 'ONLINE',
-              onlineMeetingUrl: 'https://example.com',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              _count: { attendees: 0 }
-            };
-            setMeeting(mockMeeting);
-            setLoading(false);
-            return;
-          }
+          // Removed mock data section to ensure real meeting data is always displayed
           
           const response = await fetch(`/api/meetings/${id}`);
           if (response.ok) {

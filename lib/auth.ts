@@ -15,6 +15,7 @@ export interface AuthState {
     email?: string;
     name?: string;
     role?: 'ADMIN' | 'CREATOR';
+    department?: string;
   };
 }
 

@@ -39,11 +39,20 @@ interface Sector {
 }
 
 export default function MeetingsPage() {
+  const auth = useAuth();
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [filteredMeetings, setFilteredMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showActive, setShowActive] = useState(false);
+  
+  // Get time of day for personalized greeting
+  const getTimeOfDay = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+  };
   // Get sector from URL parameter instead of local state
   const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const [selectedSector, setSelectedSector] = useState(searchParams.get('sector') || '');
@@ -74,6 +83,18 @@ export default function MeetingsPage() {
       // If sector is selected, add it to the API query rather than filtering client-side
       if (selectedSector) {
         queryParams.set('department', selectedSector);
+      }
+      
+      // For creator role, only show meetings they created or from their department
+      if (auth.user?.role === 'CREATOR') {
+        if (auth.user?.email) {
+          queryParams.append('creatorEmail', auth.user.email);
+        }
+        
+        // Also include department filtering if department is available
+        if (auth.user?.department) {
+          queryParams.append('department', auth.user.department);
+        }
       }
       
       const queryString = queryParams.toString();
@@ -204,7 +225,14 @@ export default function MeetingsPage() {
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Upcoming Meetings</h1>
+        <div>
+          <h1 className="text-2xl font-bold">Upcoming Meetings</h1>
+          {auth.user && (
+            <p className="text-gray-600 mt-1">
+              {getTimeOfDay()}, {auth.user.name}! Here are your meetings.
+            </p>
+          )}
+        </div>
       </div>
 
       <div className="mb-4 flex items-center justify-between">

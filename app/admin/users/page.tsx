@@ -59,15 +59,16 @@ export default function UserManagement() {
   // Define sector options for department dropdown
   const sectorOptions = [
     { value: '', label: 'Select Department' },
-    { value: 'IDE', label: 'ICT & Digital Economy' },
-    { value: 'FIN', label: 'Finance' },
-    { value: 'EDU', label: 'Education' },
-    { value: 'HEA', label: 'Health' },
-    { value: 'AGR', label: 'Agriculture' },
-    { value: 'TRA', label: 'Transport' },
-    { value: 'ENV', label: 'Environment' },
-    { value: 'SEC', label: 'Security' },
-    { value: 'OTH', label: 'Other' }
+    { value: 'F&EPA', label: 'Finance and Economic Planning Affairs' },
+    { value: 'IDE', label: 'Innovation and Digital Economy' },
+    { value: 'TS&DC', label: 'Talents, Skills Development and Care' },
+    { value: 'M&W', label: 'Mobility and Works' },
+    { value: 'BE&UP', label: 'Built Environment and Urban Planning Sector' },
+    { value: 'BA&P', label: 'Boroughs Administration and Personnel' },
+    { value: 'B&HO', label: 'Business and Hustler Opportunities' },
+    { value: 'GN', label: 'Green Nairobi (Environment, Water, Food and Agriculture)' },
+    { value: 'HW&N', label: 'Health Wellness and Nutrition' },
+    { value: 'IPP&CS', label: 'Inclusivity, Public Participation and Customer Service Sector' }
   ];
 
   // Only fetch users if authenticated and admin
@@ -148,12 +149,12 @@ export default function UserManagement() {
         return;
       }
       
-      const response = await fetch(`/api/users/${selectedUserId}/reset-password`, {
+      const response = await fetch(`/api/users/password-actions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ newPassword }),
+        body: JSON.stringify({ userId: selectedUserId, newPassword }),
       });
 
       if (response.ok) {
@@ -418,8 +419,8 @@ export default function UserManagement() {
                 </select>
               </div>
               
-              <div className="mb-4">
-                <label className="block text-gray-700 mb-2" htmlFor="department">
+              <div>
+                <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-1">
                   Department/Sector
                 </label>
                 <select
@@ -427,7 +428,7 @@ export default function UserManagement() {
                   name="department"
                   value={newUser.department || ''}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#014a2f]/30"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#014a2f] focus:border-transparent"
                   required
                 >
                   {sectorOptions.map(option => (

@@ -34,6 +34,14 @@ export default function MeetingsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showActive, setShowActive] = useState(false);
+  
+  // Get time of day for greeting
+  const getTimeOfDay = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+  };
 
   // No redirection in useEffect, we'll handle this in the render logic instead
 
@@ -47,10 +55,20 @@ export default function MeetingsPage() {
       
       // Use different API endpoints based on user role
       let url = '/api/meetings';
+      let queryParams = new URLSearchParams();
       
-      // For creators, only show meetings they created
-      if (auth.user?.role === 'CREATOR' && auth.user?.email) {
-        url = `/api/meetings?creatorEmail=${encodeURIComponent(auth.user.email)}`;
+      // For creators, only show meetings they created or from their department
+      if (auth.user?.role === 'CREATOR') {
+        if (auth.user?.email) {
+          queryParams.append('creatorEmail', auth.user.email);
+        }
+        
+        // Also include department filtering if department is available
+        if (auth.user?.department) {
+          queryParams.append('department', auth.user.department);
+        }
+        
+        url = `/api/meetings?${queryParams.toString()}`;
       }
       
       const response = await fetch(url);
@@ -185,6 +203,11 @@ export default function MeetingsPage() {
             Back to Dashboard
           </Link>
           <h1 className="text-2xl font-semibold text-[#014a2f]">Meetings Management</h1>
+          {auth.user && (
+            <p className="text-gray-600 mt-1">
+              {getTimeOfDay()}, {auth.user.name}! Here are your meetings.
+            </p>
+          )}
         </div>
         
         <div className="flex space-x-3">
@@ -337,12 +360,12 @@ export default function MeetingsPage() {
                     </span>
                     
                     <div className="flex space-x-2">
-                      <button 
-                        onClick={() => window.location.href = `/admin/meetings/${meeting.id}`}
+                      <Link 
+                        href={`/admin/meetings/${meeting.id}`}
                         className="text-sm text-blue-600 hover:text-blue-800 cursor-pointer"
                       >
                         View Details
-                      </button>
+                      </Link>
                       
                       {isUpcoming(meeting.date) && (
                         <Link 

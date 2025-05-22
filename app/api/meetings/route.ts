@@ -41,18 +41,27 @@ export async function GET(request: Request) {
     // Note: There is no createdBy field in the Meeting model
     // We're not using the createdBy parameter as it doesn't map to our schema
 
-    // Filter by creator email
-    if (creatorEmail) {
-      where.creatorEmail = creatorEmail;
+    // For creator role, we need to get meetings either created by them or in their department
+    if (creatorEmail && department) {
+      // Use OR condition to get meetings either created by the user OR in their department
+      where.OR = [
+        { creatorEmail: creatorEmail },
+        { sector: department }
+      ];
+    } else {
+      // Handle individual filters if both are not present
+      if (creatorEmail) {
+        where.creatorEmail = creatorEmail;
+      }
+      
+      // Filter by department
+      if (department) {
+        where.sector = department;
+      }
     }
     
-    // Filter by department
-    if (department) {
-      where.sector = department;
-    }
-    
-    // Filter by sector
-    if (sector) {
+    // Filter by sector (separate from department filtering)
+    if (sector && !department) {
       where.sector = sector;
     }
     
