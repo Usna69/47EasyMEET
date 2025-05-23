@@ -39,16 +39,14 @@ export default function DualColorSpinner({ size = 40, className = '' }: SpinnerP
       `}} />
       
       <svg viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
-        {/* First half yellow, second half green */}
         <defs>
-          <linearGradient id="half-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+          <linearGradient id="yellow-green-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" style={{ stopColor: '#FFC107' }} />
             <stop offset="50%" style={{ stopColor: '#FFC107' }} />
             <stop offset="50%" style={{ stopColor: '#014a2f' }} />
             <stop offset="100%" style={{ stopColor: '#014a2f' }} />
           </linearGradient>
         </defs>
-        
         <circle 
           className="spin2" 
           cx="400" 
@@ -56,7 +54,7 @@ export default function DualColorSpinner({ size = 40, className = '' }: SpinnerP
           fill="none"
           r="200" 
           strokeWidth="50" 
-          stroke="url(#half-gradient)"
+          stroke="url(#yellow-green-gradient)"
           strokeDasharray="700 1400"
           strokeLinecap="round" 
         />
