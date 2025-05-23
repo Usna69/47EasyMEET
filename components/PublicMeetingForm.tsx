@@ -265,15 +265,17 @@ export default function PublicMeetingForm({ onSuccess }: PublicMeetingFormProps)
             }`}
           >
             <option value="">Select sector</option>
-            <option value="IDE">ICT & Digital Economy</option>
-            <option value="FIN">Finance</option>
-            <option value="EDU">Education</option>
-            <option value="HEA">Health</option>
-            <option value="AGR">Agriculture</option>
-            <option value="TRA">Transport</option>
-            <option value="ENV">Environment</option>
-            <option value="SEC">Security</option>
-            <option value="OTH">Other</option>
+            <option value="BA&P">Boroughs Administration and Personnel</option>
+            <option value="BE&UP">Built Environment and Urban Planning Sector</option>
+            <option value="B&HO">Business and Hustler Opportunities</option>
+            <option value="F&EPA">Finance and Economic Planning Affairs</option>
+            <option value="GN">Green Nairobi (Environment, Water, Food and Agriculture)</option>
+            <option value="HW&N">Health Wellness and Nutrition</option>
+            <option value="IDE">Innovation and Digital Economy</option>
+            <option value="IPP&CS">Inclusivity, Public Participation and Customer Service Sector</option>
+            <option value="M&W">Mobility and Works</option>
+            <option value="OG">Office of the Governor</option>
+            <option value="TS&DC">Talents, Skills Development and Care</option>
           </select>
           {errors.sector && <p className="mt-1 text-sm text-red-600">{errors.sector}</p>}
         </div>

@@ -56,25 +56,20 @@ export default function UserManagement() {
     { value: "CREATOR", label: "Meeting Creator" },
   ];
 
-  // Define sector options for department dropdown
+  // Define sector options for department dropdown - aligned with other sector dropdowns
   const sectorOptions = [
     { value: "", label: "Select Department" },
-    { value: "F&EPA", label: "Finance and Economic Planning Affairs" },
-    { value: "IDE", label: "Innovation and Digital Economy" },
-    { value: "TS&DC", label: "Talents, Skills Development and Care" },
-    { value: "M&W", label: "Mobility and Works" },
-    { value: "BE&UP", label: "Built Environment and Urban Planning Sector" },
     { value: "BA&P", label: "Boroughs Administration and Personnel" },
+    { value: "BE&UP", label: "Built Environment and Urban Planning Sector" },
     { value: "B&HO", label: "Business and Hustler Opportunities" },
-    {
-      value: "GN",
-      label: "Green Nairobi (Environment, Water, Food and Agriculture)",
-    },
+    { value: "F&EPA", label: "Finance and Economic Planning Affairs" },
+    { value: "GN", label: "Green Nairobi (Environment, Water, Food and Agriculture)" },
     { value: "HW&N", label: "Health Wellness and Nutrition" },
-    {
-      value: "IPP&CS",
-      label: "Inclusivity, Public Participation and Customer Service Sector",
-    },
+    { value: "IDE", label: "Innovation and Digital Economy" },
+    { value: "IPP&CS", label: "Inclusivity, Public Participation and Customer Service Sector" },
+    { value: "M&W", label: "Mobility and Works" },
+    { value: "OG", label: "Office of the Governor" },
+    { value: "TS&DC", label: "Talents, Skills Development and Care" }
   ];
 
   // Only fetch users if authenticated and admin

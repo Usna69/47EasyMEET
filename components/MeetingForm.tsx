@@ -37,20 +37,20 @@ export default function MeetingForm({
   const [currentTime] = useState(new Date("2025-05-23T17:30:23+03:00")); // Updated to current time
   const [meetingIdPreview, setMeetingIdPreview] = useState("");
 
-  // Sector options aligned with the sector filter
-  const sectorOptions = {
-    "BA&P": "Boroughs Administration and Personnel",
-    "BE&UP": "Built Environment and Urban Planning Sector",
-    "B&HO": "Business and Hustler Opportunities",
-    "F&EPA": "Finance and Economic Planning Affairs",
-    "GN": "Green Nairobi (Environment, Water, Food and Agriculture)",
-    "HW&N": "Health Wellness and Nutrition",
-    "IDE": "Innovation and Digital Economy",
-    "IPP&CS": "Inclusivity, Public Participation and Customer Service Sector",
-    "M&W": "Mobility and Works",
-    "OG": "Office of the Governor",
-    "TS&DC": "Talents, Skills Development and Care"
-  };
+  // Sector options as array to match exact structure of SectorFilter component
+  const sectors: Array<{name: string; code: string}> = [
+    { name: 'Boroughs Administration and Personnel', code: 'BA&P' },
+    { name: 'Built Environment and Urban Planning Sector', code: 'BE&UP' },
+    { name: 'Business and Hustler Opportunities', code: 'B&HO' },
+    { name: 'Finance and Economic Planning Affairs', code: 'F&EPA' },
+    { name: 'Green Nairobi (Environment, Water, Food and Agriculture)', code: 'GN' },
+    { name: 'Health Wellness and Nutrition', code: 'HW&N' },
+    { name: 'Innovation and Digital Economy', code: 'IDE' },
+    { name: 'Inclusivity, Public Participation and Customer Service Sector', code: 'IPP&CS' },
+    { name: 'Mobility and Works', code: 'M&W' },
+    { name: 'Office of the Governor', code: 'OG' },
+    { name: 'Talents, Skills Development and Care', code: 'TS&DC' }
+  ];
 
   // Default creator type (since dropdown is being removed)
   const defaultCreatorType = "HOD";
@@ -112,19 +112,25 @@ export default function MeetingForm({
   }, [currentTime, formData.date]);
 
   useEffect(() => {
-    if (formData.date && formData.sector && formData.creatorType) {
+    if (formData.date && formData.sector && formData.meetingCategory) {
       try {
         const dateObj = new Date(formData.date);
         const datePart = format(dateObj, "ddMMyyyy");
         const timePart = format(dateObj, "HHmm");
-
-        const meetingId = `047/${formData.sector}/${formData.creatorType}/${datePart}-${timePart}`;
+        
+        // Convert meeting category to code for the ID
+        const categoryCode = 
+          formData.meetingCategory === "INTERNAL" ? "INT" :
+          formData.meetingCategory === "EXTERNAL" ? "EXT" :
+          formData.meetingCategory === "STAKEHOLDER" ? "STK" : "INT";
+          
+        const meetingId = `047/${formData.sector}/${categoryCode}/${datePart}-${timePart}`;
         setMeetingIdPreview(meetingId);
       } catch (error) {
         console.error("Error generating meeting ID:", error);
       }
     }
-  }, [formData.date, formData.sector, formData.creatorType]);
+  }, [formData.date, formData.sector, formData.meetingCategory]);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -291,6 +297,7 @@ export default function MeetingForm({
           creatorEmail: auth.user?.email,
           sector: formData.sector,
           creatorType: formData.creatorType,
+          meetingCategory: formData.meetingCategory,
           meetingId: meetingIdPreview,
         }),
       });
@@ -430,39 +437,37 @@ export default function MeetingForm({
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label
-            htmlFor="sector"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Sector
-          </label>
-          <select
-            id="sector"
-            name="sector"
-            value={formData.sector}
-            onChange={handleChange}
-            className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-              errors.sector
-                ? "border-red-500 focus:ring-red-200"
-                : "border-gray-300 focus:ring-green-300"
-            }`}
-          >
-            {Object.entries(sectorOptions).map(([abbr, fullName]) => (
-              <option key={abbr} value={abbr}>
-                {abbr} - {fullName}
-              </option>
-            ))}
-          </select>
-          {errors.sector && (
-            <p className="mt-1 text-sm text-red-600">{errors.sector}</p>
-          )}
-        </div>
-
-        {/* Creator Type is now fixed as HOD */}
-        <input type="hidden" name="creatorType" value={formData.creatorType} />
+      <div>
+        <label
+          htmlFor="sector"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
+          Sector
+        </label>
+        <select
+          id="sector"
+          name="sector"
+          value={formData.sector}
+          onChange={handleChange}
+          className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+            errors.sector
+              ? "border-red-500 focus:ring-red-200"
+              : "border-gray-300 focus:ring-green-300"
+          }`}
+        >
+          {sectors.map((sector) => (
+            <option key={sector.code} value={sector.code}>
+              {sector.name}
+            </option>
+          ))}
+        </select>
+        {errors.sector && (
+          <p className="mt-1 text-sm text-red-600">{errors.sector}</p>
+        )}
       </div>
+
+      {/* Creator Type is now fixed as HOD */}
+      <input type="hidden" name="creatorType" value={formData.creatorType} />
 
       <div>
         <label
