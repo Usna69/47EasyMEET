@@ -1,7 +1,13 @@
 // "use client";
 
+//<<<<<<< mogambi
 // import React, { useState, useRef } from "react";
 // import { useRouter } from "next/navigation";
+//=======
+//import React, { useState, useRef } from "react";
+//import { useRouter } from "next/navigation";
+//import dynamic from "next/dynamic";
+//>>>>>>> master
 
 // interface RegistrationFormProps {
 //   meetingId: string;

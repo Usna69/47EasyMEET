@@ -131,11 +131,22 @@ export async function POST(request: Request) {
 
     // Convert date strings to Date objects
     const date = new Date(dateStr);
+    
+    // Validate that the meeting date is not in the past
+    const now = new Date();
+    if (date < now) {
+      return json({ error: "Cannot create meetings in the past" }, { status: 400 });
+    }
 
     // Set registration end time (default: 2 hours after meeting start)
     let registrationEnd: Date | undefined;
     if (registrationEndStr) {
       registrationEnd = new Date(registrationEndStr);
+      
+      // Validate that registration end is after meeting start
+      if (registrationEnd < date) {
+        return json({ error: "Registration end time must be after meeting start time" }, { status: 400 });
+      }
     } else {
       registrationEnd = new Date(date);
       registrationEnd.setHours(registrationEnd.getHours() + 2);

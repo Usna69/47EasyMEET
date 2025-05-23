@@ -34,24 +34,23 @@ export default function MeetingForm({
   const auth = useSessionAuth();
   const [minDateTime, setMinDateTime] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentTime] = useState(new Date("2025-05-23T16:28:51+03:00"));
+  const [currentTime] = useState(new Date("2025-05-23T17:30:23+03:00")); // Updated to current time
   const [meetingIdPreview, setMeetingIdPreview] = useState("");
 
-  // Sector options (abbr -> full name mapping)
-  const sectorOptions = {
-    IDE: "Innovation and Digital Economy",
-    "M&W": "Mobility and Works",
-    GNrb: "Green Nairobi (Environment, Water, Food, and Agriculture)",
-    BEU: "Built Environment and Urban Planning",
-    TSS: "Talents, Skills Development, Sports, and Social Services",
-    "HW&N": "Health, Wellness, and Nutrition",
-    EGC: "Education, Gender Affairs, and Culture",
-    "F&EP": "Finance and Economic Planning",
-    GPPC: "Governance, Public Participation, and Citizen Engagement",
-    "PS&A": "Public Service Management and Administration",
-    "TC&T": "Trade, Commerce, Tourism, and Cooperatives",
-    "LA&C": "Legal Affairs and Compliance",
-  };
+  // Sector options as array to match exact structure of SectorFilter component
+  const sectors: Array<{name: string; code: string}> = [
+    { name: 'Boroughs Administration and Personnel', code: 'BA&P' },
+    { name: 'Built Environment and Urban Planning Sector', code: 'BE&UP' },
+    { name: 'Business and Hustler Opportunities', code: 'B&HO' },
+    { name: 'Finance and Economic Planning Affairs', code: 'F&EPA' },
+    { name: 'Green Nairobi (Environment, Water, Food and Agriculture)', code: 'GN' },
+    { name: 'Health Wellness and Nutrition', code: 'HW&N' },
+    { name: 'Innovation and Digital Economy', code: 'IDE' },
+    { name: 'Inclusivity, Public Participation and Customer Service Sector', code: 'IPP&CS' },
+    { name: 'Mobility and Works', code: 'M&W' },
+    { name: 'Office of the Governor', code: 'OG' },
+    { name: 'Talents, Skills Development and Care', code: 'TS&DC' }
+  ];
 
   // Default creator type (since dropdown is being removed)
   const defaultCreatorType = "HOD";
@@ -84,9 +83,12 @@ export default function MeetingForm({
   });
   // Set minimum date-time to current time
   useEffect(() => {
+    // Use the most current time possible
     const now = new Date(currentTime);
-    // Add 30 minutes buffer for meeting setup
-    now.setMinutes(now.getMinutes() + 30);
+    
+    // Add 5 minutes buffer for meeting setup (reduced from 30 to make testing easier)
+    now.setMinutes(now.getMinutes() + 5);
+    
     // Format for datetime-local input
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -94,23 +96,41 @@ export default function MeetingForm({
     const hours = String(now.getHours()).padStart(2, "0");
     const minutes = String(now.getMinutes()).padStart(2, "0");
     const formattedDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+    
     setMinDateTime(formattedDateTime);
-  }, [currentTime]);
+    
+    // If the current form date is in the past, update it to the minimum allowed time
+    if (formData.date) {
+      const selectedDate = new Date(formData.date);
+      if (selectedDate < now) {
+        setFormData((prev: typeof formData) => ({
+          ...prev,
+          date: formattedDateTime
+        }));
+      }
+    }
+  }, [currentTime, formData.date]);
 
   useEffect(() => {
-    if (formData.date && formData.sector && formData.creatorType) {
+    if (formData.date && formData.sector && formData.meetingCategory) {
       try {
         const dateObj = new Date(formData.date);
         const datePart = format(dateObj, "ddMMyyyy");
         const timePart = format(dateObj, "HHmm");
-
-        const meetingId = `047/${formData.sector}/${formData.creatorType}/${datePart}-${timePart}`;
+        
+        // Convert meeting category to code for the ID
+        const categoryCode = 
+          formData.meetingCategory === "INTERNAL" ? "INT" :
+          formData.meetingCategory === "EXTERNAL" ? "EXT" :
+          formData.meetingCategory === "STAKEHOLDER" ? "STK" : "INT";
+          
+        const meetingId = `047/${formData.sector}/${categoryCode}/${datePart}-${timePart}`;
         setMeetingIdPreview(meetingId);
       } catch (error) {
         console.error("Error generating meeting ID:", error);
       }
     }
-  }, [formData.date, formData.sector, formData.creatorType]);
+  }, [formData.date, formData.sector, formData.meetingCategory]);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -167,7 +187,7 @@ export default function MeetingForm({
   };
 
   const validateForm = () => {
-    const newErrors = {
+    let newErrors = {
       title: "",
       description: "",
       date: "",
@@ -179,66 +199,72 @@ export default function MeetingForm({
     };
     let isValid = true;
 
+    // Validate title
     if (!formData.title.trim()) {
       newErrors.title = "Title is required";
       isValid = false;
-    }
-
-    if (!formData.description.trim()) {
-      newErrors.description = "Description is required";
+    } else if (formData.title.length < 5) {
+      newErrors.title = "Title must be at least 5 characters";
+      isValid = false;
+    } else if (formData.title.length > 100) {
+      newErrors.title = "Title must be less than 100 characters";
       isValid = false;
     }
 
+    // Validate description
+    if (!formData.description.trim()) {
+      newErrors.description = "Description is required";
+      isValid = false;
+    } else if (formData.description.length < 10) {
+      newErrors.description = "Description must be at least 10 characters";
+      isValid = false;
+    }
+
+    // Validate date
     if (!formData.date) {
       newErrors.date = "Date and time are required";
       isValid = false;
     } else {
+      // Check if date is in the past
       const selectedDate = new Date(formData.date);
       const now = new Date(currentTime);
 
-      // Add 30 minutes buffer for meeting setup
-      now.setMinutes(now.getMinutes() + 30);
-
-      // Compare using timestamps for accurate time comparison
-      const selectedTime = selectedDate.getTime();
-      const minTime = now.getTime();
-
-      if (selectedTime < minTime) {
-        newErrors.date =
-          "Please select a time at least 30 minutes in the future";
-        isValid = false;
-      }
-
-      // Check if date is too far in the future (e.g., 1 year)
-      const oneYearFromNow = new Date(currentTime);
-      oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
-      if (selectedDate > oneYearFromNow) {
-        newErrors.date =
-          "Meeting cannot be scheduled more than 1 year in advance";
+      if (selectedDate < now) {
+        newErrors.date = "Cannot create meetings in the past";
         isValid = false;
       }
     }
 
+    // Validate location
     if (!formData.location.trim()) {
       newErrors.location = "Location is required";
       isValid = false;
     }
 
+    // Validate email
     if (!formData.creatorEmail.trim()) {
       newErrors.creatorEmail = "Creator email is required";
       isValid = false;
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.creatorEmail)) {
-      newErrors.creatorEmail = "Please enter a valid email address";
+    } else if (
+      !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(
+        formData.creatorEmail
+      )
+    ) {
+      newErrors.creatorEmail = "Invalid email address";
       isValid = false;
     }
 
+    // Validate sector
     if (!formData.sector) {
       newErrors.sector = "Sector is required";
       isValid = false;
     }
 
-    if (!formData.creatorType) {
-      newErrors.creatorType = "Creator type is required";
+    // Creator type is set by default, no validation needed
+
+    // Validate meeting category
+    if (!formData.meetingCategory) {
+      newErrors.meetingCategory = "Meeting category is required";
       isValid = false;
     }
 
@@ -271,6 +297,7 @@ export default function MeetingForm({
           creatorEmail: auth.user?.email,
           sector: formData.sector,
           creatorType: formData.creatorType,
+          meetingCategory: formData.meetingCategory,
           meetingId: meetingIdPreview,
         }),
       });
@@ -360,13 +387,26 @@ export default function MeetingForm({
           value={formData.date}
           onChange={handleChange}
           min={minDateTime}
+          required
+          // Prevent manual entry that could bypass the min attribute
           onKeyDown={(e) => e.preventDefault()}
+          // Add click handler to ensure calendar opens with current constraints
+          onClick={() => {
+            // Force refresh of min attribute if needed
+            const dateInput = document.getElementById('date') as HTMLInputElement;
+            if (dateInput) {
+              dateInput.min = minDateTime;
+            }
+          }}
           className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
             errors.date
               ? "border-red-500 focus:ring-red-200"
               : "border-gray-300 focus:ring-green-300"
           }`}
         />
+        <p className="text-xs text-gray-500 mt-1">
+          Meetings can only be scheduled in the future (at least 5 minutes from now)
+        </p>
         {errors.date && (
           <p className="mt-1 text-sm text-red-600">{errors.date}</p>
         )}
@@ -397,39 +437,37 @@ export default function MeetingForm({
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label
-            htmlFor="sector"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Sector
-          </label>
-          <select
-            id="sector"
-            name="sector"
-            value={formData.sector}
-            onChange={handleChange}
-            className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-              errors.sector
-                ? "border-red-500 focus:ring-red-200"
-                : "border-gray-300 focus:ring-green-300"
-            }`}
-          >
-            {Object.entries(sectorOptions).map(([abbr, fullName]) => (
-              <option key={abbr} value={abbr}>
-                {abbr} - {fullName}
-              </option>
-            ))}
-          </select>
-          {errors.sector && (
-            <p className="mt-1 text-sm text-red-600">{errors.sector}</p>
-          )}
-        </div>
-
-        {/* Creator Type is now fixed as HOD */}
-        <input type="hidden" name="creatorType" value={formData.creatorType} />
+      <div>
+        <label
+          htmlFor="sector"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
+          Sector
+        </label>
+        <select
+          id="sector"
+          name="sector"
+          value={formData.sector}
+          onChange={handleChange}
+          className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+            errors.sector
+              ? "border-red-500 focus:ring-red-200"
+              : "border-gray-300 focus:ring-green-300"
+          }`}
+        >
+          {sectors.map((sector) => (
+            <option key={sector.code} value={sector.code}>
+              {sector.name}
+            </option>
+          ))}
+        </select>
+        {errors.sector && (
+          <p className="mt-1 text-sm text-red-600">{errors.sector}</p>
+        )}
       </div>
+
+      {/* Creator Type is now fixed as HOD */}
+      <input type="hidden" name="creatorType" value={formData.creatorType} />
 
       <div>
         <label

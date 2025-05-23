@@ -355,26 +355,22 @@ export default function CreateMeetingPage() {
             >
               <option value="">Select a sector</option>
               {/* Show predefined sectors */}
-              <optgroup label="Official Sectors">
-                {sectors.map((sectorOption: {name: string, code: string}) => (
-                  <option key={sectorOption.code} value={sectorOption.code}>
-                    {sectorOption.name} ({sectorOption.code})
-                  </option>
-                ))}
-              </optgroup>
+              {sectors.map((sectorOption: {name: string, code: string}) => (
+                <option key={sectorOption.code} value={sectorOption.code}>
+                  {sectorOption.name}
+                </option>
+              ))}
               
               {/* Show sectors from API if available */}
-              {apiSectors.length > 0 && (
-                <optgroup label="Other Sectors">
-                  {apiSectors
-                    .filter((apiSector: string) => !sectors.some((s: {name: string, code: string}) => s.code === apiSector))
-                    .map((apiSector: string) => (
-                      <option key={apiSector} value={apiSector}>
-                        {apiSector}
-                      </option>
-                    ))}
-                </optgroup>
-              )}
+              {apiSectors.length > 0 && 
+                apiSectors
+                  .filter((apiSector: string) => !sectors.some((s: {name: string, code: string}) => s.code === apiSector))
+                  .map((apiSector: string) => (
+                    <option key={apiSector} value={apiSector}>
+                      {apiSector}
+                    </option>
+                  ))
+              }
             </select>
           </div>
 
