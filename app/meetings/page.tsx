@@ -60,16 +60,17 @@ export default function MeetingsPage() {
   
   // List of sectors with their codes (matching the admin sector list)
   const sectors: Sector[] = [
-    { name: 'Finance and Economic Planning Affairs', code: 'F&EPA' },
-    { name: 'Innovation and Digital Economy', code: 'IDE' },
-    { name: 'Talents, Skills Development and Care', code: 'TS&DC' },
-    { name: 'Mobility and Works', code: 'M&W' },
-    { name: 'Built Environment and Urban Planning Sector', code: 'BE&UP' },
     { name: 'Boroughs Administration and Personnel', code: 'BA&P' },
+    { name: 'Built Environment and Urban Planning Sector', code: 'BE&UP' },
     { name: 'Business and Hustler Opportunities', code: 'B&HO' },
+    { name: 'Finance and Economic Planning Affairs', code: 'F&EPA' },
     { name: 'Green Nairobi (Environment, Water, Food and Agriculture)', code: 'GN' },
     { name: 'Health Wellness and Nutrition', code: 'HW&N' },
-    { name: 'Inclusivity, Public Participation and Customer Service Sector', code: 'IPP&CS' }
+    { name: 'Innovation and Digital Economy', code: 'IDE' },
+    { name: 'Inclusivity, Public Participation and Customer Service Sector', code: 'IPP&CS' },
+    { name: 'Mobility and Works', code: 'M&W' },
+    { name: 'Office of the Governor', code: 'OG' },
+    { name: 'Talents, Skills Development and Care', code: 'TS&DC' }
   ];
 
   // Fetch meetings

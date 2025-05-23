@@ -4,16 +4,17 @@
 
 // Map of sector codes to full names
 const SECTOR_NAMES: Record<string, string> = {
-  'F&EPA': 'Finance and Economic Planning Affairs',
-  'IDE': 'Innovation and Digital Economy',
-  'TS&DC': 'Talents, Skills Development and Care',
-  'M&W': 'Mobility and Works',
-  'BE&UP': 'Built Environment and Urban Planning Sector',
   'BA&P': 'Boroughs Administration and Personnel',
+  'BE&UP': 'Built Environment and Urban Planning Sector',
   'B&HO': 'Business and Hustler Opportunities',
+  'F&EPA': 'Finance and Economic Planning Affairs',
   'GN': 'Green Nairobi (Environment, Water, Food and Agriculture)',
   'HW&N': 'Health Wellness and Nutrition',
-  'IPP&CS': 'Inclusivity, Public Participation and Customer Service Sector'
+  'IDE': 'Innovation and Digital Economy',
+  'IPP&CS': 'Inclusivity, Public Participation and Customer Service Sector',
+  'M&W': 'Mobility and Works',
+  'OG': 'Office of the Governor',
+  'TS&DC': 'Talents, Skills Development and Care'
 };
 
 /**
