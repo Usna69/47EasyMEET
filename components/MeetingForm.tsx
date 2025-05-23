@@ -34,23 +34,22 @@ export default function MeetingForm({
   const auth = useSessionAuth();
   const [minDateTime, setMinDateTime] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentTime] = useState(new Date("2025-05-23T16:28:51+03:00"));
+  const [currentTime] = useState(new Date("2025-05-23T17:30:23+03:00")); // Updated to current time
   const [meetingIdPreview, setMeetingIdPreview] = useState("");
 
-  // Sector options (abbr -> full name mapping)
+  // Sector options aligned with the sector filter
   const sectorOptions = {
-    IDE: "Innovation and Digital Economy",
+    "BA&P": "Boroughs Administration and Personnel",
+    "BE&UP": "Built Environment and Urban Planning Sector",
+    "B&HO": "Business and Hustler Opportunities",
+    "F&EPA": "Finance and Economic Planning Affairs",
+    "GN": "Green Nairobi (Environment, Water, Food and Agriculture)",
+    "HW&N": "Health Wellness and Nutrition",
+    "IDE": "Innovation and Digital Economy",
+    "IPP&CS": "Inclusivity, Public Participation and Customer Service Sector",
     "M&W": "Mobility and Works",
-    GNrb: "Green Nairobi (Environment, Water, Food, and Agriculture)",
-    BEU: "Built Environment and Urban Planning",
-    TSS: "Talents, Skills Development, Sports, and Social Services",
-    "HW&N": "Health, Wellness, and Nutrition",
-    EGC: "Education, Gender Affairs, and Culture",
-    "F&EP": "Finance and Economic Planning",
-    GPPC: "Governance, Public Participation, and Citizen Engagement",
-    "PS&A": "Public Service Management and Administration",
-    "TC&T": "Trade, Commerce, Tourism, and Cooperatives",
-    "LA&C": "Legal Affairs and Compliance",
+    "OG": "Office of the Governor",
+    "TS&DC": "Talents, Skills Development and Care"
   };
 
   // Default creator type (since dropdown is being removed)
@@ -84,9 +83,12 @@ export default function MeetingForm({
   });
   // Set minimum date-time to current time
   useEffect(() => {
+    // Use the most current time possible
     const now = new Date(currentTime);
-    // Add 30 minutes buffer for meeting setup
-    now.setMinutes(now.getMinutes() + 30);
+    
+    // Add 5 minutes buffer for meeting setup (reduced from 30 to make testing easier)
+    now.setMinutes(now.getMinutes() + 5);
+    
     // Format for datetime-local input
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -94,8 +96,20 @@ export default function MeetingForm({
     const hours = String(now.getHours()).padStart(2, "0");
     const minutes = String(now.getMinutes()).padStart(2, "0");
     const formattedDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+    
     setMinDateTime(formattedDateTime);
-  }, [currentTime]);
+    
+    // If the current form date is in the past, update it to the minimum allowed time
+    if (formData.date) {
+      const selectedDate = new Date(formData.date);
+      if (selectedDate < now) {
+        setFormData((prev: typeof formData) => ({
+          ...prev,
+          date: formattedDateTime
+        }));
+      }
+    }
+  }, [currentTime, formData.date]);
 
   useEffect(() => {
     if (formData.date && formData.sector && formData.creatorType) {
@@ -167,7 +181,7 @@ export default function MeetingForm({
   };
 
   const validateForm = () => {
-    const newErrors = {
+    let newErrors = {
       title: "",
       description: "",
       date: "",
@@ -179,66 +193,72 @@ export default function MeetingForm({
     };
     let isValid = true;
 
+    // Validate title
     if (!formData.title.trim()) {
       newErrors.title = "Title is required";
       isValid = false;
-    }
-
-    if (!formData.description.trim()) {
-      newErrors.description = "Description is required";
+    } else if (formData.title.length < 5) {
+      newErrors.title = "Title must be at least 5 characters";
+      isValid = false;
+    } else if (formData.title.length > 100) {
+      newErrors.title = "Title must be less than 100 characters";
       isValid = false;
     }
 
+    // Validate description
+    if (!formData.description.trim()) {
+      newErrors.description = "Description is required";
+      isValid = false;
+    } else if (formData.description.length < 10) {
+      newErrors.description = "Description must be at least 10 characters";
+      isValid = false;
+    }
+
+    // Validate date
     if (!formData.date) {
       newErrors.date = "Date and time are required";
       isValid = false;
     } else {
+      // Check if date is in the past
       const selectedDate = new Date(formData.date);
       const now = new Date(currentTime);
 
-      // Add 30 minutes buffer for meeting setup
-      now.setMinutes(now.getMinutes() + 30);
-
-      // Compare using timestamps for accurate time comparison
-      const selectedTime = selectedDate.getTime();
-      const minTime = now.getTime();
-
-      if (selectedTime < minTime) {
-        newErrors.date =
-          "Please select a time at least 30 minutes in the future";
-        isValid = false;
-      }
-
-      // Check if date is too far in the future (e.g., 1 year)
-      const oneYearFromNow = new Date(currentTime);
-      oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
-      if (selectedDate > oneYearFromNow) {
-        newErrors.date =
-          "Meeting cannot be scheduled more than 1 year in advance";
+      if (selectedDate < now) {
+        newErrors.date = "Cannot create meetings in the past";
         isValid = false;
       }
     }
 
+    // Validate location
     if (!formData.location.trim()) {
       newErrors.location = "Location is required";
       isValid = false;
     }
 
+    // Validate email
     if (!formData.creatorEmail.trim()) {
       newErrors.creatorEmail = "Creator email is required";
       isValid = false;
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.creatorEmail)) {
-      newErrors.creatorEmail = "Please enter a valid email address";
+    } else if (
+      !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(
+        formData.creatorEmail
+      )
+    ) {
+      newErrors.creatorEmail = "Invalid email address";
       isValid = false;
     }
 
+    // Validate sector
     if (!formData.sector) {
       newErrors.sector = "Sector is required";
       isValid = false;
     }
 
-    if (!formData.creatorType) {
-      newErrors.creatorType = "Creator type is required";
+    // Creator type is set by default, no validation needed
+
+    // Validate meeting category
+    if (!formData.meetingCategory) {
+      newErrors.meetingCategory = "Meeting category is required";
       isValid = false;
     }
 
@@ -360,13 +380,26 @@ export default function MeetingForm({
           value={formData.date}
           onChange={handleChange}
           min={minDateTime}
+          required
+          // Prevent manual entry that could bypass the min attribute
           onKeyDown={(e) => e.preventDefault()}
+          // Add click handler to ensure calendar opens with current constraints
+          onClick={() => {
+            // Force refresh of min attribute if needed
+            const dateInput = document.getElementById('date') as HTMLInputElement;
+            if (dateInput) {
+              dateInput.min = minDateTime;
+            }
+          }}
           className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
             errors.date
               ? "border-red-500 focus:ring-red-200"
               : "border-gray-300 focus:ring-green-300"
           }`}
         />
+        <p className="text-xs text-gray-500 mt-1">
+          Meetings can only be scheduled in the future (at least 5 minutes from now)
+        </p>
         {errors.date && (
           <p className="mt-1 text-sm text-red-600">{errors.date}</p>
         )}
