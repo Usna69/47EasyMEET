@@ -1,5 +1,7 @@
 'use client';
 
+// Updated version with improved UI and meeting registration validation
+
 import React from 'react';
 import DualColorSpinner from '../../../components/DualColorSpinner';
 import { notFound } from 'next/navigation';
