@@ -15,25 +15,12 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     // Get the resource ID from the params
     const resourceId = params.id;
     
-    // Fetch the resource from the database
-    // Check if the Resource model exists in the Prisma schema
-    // If not, we'll query it through the meeting resources relationship
-    let resource;
-    try {
-      // Try to use the Resource model directly if it exists
-      resource = await prisma.resource.findUnique({
-        where: {
-          id: resourceId,
-        },
-      });
-    } catch (error) {
-      // If Resource model doesn't exist, try to find it through MeetingResource
-      resource = await prisma.meetingResource.findUnique({
-        where: {
-          id: resourceId,
-        },
-      });
-    }
+    // Fetch the resource from the database using the MeetingResource model
+    const resource = await prisma.meetingResource.findUnique({
+      where: {
+        id: resourceId,
+      },
+    });
     
     // If the resource doesn't exist, return a 404
     if (!resource) {

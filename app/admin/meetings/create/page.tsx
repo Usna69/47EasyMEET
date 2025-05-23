@@ -27,7 +27,7 @@ export default function CreateMeetingPage() {
   const [physicalLocation, setPhysicalLocation] = useState('');
   const [resources, setResources] = useState<File[]>([]);
   
-  // Sectors data with official codes
+  // Sectors data with official codes - exactly matching the sector filter dropdown
   const [sectors, setSectors] = useState<Array<{name: string, code: string}>>([  
     { name: 'Boroughs Administration and Personnel', code: 'BA&P' },
     { name: 'Built Environment and Urban Planning Sector', code: 'BE&UP' },

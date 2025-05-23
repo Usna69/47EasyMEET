@@ -245,7 +245,7 @@ export default function MeetingDetails({ params }: MeetingDetailsParams) {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-2">
-          <div className="bg-white shadow-md rounded-lg p-6 border border-gray-100">
+          <div className="bg-white shadow-md rounded-lg p-6 border border-gray-100" style={{ minHeight: "580px" }}>
             <div className="flex justify-between items-start mb-2">
               <h1 className="text-2xl font-semibold text-[#014a2f]">{meeting.title}</h1>
               {meeting.meetingId && (
@@ -254,41 +254,79 @@ export default function MeetingDetails({ params }: MeetingDetailsParams) {
                 </span>
               )}
             </div>
-            <p className="text-gray-700 mb-6">{meeting.description}</p>
             
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div>
-                <h3 className="text-sm font-medium text-gray-500">Date</h3>
-                <p className="text-lg">{new Date(meeting.date).toLocaleDateString()}</p>
+            <div className="mb-6">
+              <p className="text-gray-700 whitespace-pre-wrap">{meeting.description}</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div className="bg-gray-50 p-4 rounded-md">
+                <h3 className="text-sm font-medium text-gray-500 mb-1">Date & Time</h3>
+                <p className="text-gray-800">{format(new Date(meeting.date), 'PPP p')}</p>
               </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-500">Time</h3>
-                <p className="text-lg">{new Date(meeting.date).toLocaleTimeString()}</p>
+              
+              <div className="bg-gray-50 p-4 rounded-md">
+                <h3 className="text-sm font-medium text-gray-500 mb-1">Location</h3>
+                <p className="text-gray-800">{meeting.location}</p>
               </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-500">Location</h3>
-                <p className="text-lg">{meeting.location}</p>
+              
+              <div className="bg-gray-50 p-4 rounded-md">
+                <h3 className="text-sm font-medium text-gray-500 mb-1">Meeting Type</h3>
+                <p className="text-gray-800 flex items-center">
+                  <span className={`inline-block w-2 h-2 rounded-full mr-2 ${meeting.meetingType === 'ONLINE' ? 'bg-blue-500' : meeting.meetingType === 'HYBRID' ? 'bg-purple-500' : 'bg-green-500'}`}></span>
+                  {meeting.meetingType === 'ONLINE' ? 'Online Meeting' : meeting.meetingType === 'HYBRID' ? 'Hybrid Meeting' : 'Physical Meeting'}
+                </p>
               </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-500">Attendees</h3>
-                <p className="text-lg">{meeting._count?.attendees || meeting.attendees.length}</p>
-              </div>
-              {meeting.sector && (
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Sector</h3>
-                  <p className="text-lg">{meeting.sector}</p>
+              
+              {/* Display online meeting link for online and hybrid meetings - matching admin style */}
+              {((meeting.meetingType === "ONLINE" || meeting.meetingType === "HYBRID") && meeting.onlineMeetingUrl) && (
+                <div className="bg-gray-50 p-4 rounded-md">
+                  <h3 className="text-sm font-medium text-gray-500 mb-1">Meeting URL</h3>
+                  {new Date() >= new Date(meeting.date) ? (
+                    <a 
+                      href={meeting.onlineMeetingUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 hover:underline flex items-center"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                      {meeting.onlineMeetingUrl}
+                    </a>
+                  ) : (
+                    <p className="text-gray-500 italic">Link will be available when the meeting starts</p>
+                  )}
                 </div>
               )}
-              {meeting.creatorType && (
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Meeting Category</h3>
-                  <p className="text-lg">{meeting.creatorType}</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 mt-6">
+              <div className="bg-gray-50 p-4 rounded-md">
+                <h3 className="text-sm font-medium text-gray-500 mb-1">Attendees</h3>
+                <p className="text-gray-800">{meeting._count?.attendees || meeting.attendees.length}</p>
+              </div>
+              {meeting.sector && (
+                <div className="bg-gray-50 p-4 rounded-md">
+                  <h3 className="text-sm font-medium text-gray-500 mb-1">Sector</h3>
+                  <p className="text-gray-800">{meeting.sector}</p>
+                </div>
+              )}
+              {meeting.meetingCategory && (
+                <div className="bg-gray-50 p-4 rounded-md">
+                  <h3 className="text-sm font-medium text-gray-500 mb-1">Meeting Category</h3>
+                  <p className="text-gray-800">
+                    {meeting.meetingCategory === 'INTERNAL' ? 'Internal' : 
+                     meeting.meetingCategory === 'EXTERNAL' ? 'External' : 
+                     meeting.meetingCategory === 'STAKEHOLDER' ? 'Stakeholder' : 
+                     meeting.meetingCategory}
+                  </p>
                 </div>
               )}
               {meeting.creatorEmail && (
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Created By</h3>
-                  <p className="text-lg">{meeting.creatorEmail}</p>
+                <div className="bg-gray-50 p-4 rounded-md">
+                  <h3 className="text-sm font-medium text-gray-500 mb-1">Created By</h3>
+                  <p className="text-gray-800">{meeting.creatorEmail}</p>
                 </div>
               )}
             </div>
@@ -317,7 +355,7 @@ export default function MeetingDetails({ params }: MeetingDetailsParams) {
         </div>
 
         <div>
-          <div className="bg-white shadow-md rounded-lg p-6 border border-gray-100">
+          <div className="bg-white shadow-md rounded-lg p-6 border border-gray-100" style={{ minHeight: "580px", display: "flex", flexDirection: "column" }}>
             <h2 className="text-xl font-semibold mb-4 text-[#014a2f]">Meeting QR Code</h2>
             <p className="text-gray-600 mb-4">Scan this QR code to register for the meeting</p>
             <div className="flex justify-center mb-4">
@@ -389,13 +427,6 @@ export default function MeetingDetails({ params }: MeetingDetailsParams) {
           {/* Resources Section */}
           {meeting && meeting.resources && meeting.resources.length > 0 && (
             <div className="my-8">
-              <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-4 flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <p className="text-yellow-800">This meeting has {meeting.resources.length} resource{meeting.resources.length !== 1 ? 's' : ''} available for download.</p>
-              </div>
-
               <div className="bg-white shadow-md rounded-lg border border-gray-200 overflow-hidden">
                 <div className="bg-gradient-to-r from-[#014a2f] to-[#016a3f] px-6 py-4 flex items-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">

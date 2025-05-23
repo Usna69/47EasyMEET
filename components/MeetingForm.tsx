@@ -13,11 +13,11 @@ interface Meeting {
   description: string;
   date: Date;
   location: string;
-  creatorEmail?: string;
-  sector?: string;
-  creatorType?: string;
-  meetingId?: string;
-  meetingCategory?: string;
+  creatorEmail?: string | null;
+  sector?: string | null;
+  creatorType?: string | null;
+  meetingId?: string | null;
+  meetingCategory?: string | null;
 }
 
 interface MeetingFormProps {

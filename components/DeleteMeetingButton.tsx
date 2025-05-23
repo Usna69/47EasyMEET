@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
+const { useState } = React;
 import { useRouter } from 'next/navigation';
 
 interface DeleteMeetingButtonProps {
