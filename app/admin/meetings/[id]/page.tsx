@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { useSessionAuth } from '../../../../lib/session-auth';
 import QRCodeDisplay from '../../../../components/QRCodeDisplay';
 
@@ -37,8 +37,9 @@ interface Meeting {
   }>;
 }
 
-export default function AdminMeetingDetails({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function AdminMeetingDetails() {
+  const params = useParams();
+  const id = params.id as string;
   const auth = useSessionAuth();
   const [meeting, setMeeting] = useState<Meeting | null>(null);
   const [loading, setLoading] = useState(true);
@@ -48,7 +49,7 @@ export default function AdminMeetingDetails({ params }: { params: { id: string }
   // First useEffect to fetch meeting data
   // Use console to debug parameters
   console.log('Meeting ID:', id);
-  
+
   useEffect(() => {
     if (auth.isLoggedIn && id) {
       const fetchMeeting = async () => {
@@ -78,7 +79,7 @@ export default function AdminMeetingDetails({ params }: { params: { id: string }
       fetchMeeting();
     }
   }, [id, auth.isLoggedIn]);
-  
+
   // Second useEffect to set meeting URL safely on the client side
   useEffect(() => {
     if (meeting) {
