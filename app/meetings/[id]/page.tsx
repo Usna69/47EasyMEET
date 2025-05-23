@@ -324,26 +324,52 @@ export default function MeetingDetails({ params }: MeetingDetailsParams) {
               <QRCodeDisplay url={`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/meetings/${meeting.id}/register`} />
             </div>
             <div className="text-center space-y-3">
-              {/* Check if meeting has started and registration period hasn't ended yet */}
-              {new Date() >= new Date(meeting.date) && 
-               (!meeting.registrationEnd || new Date() <= new Date(meeting.registrationEnd)) ? (
-                <Link 
-                  href={`/meetings/${meeting.id}/register`}
-                  className="bg-yellow-400 hover:bg-yellow-500 text-[#014a2f] px-6 py-3 rounded-md font-medium transition-colors inline-block w-full"
-                >
-                  Register for this Meeting
-                </Link>
-              ) : (
-                <div 
-                  className="bg-gray-300 text-gray-600 px-6 py-3 rounded-md font-medium inline-block w-full cursor-not-allowed"
-                >
-                  {new Date() < new Date(meeting.date) ? (
-                    "Registration opens when meeting starts"
-                  ) : (
-                    "Registration period has ended"
-                  )}
-                </div>
-              )}
+              {/* Check if meeting has started, hasn't completely ended, and registration period hasn't ended yet */}
+              {(() => {
+                  const now = new Date();
+                  const meetingStartTime = new Date(meeting.date);
+                  const registrationEndTime = meeting.registrationEnd 
+                    ? new Date(meeting.registrationEnd) 
+                    : new Date(meetingStartTime.getTime() + 2 * 60 * 60 * 1000);
+                  
+                  // Check if meeting is more than a day old (considered ended)
+                  const yesterday = new Date();
+                  yesterday.setDate(yesterday.getDate() - 1);
+                  const isMeetingEnded = meetingStartTime < yesterday;
+                  
+                  const isRegistrationAllowed = now >= meetingStartTime && 
+                         now <= registrationEndTime && 
+                         !isMeetingEnded;
+                  
+                  if (isRegistrationAllowed) {
+                    return (
+                      <Link 
+                        href={`/meetings/${meeting.id}/register`}
+                        className="bg-yellow-400 hover:bg-yellow-500 text-[#014a2f] px-6 py-3 rounded-md font-medium transition-colors inline-block w-full"
+                      >
+                        Register for this Meeting
+                      </Link>
+                    );
+                  } else {
+                    let statusMessage = "";
+                    
+                    if (meetingStartTime < yesterday) {
+                      statusMessage = "Meeting has ended";
+                    } else if (now < meetingStartTime) {
+                      statusMessage = "Registration opens when meeting starts";
+                    } else {
+                      statusMessage = "Registration period has ended";
+                    }
+                    
+                    return (
+                      <div 
+                        className="bg-gray-300 text-gray-600 px-6 py-3 rounded-md font-medium inline-block w-full cursor-not-allowed"
+                      >
+                        {statusMessage}
+                      </div>
+                    );
+                  }
+              })()}
               <button
                 onClick={() => {
                   try {

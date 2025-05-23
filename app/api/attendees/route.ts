@@ -72,6 +72,18 @@ export async function POST(request: NextRequest) {
       );
     }
     
+    // Check if meeting date is in the past (more than a day ago)
+    // For meetings that happened on a previous day, we consider them ended
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    if (meetingStartTime < yesterday) {
+      return Response.json(
+        { error: 'This meeting has ended. Registration is no longer available.' },
+        { status: 400 }
+      );
+    }
+    
     // Check if registration period is closed (2 hours after meeting start)
     if (now > registrationEndTime) {
       return Response.json(

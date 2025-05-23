@@ -28,7 +28,12 @@ export default async function RegistrationPage({ params }: RegistrationPageParam
     ? new Date(meeting.registrationEnd) 
     : new Date(new Date(meeting.date).getTime() + 2 * 60 * 60 * 1000); // 2 hours after start
   
-  const isRegistrationOpen = now >= meetingStartTime && now <= registrationEndTime;
+  // Check if meeting is more than a day old (considered ended)
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isMeetingEnded = meetingStartTime < yesterday;
+  
+  const isRegistrationOpen = now >= meetingStartTime && now <= registrationEndTime && !isMeetingEnded;
 
   return (
     <div className="py-8" style={{ 
@@ -69,6 +74,25 @@ export default async function RegistrationPage({ params }: RegistrationPageParam
 
           {isRegistrationOpen ? (
             <RegistrationForm meetingId={meeting.id} />
+          ) : isMeetingEnded ? (
+            <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md my-6">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-red-700 font-medium">Meeting has ended</p>
+                  <p className="text-sm text-red-600 mt-1">
+                    This meeting occurred on {new Date(meeting.date).toLocaleDateString()} and is no longer available for registration.
+                  </p>
+                  <p className="text-sm text-red-600 mt-3">
+                    <Link href={`/meetings/${meeting.id}`} className="font-medium underline">Return to meeting details</Link>
+                  </p>
+                </div>
+              </div>
+            </div>
           ) : now < meetingStartTime ? (
             <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md my-6">
               <div className="flex">
