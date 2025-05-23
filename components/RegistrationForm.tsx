@@ -1,7 +1,6 @@
 'use client';
 
-import * as React from 'react';
-const { useState, useRef } = React;
+import * as React { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
