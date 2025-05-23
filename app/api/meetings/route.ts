@@ -1,8 +1,8 @@
-import { NextRequest } from 'next/server';
-import { prisma } from '../../../lib/prisma';
-import { mkdir, writeFile } from 'fs/promises';
-import { join } from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import { NextRequest } from "next/server";
+import { prisma } from "../../../lib/prisma";
+import { mkdir, writeFile } from "fs/promises";
+import { join } from "path";
+import { v4 as uuidv4 } from "uuid";
 
 // Import Response properly for Next.js App Router API
 const Response = globalThis.Response;
@@ -11,64 +11,55 @@ const json = (data: any, init?: ResponseInit) => {
     ...init,
     headers: {
       ...init?.headers,
-      'Content-Type': 'application/json'
-    }
+      "Content-Type": "application/json",
+    },
   });
 };
 
 // GET /api/meetings - Get all meetings
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
     const searchParams = url.searchParams;
-    const showActive = searchParams.get('active') === 'true';
-    const createdBy = searchParams.get('createdBy');
-    const creatorEmail = searchParams.get('creatorEmail');
-    const department = searchParams.get('department');
-    const sector = searchParams.get('sector');
+    const showActive = searchParams.get("active") === "true";
+    const creatorEmail = searchParams.get("creatorEmail");
+    const department = searchParams.get("department");
+    const page = parseInt(searchParams.get("page") || "0");
+    const limit = parseInt(searchParams.get("limit") || "9");
     const now = new Date();
-    
+
     // Build the where clause based on query parameters
     let where: any = {};
-    
+
     // Filter by meeting date (active/upcoming meetings)
     if (showActive) {
       where.date = {
-        gte: now, // Meeting hasn't started yet
+        gte: now,
       };
     }
-    
-    // Note: There is no createdBy field in the Meeting model
-    // We're not using the createdBy parameter as it doesn't map to our schema
 
-    // For creator role, we need to get meetings either created by them or in their department
+    // Filter by creator email and department
     if (creatorEmail && department) {
-      // Use OR condition to get meetings either created by the user OR in their department
-      where.OR = [
-        { creatorEmail: creatorEmail },
-        { sector: department }
-      ];
+      where.OR = [{ creatorEmail }, { sector: department }];
     } else {
-      // Handle individual filters if both are not present
       if (creatorEmail) {
         where.creatorEmail = creatorEmail;
       }
-      
-      // Filter by department
       if (department) {
         where.sector = department;
       }
     }
-    
-    // Filter by sector (separate from department filtering)
-    if (sector && !department) {
-      where.sector = sector;
-    }
-    
+
+    // Get total count
+    const total = await prisma.meeting.count({
+      where,
+    });
+
+    // Get paginated meetings
     const meetings = await prisma.meeting.findMany({
       where,
       orderBy: {
-        date: 'desc',
+        date: "asc",
       },
       include: {
         _count: {
@@ -76,15 +67,18 @@ export async function GET(request: Request) {
         },
         resources: true,
       },
+      skip: page * limit,
+      take: limit,
     });
-    
-    return json(meetings);
+
+    return json({
+      meetings,
+      total,
+      hasMore: (page + 1) * limit < total,
+    });
   } catch (error) {
-    console.error('Error fetching meetings:', error);
-    return json(
-      { error: 'Failed to fetch meetings' },
-      { status: 500 }
-    );
+    console.error("Error fetching meetings:", error);
+    return json({ error: "Failed to fetch meetings" }, { status: 500 });
   }
 }
 
@@ -93,38 +87,51 @@ export async function POST(request: Request) {
   try {
     // Handle multipart form data for file uploads
     const formData = await request.formData();
-    
+
     // Extract form fields
-    const title = formData.get('title') as string;
-    const description = formData.get('description') as string;
-    const dateStr = formData.get('date') as string;
-    const location = formData.get('location') as string;
-    const sector = formData.get('sector') as string;
-    const creatorEmail = formData.get('creatorEmail') as string;
-    const creatorType = formData.get('creatorType') as string;
-    const meetingType = formData.get('meetingType') as string || 'PHYSICAL';
-    const meetingCategory = formData.get('meetingCategory') as string || 'INTERNAL';
-    const onlineMeetingUrl = formData.get('onlineMeetingUrl') as string;
-    const registrationEndStr = formData.get('registrationEnd') as string;
-    
+    const title = formData.get("title") as string;
+    const description = formData.get("description") as string;
+    const dateStr = formData.get("date") as string;
+    const location = formData.get("location") as string;
+    const sector = formData.get("sector") as string;
+    const creatorEmail = formData.get("creatorEmail") as string;
+    const creatorType = formData.get("creatorType") as string;
+    const meetingType = (formData.get("meetingType") as string) || "PHYSICAL";
+    const meetingCategory =
+      (formData.get("meetingCategory") as string) || "INTERNAL";
+    const onlineMeetingUrl = formData.get("onlineMeetingUrl") as string;
+    const registrationEndStr = formData.get("registrationEnd") as string;
+
     // Validate required fields
     if (!title || !description || !dateStr || !location) {
-      return json({ error: 'Missing required fields' }, { status: 400 });
+      return json({ error: "Missing required fields" }, { status: 400 });
     }
-    
+
     // For online or hybrid meetings, require a meeting URL
-    if ((meetingType === 'ONLINE' || meetingType === 'HYBRID') && !onlineMeetingUrl) {
-      return json({ error: 'Online meeting URL is required for online and hybrid meetings' }, { status: 400 });
+    if (
+      (meetingType === "ONLINE" || meetingType === "HYBRID") &&
+      !onlineMeetingUrl
+    ) {
+      return json(
+        {
+          error:
+            "Online meeting URL is required for online and hybrid meetings",
+        },
+        { status: 400 }
+      );
     }
-    
+
     // For hybrid meetings, also require a physical location
-    if (meetingType === 'HYBRID' && !location) {
-      return json({ error: 'Physical location is required for hybrid meetings' }, { status: 400 });
+    if (meetingType === "HYBRID" && !location) {
+      return json(
+        { error: "Physical location is required for hybrid meetings" },
+        { status: 400 }
+      );
     }
-    
+
     // Convert date strings to Date objects
     const date = new Date(dateStr);
-    
+
     // Set registration end time (default: 2 hours after meeting start)
     let registrationEnd: Date | undefined;
     if (registrationEndStr) {
@@ -133,34 +140,38 @@ export async function POST(request: Request) {
       registrationEnd = new Date(date);
       registrationEnd.setHours(registrationEnd.getHours() + 2);
     }
-    
+
     // Handle both admin and public meeting creation
-    let meetingId = formData.get('meetingId') as string;
-    
+    let meetingId = formData.get("meetingId") as string;
+
     // For public submissions with no meetingId, generate one
     if (!meetingId && sector && creatorType) {
       // Format date as DDMMYYYY
-      const day = date.getDate().toString().padStart(2, '0');
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, "0");
+      const month = (date.getMonth() + 1).toString().padStart(2, "0");
       const year = date.getFullYear();
       const datePart = `${day}${month}${year}`;
-      
+
       // Format time as HHMM in 24-hour format
-      const hours = date.getHours().toString().padStart(2, '0');
-      const minutes = date.getMinutes().toString().padStart(2, '0');
+      const hours = date.getHours().toString().padStart(2, "0");
+      const minutes = date.getMinutes().toString().padStart(2, "0");
       const timePart = `${hours}${minutes}`;
-      
+
       // Create meeting ID in format: 047/SECTOR_CODE/MEETING_TYPE/DDMMYYYY-HHMM
       // Example: 047/IDE/INT/21052025-1430
       // Meeting types: INT (INTERNAL), EXT (EXTERNAL), STK (STAKEHOLDER)
-      const meetingTypeCode = 
-        meetingCategory === 'INTERNAL' ? 'INT' :
-        meetingCategory === 'EXTERNAL' ? 'EXT' :
-        meetingCategory === 'STAKEHOLDER' ? 'STK' : 'INT';
-      
+      const meetingTypeCode =
+        meetingCategory === "INTERNAL"
+          ? "INT"
+          : meetingCategory === "EXTERNAL"
+          ? "EXT"
+          : meetingCategory === "STAKEHOLDER"
+          ? "STK"
+          : "INT";
+
       meetingId = `047/${sector}/${meetingTypeCode}/${datePart}-${timePart}`;
     }
-    
+
     // Create the meeting with all necessary fields
     const meeting = await prisma.meeting.create({
       data: {
@@ -169,40 +180,49 @@ export async function POST(request: Request) {
         date,
         location,
         creatorEmail,
-        sector: sector || 'IDE',  // Default sector if not provided
-        creatorType: creatorType || 'ORG', // Default creator type if not provided
+        sector: sector || "IDE", // Default sector if not provided
+        creatorType: creatorType || "ORG", // Default creator type if not provided
         meetingId,
         // Add these fields only if they are defined in the schema
         ...(meetingType && { meetingType }),
-        ...((meetingType === 'ONLINE' || meetingType === 'HYBRID') && onlineMeetingUrl ? { onlineMeetingUrl } : {}),
+        ...((meetingType === "ONLINE" || meetingType === "HYBRID") &&
+        onlineMeetingUrl
+          ? { onlineMeetingUrl }
+          : {}),
         ...(registrationEnd ? { registrationEnd } : {}),
       },
     });
-    
+
     // Process uploaded resource files
-    const resourceFiles: { id: string, fileName: string, fileType: string, fileSize: number, fileUrl: string }[] = [];
-    
+    const resourceFiles: {
+      id: string;
+      fileName: string;
+      fileType: string;
+      fileSize: number;
+      fileUrl: string;
+    }[] = [];
+
     // Check for resource files in the form data
     const entries = Array.from(formData.entries());
     for (const [key, value] of entries) {
-      if (key.startsWith('resource-') && value instanceof File) {
+      if (key.startsWith("resource-") && value instanceof File) {
         const file = value;
-        
+
         // Create unique file ID and name
         const fileId = uuidv4();
-        const safeFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-        const fileExtension = safeFileName.split('.').pop() || '';
+        const safeFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+        const fileExtension = safeFileName.split(".").pop() || "";
         const storedFileName = `${fileId}.${fileExtension}`;
-        
+
         // Create resources directory if it doesn't exist
-        const resourcesDir = join(process.cwd(), 'public', 'resources');
+        const resourcesDir = join(process.cwd(), "public", "resources");
         await mkdir(resourcesDir, { recursive: true });
-        
+
         // Save file to disk
         const fileBuffer = Buffer.from(await file.arrayBuffer());
         const filePath = join(resourcesDir, storedFileName);
         await writeFile(filePath, fileBuffer);
-        
+
         // Add file info to resources array
         resourceFiles.push({
           id: fileId,
@@ -213,7 +233,7 @@ export async function POST(request: Request) {
         });
       }
     }
-    
+
     // Add resources to the database
     if (resourceFiles.length > 0) {
       // Check if MeetingResource model exists before creating resources
@@ -221,7 +241,7 @@ export async function POST(request: Request) {
         // @ts-ignore - Ignoring TypeScript error for prisma.meetingResource
         // This is valid since we know the model exists in our schema
         await Promise.all(
-          resourceFiles.map(resource =>
+          resourceFiles.map((resource) =>
             prisma.meetingResource.create({
               data: {
                 meetingId: meeting.id,
@@ -229,23 +249,20 @@ export async function POST(request: Request) {
                 fileType: resource.fileType,
                 fileSize: resource.fileSize,
                 fileUrl: resource.fileUrl,
-              }
+              },
             })
           )
         );
       } catch (error) {
-        console.error('Error creating meeting resources:', error);
+        console.error("Error creating meeting resources:", error);
         // Continue execution even if resource creation fails
       }
     }
-    
+
     // Return the created meeting
     return json(meeting, { status: 201 });
   } catch (error) {
-    console.error('Error creating meeting:', error);
-    return json(
-      { error: 'Failed to create meeting' },
-      { status: 500 }
-    );
+    console.error("Error creating meeting:", error);
+    return json({ error: "Failed to create meeting" }, { status: 500 });
   }
 }

@@ -1,5 +1,6 @@
-import { NextRequest } from 'next/server';
-import { prisma } from '../../../../../lib/prisma';
+import { NextRequest } from "next/server";
+import { prisma } from "../../../../../lib/prisma";
+import bcrypt from "bcryptjs";
 
 // API response helper
 const json = (data: any, init?: ResponseInit) => {
@@ -7,8 +8,8 @@ const json = (data: any, init?: ResponseInit) => {
     ...init,
     headers: {
       ...init?.headers,
-      'Content-Type': 'application/json'
-    }
+      "Content-Type": "application/json",
+    },
   });
 };
 
@@ -19,42 +20,45 @@ export async function POST(
   try {
     // For this endpoint, we don't have proper server-side session checking
     // In a production app, you would verify the admin session here
-    
+
     const userId = params.id;
     const { newPassword } = await request.json();
 
     // Validate input
     if (!userId || !newPassword) {
-      return json({ error: 'User ID and new password are required' }, { status: 400 });
+      return json(
+        { error: "User ID and new password are required" },
+        { status: 400 }
+      );
     }
 
     // Find the user to reset password
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
-      return json({ error: 'User not found' }, { status: 404 });
+      return json({ error: "User not found" }, { status: 404 });
     }
-    
+
     // In this demo we're using plain text passwords
     // In a production app, you'd use bcrypt or similar for password hashing
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     // Update user record with new password and clear reset request
     await prisma.user.update({
       where: { id: userId },
       data: {
-        password: newPassword, // Plain text in this demo
-        passwordResetRequested: false
-      }
+        password: hashedPassword,
+        passwordResetRequested: false,
+      },
     });
 
-    console.log(`Password reset completed for user: ${user.email}`);
     return json(
-      { success: true, message: 'Password reset successfully' },
+      { success: true, message: "Password reset successfully" },
       { status: 200 }
     );
   } catch (error) {
-    console.error('Error resetting password:', error);
+    console.error("Error resetting password:", error);
     return json(
-      { error: 'An error occurred while resetting the password' },
+      { error: "An error occurred while resetting the password" },
       { status: 500 }
     );
   }

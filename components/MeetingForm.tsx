@@ -1,8 +1,9 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
-import { format } from 'date-fns';
+import React from "react";
+import { useRouter } from "next/navigation";
+import { format } from "date-fns";
+import { useSessionAuth } from "@/lib/session-auth";
 
 // Extract React hooks from React import
 const { useState, useEffect } = React;
@@ -25,141 +26,219 @@ interface MeetingFormProps {
   isEditing?: boolean;
 }
 
-export default function MeetingForm({ meeting, isEditing = false }: MeetingFormProps) {
+export default function MeetingForm({
+  meeting,
+  isEditing = false,
+}: MeetingFormProps) {
   const router = useRouter();
+  const auth = useSessionAuth();
+  const [minDateTime, setMinDateTime] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [meetingIdPreview, setMeetingIdPreview] = useState('');
-  
+  const [currentTime] = useState(new Date("2025-05-23T16:28:51+03:00"));
+  const [meetingIdPreview, setMeetingIdPreview] = useState("");
+
   // Sector options (abbr -> full name mapping)
   const sectorOptions = {
-    'IDE': 'Innovation and Digital Economy',
-    'M&W': 'Mobility and Works',
-    'GNrb': 'Green Nairobi (Environment, Water, Food, and Agriculture)',
-    'BEU': 'Built Environment and Urban Planning',
-    'TSS': 'Talents, Skills Development, Sports, and Social Services',
-    'HW&N': 'Health, Wellness, and Nutrition',
-    'EGC': 'Education, Gender Affairs, and Culture',
-    'F&EP': 'Finance and Economic Planning',
-    'GPPC': 'Governance, Public Participation, and Citizen Engagement',
-    'PS&A': 'Public Service Management and Administration',
-    'TC&T': 'Trade, Commerce, Tourism, and Cooperatives',
-    'LA&C': 'Legal Affairs and Compliance'
+    IDE: "Innovation and Digital Economy",
+    "M&W": "Mobility and Works",
+    GNrb: "Green Nairobi (Environment, Water, Food, and Agriculture)",
+    BEU: "Built Environment and Urban Planning",
+    TSS: "Talents, Skills Development, Sports, and Social Services",
+    "HW&N": "Health, Wellness, and Nutrition",
+    EGC: "Education, Gender Affairs, and Culture",
+    "F&EP": "Finance and Economic Planning",
+    GPPC: "Governance, Public Participation, and Citizen Engagement",
+    "PS&A": "Public Service Management and Administration",
+    "TC&T": "Trade, Commerce, Tourism, and Cooperatives",
+    "LA&C": "Legal Affairs and Compliance",
   };
 
   // Default creator type (since dropdown is being removed)
-  const defaultCreatorType = 'HOD';
-  
+  const defaultCreatorType = "HOD";
+
   // Meeting category options
-  const meetingCategoryOptions = [
-    'INTERNAL',
-    'EXTERNAL',
-    'STAKEHOLDER'
-  ];
-  
+  const meetingCategoryOptions = ["INTERNAL", "EXTERNAL", "STAKEHOLDER"];
+
   const [formData, setFormData] = useState({
-    title: meeting?.title || '',
-    description: meeting?.description || '',
-    date: meeting?.date ? new Date(meeting.date).toISOString().substring(0, 16) : '',
-    location: meeting?.location || '',
-    creatorEmail: meeting?.creatorEmail || '',
-    sector: meeting?.sector || 'IDE',
+    title: meeting?.title || "",
+    description: meeting?.description || "",
+    date: meeting?.date
+      ? new Date(meeting.date).toISOString().substring(0, 16)
+      : "",
+    location: meeting?.location || "",
+    creatorEmail: meeting?.creatorEmail || "",
+    sector: meeting?.sector || "IDE",
     creatorType: meeting?.creatorType || defaultCreatorType, // Use default creator type
-    meetingCategory: meeting?.meetingCategory || 'INTERNAL',
-  });
-  
-  const [errors, setErrors] = useState({
-    title: '',
-    description: '',
-    date: '',
-    location: '',
-    creatorEmail: '',
-    sector: '',
-    creatorType: '',
-    meetingCategory: ''
+    meetingCategory: meeting?.meetingCategory || "INTERNAL",
   });
 
-  // Generate meeting ID based on form data
+  const [errors, setErrors] = useState({
+    title: "",
+    description: "",
+    date: "",
+    location: "",
+    creatorEmail: "",
+    sector: "",
+    creatorType: "",
+    meetingCategory: "",
+  });
+  // Set minimum date-time to current time
+  useEffect(() => {
+    const now = new Date(currentTime);
+    // Add 30 minutes buffer for meeting setup
+    now.setMinutes(now.getMinutes() + 30);
+    // Format for datetime-local input
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    const formattedDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+    setMinDateTime(formattedDateTime);
+  }, [currentTime]);
+
   useEffect(() => {
     if (formData.date && formData.sector && formData.creatorType) {
       try {
         const dateObj = new Date(formData.date);
-        const datePart = format(dateObj, 'ddMMyyyy');
-        const timePart = format(dateObj, 'HHmm');
-        
+        const datePart = format(dateObj, "ddMMyyyy");
+        const timePart = format(dateObj, "HHmm");
+
         const meetingId = `047/${formData.sector}/${formData.creatorType}/${datePart}-${timePart}`;
         setMeetingIdPreview(meetingId);
       } catch (error) {
-        console.error('Error generating meeting ID:', error);
+        console.error("Error generating meeting ID:", error);
       }
     }
   }, [formData.date, formData.sector, formData.creatorType]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     const { name, value } = e.target;
+
+    // Special handling for date field
+    if (name === "date") {
+      const selectedDate = new Date(value);
+      const now = new Date(currentTime);
+
+      // Add 30 minutes buffer for meeting setup
+      now.setMinutes(now.getMinutes() + 30);
+
+      if (selectedDate.getTime() < now.getTime()) {
+        setErrors({
+          ...errors,
+          date: "Please select a time at least 30 minutes in the future",
+        });
+        // Reset to minimum allowed time
+        setFormData({ ...formData, date: minDateTime });
+        return;
+      } else {
+        // Clear error if date is valid
+        setErrors({ ...errors, date: "" });
+      }
+
+      // Check if date is too far in the future (e.g., 1 year)
+      const oneYearFromNow = new Date();
+      oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+      if (selectedDate > oneYearFromNow) {
+        setErrors({
+          ...errors,
+          date: "Meeting cannot be scheduled more than 1 year in advance",
+        });
+        return;
+      }
+    }
+
     setFormData({
       ...formData,
       [name]: value,
     });
-    
+
     // Clear error when user types
     if (errors[name as keyof typeof errors]) {
       setErrors({
         ...errors,
-        [name]: '',
+        [name]: "",
       });
     }
   };
 
   const validateForm = () => {
     const newErrors = {
-      title: '',
-      description: '',
-      date: '',
-      location: '',
-      creatorEmail: '',
-      sector: '',
-      creatorType: '',
-      meetingCategory: ''
+      title: "",
+      description: "",
+      date: "",
+      location: "",
+      creatorEmail: "",
+      sector: "",
+      creatorType: "",
+      meetingCategory: "",
     };
     let isValid = true;
 
     if (!formData.title.trim()) {
-      newErrors.title = 'Title is required';
+      newErrors.title = "Title is required";
       isValid = false;
     }
 
     if (!formData.description.trim()) {
-      newErrors.description = 'Description is required';
+      newErrors.description = "Description is required";
       isValid = false;
     }
 
     if (!formData.date) {
-      newErrors.date = 'Date and time are required';
+      newErrors.date = "Date and time are required";
       isValid = false;
+    } else {
+      const selectedDate = new Date(formData.date);
+      const now = new Date(currentTime);
+
+      // Add 30 minutes buffer for meeting setup
+      now.setMinutes(now.getMinutes() + 30);
+
+      // Compare using timestamps for accurate time comparison
+      const selectedTime = selectedDate.getTime();
+      const minTime = now.getTime();
+
+      if (selectedTime < minTime) {
+        newErrors.date =
+          "Please select a time at least 30 minutes in the future";
+        isValid = false;
+      }
+
+      // Check if date is too far in the future (e.g., 1 year)
+      const oneYearFromNow = new Date(currentTime);
+      oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+      if (selectedDate > oneYearFromNow) {
+        newErrors.date =
+          "Meeting cannot be scheduled more than 1 year in advance";
+        isValid = false;
+      }
     }
 
     if (!formData.location.trim()) {
-      newErrors.location = 'Location is required';
+      newErrors.location = "Location is required";
       isValid = false;
     }
-    
+
     if (!formData.creatorEmail.trim()) {
-      newErrors.creatorEmail = 'Creator email is required';
+      newErrors.creatorEmail = "Creator email is required";
       isValid = false;
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.creatorEmail)) {
-      newErrors.creatorEmail = 'Please enter a valid email address';
+      newErrors.creatorEmail = "Please enter a valid email address";
       isValid = false;
     }
-    
+
     if (!formData.sector) {
-      newErrors.sector = 'Sector is required';
+      newErrors.sector = "Sector is required";
       isValid = false;
     }
-    
+
     if (!formData.creatorType) {
-      newErrors.creatorType = 'Creator type is required';
+      newErrors.creatorType = "Creator type is required";
       isValid = false;
     }
 
@@ -169,30 +248,27 @@ export default function MeetingForm({ meeting, isEditing = false }: MeetingFormP
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setIsSubmitting(true);
 
-    const url = isEditing 
-      ? `/api/meetings/${meeting?.id}` 
-      : '/api/meetings';
-    const method = isEditing ? 'PUT' : 'POST';
-
+    const url = isEditing ? `/api/meetings/${meeting?.id}` : "/api/meetings";
+    const method = isEditing ? "PUT" : "POST";
     try {
       const response = await fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           title: formData.title,
           description: formData.description,
           date: new Date(formData.date).toISOString(),
           location: formData.location,
-          creatorEmail: formData.creatorEmail,
+          creatorEmail: auth.user?.email,
           sector: formData.sector,
           creatorType: formData.creatorType,
           meetingId: meetingIdPreview,
@@ -200,16 +276,18 @@ export default function MeetingForm({ meeting, isEditing = false }: MeetingFormP
       });
 
       if (!response.ok) {
-        throw new Error(isEditing ? 'Failed to update meeting' : 'Failed to create meeting');
+        throw new Error(
+          isEditing ? "Failed to update meeting" : "Failed to create meeting"
+        );
       }
 
       const data = await response.json();
-      
+
       // Stay on admin pages after creation/editing
-      router.push('/admin');
+      router.push("/admin");
       router.refresh();
     } catch (error) {
-      console.error('Form submission error:', error);
+      console.error("Form submission error:", error);
       alert(`An error occurred. Please try again.`);
     } finally {
       setIsSubmitting(false);
@@ -219,7 +297,10 @@ export default function MeetingForm({ meeting, isEditing = false }: MeetingFormP
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="title"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Meeting Title
         </label>
         <input
@@ -229,15 +310,22 @@ export default function MeetingForm({ meeting, isEditing = false }: MeetingFormP
           value={formData.title}
           onChange={handleChange}
           className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-            errors.title ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-green-300'
+            errors.title
+              ? "border-red-500 focus:ring-red-200"
+              : "border-gray-300 focus:ring-green-300"
           }`}
           placeholder="Enter meeting title"
         />
-        {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
+        {errors.title && (
+          <p className="mt-1 text-sm text-red-600">{errors.title}</p>
+        )}
       </div>
 
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="description"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Description
         </label>
         <textarea
@@ -247,15 +335,22 @@ export default function MeetingForm({ meeting, isEditing = false }: MeetingFormP
           onChange={handleChange}
           rows={4}
           className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-            errors.description ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-green-300'
+            errors.description
+              ? "border-red-500 focus:ring-red-200"
+              : "border-gray-300 focus:ring-green-300"
           }`}
           placeholder="Enter meeting description"
         />
-        {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description}</p>}
+        {errors.description && (
+          <p className="mt-1 text-sm text-red-600">{errors.description}</p>
+        )}
       </div>
 
       <div>
-        <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="date"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Date and Time
         </label>
         <input
@@ -264,15 +359,24 @@ export default function MeetingForm({ meeting, isEditing = false }: MeetingFormP
           name="date"
           value={formData.date}
           onChange={handleChange}
+          min={minDateTime}
+          onKeyDown={(e) => e.preventDefault()}
           className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-            errors.date ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-green-300'
+            errors.date
+              ? "border-red-500 focus:ring-red-200"
+              : "border-gray-300 focus:ring-green-300"
           }`}
         />
-        {errors.date && <p className="mt-1 text-sm text-red-600">{errors.date}</p>}
+        {errors.date && (
+          <p className="mt-1 text-sm text-red-600">{errors.date}</p>
+        )}
       </div>
 
       <div>
-        <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="location"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Location
         </label>
         <input
@@ -282,34 +386,23 @@ export default function MeetingForm({ meeting, isEditing = false }: MeetingFormP
           value={formData.location}
           onChange={handleChange}
           className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-            errors.location ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-green-300'
+            errors.location
+              ? "border-red-500 focus:ring-red-200"
+              : "border-gray-300 focus:ring-green-300"
           }`}
           placeholder="Enter meeting location"
         />
-        {errors.location && <p className="mt-1 text-sm text-red-600">{errors.location}</p>}
+        {errors.location && (
+          <p className="mt-1 text-sm text-red-600">{errors.location}</p>
+        )}
       </div>
-      
-      <div>
-        <label htmlFor="creatorEmail" className="block text-sm font-medium text-gray-700 mb-1">
-          Creator's Email
-        </label>
-        <input
-          type="email"
-          id="creatorEmail"
-          name="creatorEmail"
-          value={formData.creatorEmail}
-          onChange={handleChange}
-          className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-            errors.creatorEmail ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-green-300'
-          }`}
-          placeholder="Enter creator's email"
-        />
-        {errors.creatorEmail && <p className="mt-1 text-sm text-red-600">{errors.creatorEmail}</p>}
-      </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label htmlFor="sector" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="sector"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Sector
           </label>
           <select
@@ -318,7 +411,9 @@ export default function MeetingForm({ meeting, isEditing = false }: MeetingFormP
             value={formData.sector}
             onChange={handleChange}
             className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-              errors.sector ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-green-300'
+              errors.sector
+                ? "border-red-500 focus:ring-red-200"
+                : "border-gray-300 focus:ring-green-300"
             }`}
           >
             {Object.entries(sectorOptions).map(([abbr, fullName]) => (
@@ -327,15 +422,20 @@ export default function MeetingForm({ meeting, isEditing = false }: MeetingFormP
               </option>
             ))}
           </select>
-          {errors.sector && <p className="mt-1 text-sm text-red-600">{errors.sector}</p>}
+          {errors.sector && (
+            <p className="mt-1 text-sm text-red-600">{errors.sector}</p>
+          )}
         </div>
-        
+
         {/* Creator Type is now fixed as HOD */}
         <input type="hidden" name="creatorType" value={formData.creatorType} />
       </div>
-      
+
       <div>
-        <label htmlFor="meetingCategory" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="meetingCategory"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Meeting Category
         </label>
         <select
@@ -344,7 +444,9 @@ export default function MeetingForm({ meeting, isEditing = false }: MeetingFormP
           value={formData.meetingCategory}
           onChange={handleChange}
           className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-            errors.meetingCategory ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-green-300'
+            errors.meetingCategory
+              ? "border-red-500 focus:ring-red-200"
+              : "border-gray-300 focus:ring-green-300"
           }`}
         >
           {meetingCategoryOptions.map((category) => (
@@ -353,9 +455,11 @@ export default function MeetingForm({ meeting, isEditing = false }: MeetingFormP
             </option>
           ))}
         </select>
-        {errors.meetingCategory && <p className="mt-1 text-sm text-red-600">{errors.meetingCategory}</p>}
+        {errors.meetingCategory && (
+          <p className="mt-1 text-sm text-red-600">{errors.meetingCategory}</p>
+        )}
       </div>
-      
+
       {meetingIdPreview && (
         <div className="bg-green-50 p-4 rounded-md border border-green-300">
           <label className="block text-sm font-medium text-green-800 mb-1">
@@ -364,7 +468,9 @@ export default function MeetingForm({ meeting, isEditing = false }: MeetingFormP
           <div className="font-mono bg-white text-green-800 p-3 rounded border border-green-200">
             {meetingIdPreview}
           </div>
-          <p className="text-xs text-green-600 mt-1">This unique ID will be assigned to your meeting</p>
+          <p className="text-xs text-green-600 mt-1">
+            This unique ID will be assigned to your meeting
+          </p>
         </div>
       )}
 
@@ -376,14 +482,30 @@ export default function MeetingForm({ meeting, isEditing = false }: MeetingFormP
         >
           {isSubmitting ? (
             <>
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <svg
+                className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
               </svg>
-              {isEditing ? 'Updating...' : 'Creating...'}
+              {isEditing ? "Updating..." : "Creating..."}
             </>
           ) : (
-            <>{isEditing ? 'Update Meeting' : 'Create Meeting'}</>
+            <>{isEditing ? "Update Meeting" : "Create Meeting"}</>
           )}
         </button>
       </div>
