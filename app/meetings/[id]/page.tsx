@@ -4,20 +4,16 @@
 
 import React from 'react';
 import DualColorSpinner from '../../../components/DualColorSpinner';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import Link from 'next/link';
 import QRCodeDisplay from '../../../components/QRCodeDisplay';
 import { format } from 'date-fns';
 
 // We won't use dynamic imports for jsPDF to ensure it's available immediately when needed
 
-interface MeetingDetailsParams {
-  params: {
-    id: string;
-  };
-}
-
-export default function MeetingDetails({ params }: MeetingDetailsParams) {
+export default function MeetingDetails() {
+  const params = useParams();
+  const id = params.id as string;
   const [meeting, setMeeting] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState('');
@@ -187,7 +183,7 @@ export default function MeetingDetails({ params }: MeetingDetailsParams) {
     const fetchMeeting = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/meetings/${params.id}`);
+        const response = await fetch(`/api/meetings/${id}`);
         if (response.ok) {
           const data = await response.json();
           setMeeting(data);

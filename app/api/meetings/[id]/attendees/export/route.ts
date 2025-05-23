@@ -2,15 +2,15 @@ import { NextRequest } from 'next/server';
 import { prisma } from '../../../../../../lib/prisma';
 
 interface RouteContext {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // GET /api/meetings/[id]/attendees/export - Export attendees as CSV
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const { id } = context.params;
+    const { id } = (await context.params);
 
     // Get all attendees for the meeting
     const attendees = await prisma.attendee.findMany({

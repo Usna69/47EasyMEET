@@ -3,15 +3,15 @@ import type { NextRequest } from "next/server";
 import { prisma } from "../../../../lib/prisma";
 
 interface RouteContext {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // GET /api/meetings/[id] - Get a specific meeting
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const { id } = context.params;
+    const { id } = (await context.params);
 
     const meeting = await prisma.meeting.findUnique({
       where: {
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 // PUT /api/meetings/[id] - Update a meeting
 export async function PUT(request: NextRequest, context: RouteContext) {
   try {
-    const { id } = context.params;
+    const { id } = (await context.params);
     const body = await request.json();
     console.log(body);
     // Validate required fields
@@ -113,7 +113,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 // DELETE /api/meetings/[id] - Delete a meeting
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
-    const { id } = context.params;
+    const { id } = (await context.params);
 
     // Check if meeting exists
     const existingMeeting = await prisma.meeting.findUnique({

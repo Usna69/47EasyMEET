@@ -5,12 +5,13 @@ import MeetingForm from '../../../../../components/MeetingForm';
 import { notFound } from 'next/navigation';
 
 interface EditMeetingPageParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default async function EditMeetingPage({ params }: EditMeetingPageParams) {
+export default async function EditMeetingPage(props: EditMeetingPageParams) {
+  const params = await props.params;
   const meeting = await prisma.meeting.findUnique({
     where: {
       id: params.id,

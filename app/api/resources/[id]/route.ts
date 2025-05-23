@@ -10,7 +10,8 @@ const prisma = new PrismaClient();
  * GET handler for resource downloads
  * Returns the file with appropriate content type
  */
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     // Get the resource ID from the params
     const resourceId = params.id;

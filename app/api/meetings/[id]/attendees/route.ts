@@ -2,9 +2,9 @@ import { NextRequest } from 'next/server';
 import { prisma } from '../../../../../lib/prisma';
 
 interface RouteContext {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // Helper function for consistent JSON responses (from memory)
@@ -18,7 +18,7 @@ function jsonResponse(data: any, status = 200) {
 // GET /api/meetings/[id]/attendees - Get all attendees for a meeting
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const { id } = context.params;
+    const { id } = (await context.params);
 
     // Validate that the meeting exists
     const meeting = await prisma.meeting.findUnique({
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 // POST /api/meetings/[id]/attendees - Add an attendee to a meeting
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
-    const { id } = context.params;
+    const { id } = (await context.params);
     const body = await request.json();
 
     // Validate required fields

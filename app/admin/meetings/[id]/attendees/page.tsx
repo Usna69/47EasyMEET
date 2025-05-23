@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { useAuth } from '../../../../../lib/auth';
+import { useParams } from 'next/navigation';
 
 const { useState, useEffect } = React;
 
@@ -26,8 +27,9 @@ interface Meeting {
   meetingId?: string;
 }
 
-export default function AdminAttendeesList({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function AdminAttendeesList() {
+  const params = useParams();
+  const id = params.id as string;
   const auth = useAuth();
   const [attendees, setAttendees] = useState<Attendee[]>([]);
   const [meeting, setMeeting] = useState<Meeting | null>(null);

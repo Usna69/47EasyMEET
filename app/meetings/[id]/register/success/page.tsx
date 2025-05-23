@@ -4,12 +4,13 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 
 interface SuccessPageParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default async function SuccessPage({ params }: SuccessPageParams) {
+export default async function SuccessPage(props: SuccessPageParams) {
+  const params = await props.params;
   const meeting = await prisma.meeting.findUnique({
     where: {
       id: params.id,
