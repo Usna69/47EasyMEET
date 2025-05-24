@@ -209,170 +209,185 @@ export default function RegForm({ meetingId }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <label
-          htmlFor="name"
-          className="block text-sm font-medium text-[#014a2f] mb-1"
-        >
-          Full Name
-        </label>
-        <input
-          type="text"
-          id="name"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-            errors.name
-              ? "border-red-500 focus:ring-red-200"
-              : "border-gray-300 focus:ring-[#014a2f]/20"
-          }`}
-          placeholder="Enter your full name"
-        />
-        {errors.name && (
-          <p className="mt-1 text-sm text-red-600">{errors.name}</p>
-        )}
-      </div>
+    <div className="bg-white shadow-md rounded-lg p-4 sm:p-6 border border-gray-100 max-w-md mx-auto">
+      <h2 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-[#014a2f]">
+        Registration
+      </h2>
+      
+      {/* Mobile-friendly meeting status indicator */}
+      {meeting && (
+        <div className={`meeting-status ${meeting.status === 'ONGOING' ? 'ongoing' : meeting.status === 'UPCOMING' ? 'upcoming' : 'closed'}`}>
+          <div className="flex items-center">
+            <span className="inline-block w-3 h-3 rounded-full mr-2 
+              ${meeting.status === 'ONGOING' ? 'bg-green-500' : meeting.status === 'UPCOMING' ? 'bg-purple-500' : 'bg-red-500'}"></span>
+            <span>
+              {meeting.status === 'ONGOING' ? 'Meeting in progress - Registration open' : 
+               meeting.status === 'UPCOMING' ? 'Meeting not started yet' : 'Registration closed'}
+            </span>
+          </div>
+        </div>
+      )}
+      
+      <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+        <div>
+          <label
+            htmlFor="name"
+            className="block text-sm font-medium text-[#014a2f] mb-1"
+          >
+            Full Name
+          </label>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+              errors.name
+                ? "border-red-500 focus:ring-red-200"
+                : "border-gray-300 focus:ring-[#014a2f]/20"
+            }`}
+            placeholder="Enter your full name"
+          />
+          {errors.name && (
+            <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+          )}
+        </div>
 
-      <div>
-        <label
-          htmlFor="email"
-          className="block text-sm font-medium text-[#014a2f] mb-1"
-        >
-          Email Address
-        </label>
-        <input
-          type="email"
-          id="email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-          className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-            errors.email
-              ? "border-red-500 focus:ring-red-200"
-              : "border-gray-300 focus:ring-[#014a2f]/20"
-          }`}
-          placeholder="Enter your email address"
-        />
-        {errors.email && (
-          <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-        )}
-      </div>
+        <div>
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-[#014a2f] mb-1"
+          >
+            Email Address
+          </label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+              errors.email
+                ? "border-red-500 focus:ring-red-200"
+                : "border-gray-300 focus:ring-[#014a2f]/20"
+            }`}
+            placeholder="Enter your email address"
+          />
+          {errors.email && (
+            <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+          )}
+        </div>
 
-      <div>
-        <label
-          htmlFor="organization"
-          className="block text-sm font-medium text-[#014a2f] mb-1"
-        >
-          Organization
-        </label>
-        <input
-          type="text"
-          id="organization"
-          name="organization"
-          value={formData.organization}
-          onChange={handleChange}
-          className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-            errors.organization
-              ? "border-red-500 focus:ring-red-200"
-              : "border-gray-300 focus:ring-[#014a2f]/20"
-          }`}
-          placeholder="Enter your organization"
-        />
-        {errors.organization && (
-          <p className="mt-1 text-sm text-red-600">{errors.organization}</p>
-        )}
-      </div>
+        <div>
+          <label
+            htmlFor="organization"
+            className="block text-sm font-medium text-[#014a2f] mb-1"
+          >
+            Organization
+          </label>
+          <input
+            type="text"
+            id="organization"
+            name="organization"
+            value={formData.organization}
+            onChange={handleChange}
+            className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+              errors.organization
+                ? "border-red-500 focus:ring-red-200"
+                : "border-gray-300 focus:ring-[#014a2f]/20"
+            }`}
+            placeholder="Enter your organization"
+          />
+          {errors.organization && (
+            <p className="mt-1 text-sm text-red-600">{errors.organization}</p>
+          )}
+        </div>
 
-      <div>
-        <label
-          htmlFor="designation"
-          className="block text-sm font-medium text-[#014a2f] mb-1"
-        >
-          Designation
-        </label>
-        <input
-          type="text"
-          id="designation"
-          name="designation"
-          value={formData.designation}
-          onChange={handleChange}
-          className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-            errors.designation
-              ? "border-red-500 focus:ring-red-200"
-              : "border-gray-300 focus:ring-[#014a2f]/20"
-          }`}
-          placeholder="Enter your designation"
-        />
-        {errors.designation && (
-          <p className="mt-1 text-sm text-red-600">{errors.designation}</p>
-        )}
-      </div>
+        <div>
+          <label
+            htmlFor="designation"
+            className="block text-sm font-medium text-[#014a2f] mb-1"
+          >
+            Designation
+          </label>
+          <input
+            type="text"
+            id="designation"
+            name="designation"
+            value={formData.designation}
+            onChange={handleChange}
+            className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+              errors.designation
+                ? "border-red-500 focus:ring-red-200"
+                : "border-gray-300 focus:ring-[#014a2f]/20"
+            }`}
+            placeholder="Enter your designation"
+          />
+          {errors.designation && (
+            <p className="mt-1 text-sm text-red-600">{errors.designation}</p>
+          )}
+        </div>
 
-      <div>
-        <label
-          htmlFor="signature"
-          className="block text-sm font-medium text-[#014a2f] mb-1"
-        >
-          Signature (Optional)
-        </label>
-        <div className="border rounded-md p-1 border-gray-300 signature-container">
-          <div className="bg-gray-50 flex flex-col items-center border border-gray-200 rounded">
-            <SignaturePadJSX ref={signatureRef} onEnd={saveSignature} />
-            <div className="flex w-full p-2 bg-gray-50 justify-between">
-              <p className="text-xs text-gray-500">
-                {formData.signatureData ? 
-                  "✓ Signature saved" : 
-                  "Sign above using finger or stylus"}
-              </p>
-              <button
-                type="button"
-                onClick={clearSignature}
-                className="text-xs text-[#014a2f] font-medium hover:text-[#014a2f]/80"
-              >
-                Clear
-              </button>
+        <div>
+          <label
+            htmlFor="signature"
+            className="block text-sm font-medium text-[#014a2f] mb-1"
+          >
+            Signature (Optional)
+          </label>
+          <div className="border rounded-md p-1 border-gray-300 signature-container">
+            <div className="bg-gray-50 flex flex-col items-center border border-gray-200 rounded">
+              <SignaturePadJSX ref={signatureRef} onEnd={saveSignature} />
+              <div className="flex w-full p-2 bg-gray-50 justify-between items-center">
+                <p className="text-xs text-gray-500">
+                  {formData.signatureData ? 
+                    <span className="flex items-center text-green-700">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Signature saved
+                    </span> : 
+                    <span className="flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                      </svg>
+                      Sign above
+                    </span>
+                  }
+                </p>
+                <button
+                  type="button"
+                  onClick={clearSignature}
+                  className="text-xs bg-gray-200 text-gray-700 py-1 px-2 rounded hover:bg-gray-300 transition-colors"
+                >
+                  Clear
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="mt-8">
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full bg-[#014a2f] text-white py-3 flex items-center justify-center font-medium rounded-md shadow-md hover:bg-[#014a2f]/90 hover:shadow-lg transition-all"
-        >
-          {isSubmitting ? (
-            <>
-              <svg
-                className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
-              Registering...
-            </>
-          ) : (
-            "Register for Meeting"
+        <div>
+          <button
+            type="submit"
+            disabled={isSubmitting || (meeting && meeting.status !== 'ONGOING')}
+            className="w-full bg-yellow-400 hover:bg-yellow-500 text-[#014a2f] py-3 px-4 rounded-md font-medium transition-colors mobile-touch-feedback"
+          >
+            {isSubmitting ? "Registering..." : 
+             (meeting && meeting.status === 'UPCOMING') ? "Registration not open yet" :
+             (meeting && meeting.status !== 'ONGOING') ? "Registration closed" : 
+             "Register"}
+          </button>
+          
+          {/* Mobile-friendly timing note */}
+          {meeting && meeting.status === 'ONGOING' && (
+            <p className="text-xs text-center text-gray-500 mt-2">
+              Registration closes 2 hours after meeting start
+            </p>
           )}
-        </button>
-      </div>
-    </form>
+        </div>
+      </form>
+    </div>
   );
 }

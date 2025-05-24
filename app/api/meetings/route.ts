@@ -35,9 +35,10 @@ export async function GET(request: NextRequest) {
     // Filter by meeting date based on filter type
     if (showActive) {
       // Upcoming meetings: those that haven't started yet
+      // Convert the date to ISO string for accurate comparison
       console.log('Filtering for upcoming meetings. Current time:', now);
       where.date = {
-        gte: now,
+        gte: now.toISOString(),
       };
       console.log('Using where clause for upcoming meetings query:', JSON.stringify(where));
     } else if (showOngoing) {
@@ -50,8 +51,8 @@ export async function GET(request: NextRequest) {
       
       // Between 2 hours ago and now
       where.date = {
-        gte: twoHoursAgo,
-        lte: now,
+        gte: twoHoursAgo.toISOString(),
+        lte: now.toISOString(),
       };
       
       console.log('Using where clause for ongoing meetings query:', JSON.stringify(where));
@@ -93,17 +94,37 @@ export async function GET(request: NextRequest) {
     console.log(`Found ${meetings.length} meetings matching criteria:`, 
       meetings.map(m => ({ id: m.id, title: m.title, date: m.date })));
 
-    // Return meetings with more detailed information for debugging
-    const response = {
-      meetings,
-      total,
-      hasMore: (page + 1) * limit < total,
-      query: { showActive, department, creatorEmail },
-      timestamp: now.toISOString()
-    };
-    
+    // Return the meetings array directly as the client expects
     console.log('Returning API response with meetings count:', meetings.length);
-    return json(response);
+    
+    // Add meeting status to each meeting based on the date
+    const meetingsWithStatus = meetings.map(meeting => {
+      // Calculate meeting status based on registration requirements
+      // Meeting registration is only allowed for ongoing meetings (not upcoming ones)
+      // Registration closes automatically 2 hours after meeting start
+      const meetingDate = new Date(meeting.date);
+      const twoHoursAfterStart = new Date(meetingDate.getTime() + (2 * 60 * 60 * 1000));
+      
+      // Log meeting date information for debugging
+      console.log(`Meeting ${meeting.id}: Date=${meetingDate.toISOString()}, Now=${now.toISOString()}`);
+      console.log(`  - Is Upcoming: ${meetingDate > now}`);
+      
+      let status = 'UPCOMING';
+      if (meetingDate <= now) {
+        if (now <= twoHoursAfterStart) {
+          status = 'ONGOING'; // Meeting is in progress and registration is still open
+        } else {
+          status = 'CLOSED'; // Meeting has ended or registration period is over
+        }
+      }
+      
+      return {
+        ...meeting,
+        status
+      };
+    });
+    
+    return json(meetingsWithStatus);
   } catch (error) {
     console.error("Error fetching meetings:", error);
     return json({ error: "Failed to fetch meetings" }, { status: 500 });

@@ -9,6 +9,7 @@ interface Meeting {
   location: string;
   meetingType?: string;
   onlineMeetingUrl?: string;
+  status?: 'UPCOMING' | 'ONGOING' | 'CLOSED';
   _count?: {
     attendees: number;
     resources?: number;
@@ -208,7 +209,7 @@ export default function MeetingCard({ meeting }: { meeting: Meeting }) {
           {/* Resources indicator removed from here and moved to the top of the card */}
 
           {/* Attendees */}
-          {meeting._count?.attendees && meeting._count.attendees > 0 && (
+          {meeting._count?.attendees !== undefined && (
             <div className="flex items-center text-sm">
               <svg
                 xmlns="http://www.w3.org/2000/svg"

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { useAuth } from '../../lib/auth';
 import SectorFilter from '../../components/SectorFilter';
+import { MeetingCardSkeleton } from '../../components/SkeletonLoader';
 
 const { useState, useEffect } = React;
 
@@ -16,12 +17,13 @@ interface Meeting {
   date: string;
   location: string;
   meetingType: string;
-  meetingId?: string; // Add meetingId field for sector filtering
+  meetingId?: string;
   sector?: string;
   onlineMeetingUrl?: string;
   registrationEnd?: string;
   createdAt: string;
   updatedAt: string;
+  status?: 'UPCOMING' | 'ONGOING' | 'CLOSED'; // Meeting status from API
   _count?: {
     attendees: number;
     resources?: number;
@@ -77,6 +79,7 @@ export default function MeetingsPage() {
   const fetchMeetings = async () => {
     try {
       setLoading(true);
+      setError(''); // Clear any previous errors
       
       // Build query parameters
       const queryParams = new URLSearchParams();
@@ -100,21 +103,37 @@ export default function MeetingsPage() {
       }
       
       const queryString = queryParams.toString();
-      const response = await fetch(`/api/meetings${queryString ? `?${queryString}` : ''}`);
+      const apiUrl = `/api/meetings${queryString ? `?${queryString}` : ''}`;
+      console.log('Fetching meetings from:', apiUrl);
+      
+      const response = await fetch(apiUrl);
       
       if (!response.ok) {
-        throw new Error('Failed to fetch meetings');
+        const errorText = await response.text();
+        console.error('API error response:', errorText);
+        throw new Error(`Failed to fetch meetings: ${response.status} ${errorText || response.statusText}`);
       }
       
       const data = await response.json();
+      console.log('Successfully fetched meetings:', data.length);
+      
+      // Verify data is an array before filtering
+      if (!Array.isArray(data)) {
+        console.error('API returned non-array data:', data);
+        throw new Error('Invalid response format from server');
+      }
       
       // Filter out meetings that ended more than 24 hours ago
       const activeFilteredMeetings = data.filter((meeting: Meeting) => !hasEndedOverDay(meeting.date));
       setMeetings(activeFilteredMeetings);
       setFilteredMeetings(activeFilteredMeetings);
     } catch (err: any) {
-      setError(err.message || 'An error occurred while fetching meetings');
       console.error('Error fetching meetings:', err);
+      setError(err.message || 'An error occurred while fetching meetings');
+      
+      // Provide fallback empty arrays to prevent UI errors
+      setMeetings([]);
+      setFilteredMeetings([]);
     } finally {
       setLoading(false);
     }
@@ -262,11 +281,15 @@ export default function MeetingsPage() {
       {error && <div className="p-4 mb-4 text-red-700 bg-red-100 rounded-md">{error}</div>}
       
       {loading ? (
-        <div className="flex justify-center items-center h-40">
-          <DualColorSpinner size={40} />
-          <span className="ml-2">Loading meetings...</span>
+        // Show skeleton loaders while content is loading
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array(6).fill(0).map((_, index) => (
+            <div key={`skeleton-${index}`} className="h-full">
+              <MeetingCardSkeleton />
+            </div>
+          ))}
         </div>
-      ) : meetings.length === 0 ? (
+      ) : filteredMeetings.length === 0 ? (
         <div className="text-center py-10">
           <p className="text-gray-500">No meetings available.</p>
         </div>
@@ -380,16 +403,16 @@ export default function MeetingsPage() {
               
               <div className="bg-gray-50 px-4 py-3 flex justify-between items-center">
                 <span className={`text-xs font-medium 
-                  ${getMeetingStatus(meeting.date) === 'upcoming' ? 'text-[#014a2f]' : 
-                    getMeetingStatus(meeting.date) === 'ongoing' ? 'text-blue-600' : 
+                  ${meeting.status === 'UPCOMING' ? 'text-[#014a2f]' : 
+                    meeting.status === 'ONGOING' ? 'text-blue-600' : 
                     'text-gray-500'}`}
                 >
-                  {getMeetingStatus(meeting.date) === 'upcoming' ? (
+                  {meeting.status === 'UPCOMING' ? (
                     <>Starts in: {timeUntilMeeting(meeting.date)}</>
-                  ) : getMeetingStatus(meeting.date) === 'ongoing' ? (
-                    <>Currently active</>
+                  ) : meeting.status === 'ONGOING' ? (
+                    <>Currently active - Registration open</>
                   ) : (
-                    <>Recently ended</>
+                    <>Registration closed</>
                   )}
                 </span>
                 
@@ -401,18 +424,22 @@ export default function MeetingsPage() {
                     View Details
                   </Link>
                   
-                  {getMeetingStatus(meeting.date) === 'ongoing' ? (
+                  {meeting.status === 'ONGOING' ? (
                     <Link 
                       href={`/meetings/${meeting.id}/register`}
-                      className="text-sm text-[#014a2f] hover:text-[#014a2f]/80"
+                      className="text-sm bg-[#014a2f] text-white hover:bg-[#014a2f]/90 px-2 py-1 rounded"
                     >
                       Register
                     </Link>
-                  ) : getMeetingStatus(meeting.date) === 'upcoming' ? (
-                    <span className="text-sm text-gray-400 cursor-not-allowed">
+                  ) : meeting.status === 'UPCOMING' ? (
+                    <span className="text-sm text-gray-400 cursor-not-allowed px-2 py-1">
                       Registration Pending
                     </span>
-                  ) : null}
+                  ) : (
+                    <span className="text-sm text-gray-400 cursor-not-allowed px-2 py-1">
+                      Registration Closed
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

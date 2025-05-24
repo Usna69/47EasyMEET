@@ -15,6 +15,7 @@ interface Meeting {
   sector: string | null;
   meetingType?: string;
   onlineMeetingUrl?: string;
+  status?: 'UPCOMING' | 'ONGOING' | 'CLOSED';
   _count?: {
     attendees: number;
     resources?: number;
@@ -69,9 +70,13 @@ export default function ClientMeetings({ initialMeetings }: { initialMeetings: M
       const data = await response.json();
       console.log('Meetings API response:', data);
       
-      // Extract meetings array from the response
-      if (data && data.meetings) {
-        console.log(`Found ${data.meetings.length} meetings in API response`);
+      // API now returns the meetings array directly
+      if (Array.isArray(data)) {
+        console.log(`Found ${data.length} meetings in API response`);
+        setMeetings(data);
+      } else if (data && data.meetings) {
+        // Fallback for backward compatibility
+        console.log(`Found ${data.meetings.length} meetings in API response (legacy format)`);
         setMeetings(data.meetings);
       } else {
         console.warn('No meetings found in API response or invalid response structure');

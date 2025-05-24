@@ -1,14 +1,18 @@
 import React from 'react';
 import Link from 'next/link';
 
-export default function Footer() {
+interface FooterProps {
+  className?: string;
+}
+
+export default function Footer({ className = '' }: FooterProps) {
   return (
-    <footer className="bg-[#014a2f] text-white py-12">
+    <footer className={`bg-[#014a2f] text-white py-8 md:py-12 ${className}`}>
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-1 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-4 md:gap-8">
           <div>
-            <h3 className="text-xl font-semibold mb-4">Contact Us</h3>
-            <ul className="space-y-2">
+            <h3 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">Contact Us</h3>
+            <ul className="space-y-3">
               <li className="flex items-start">
                 <a 
                   href="https://maps.google.com/?q=City+Hall,+Nairobi,+Kenya" 
@@ -55,7 +59,7 @@ export default function Footer() {
           </div>
         </div>
         
-        <div className="border-t border-white/20 mt-10 pt-6 text-center text-white/60">
+        <div className="border-t border-white/20 mt-6 md:mt-10 pt-4 md:pt-6 text-center text-white/60 text-sm md:text-base">
           <p>&copy; 2025 SMART NAIROBI. All rights reserved.</p>
         </div>
       </div>

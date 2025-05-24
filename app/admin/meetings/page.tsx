@@ -22,6 +22,7 @@ interface Meeting {
   location: string;
   meetingType: string;
   onlineMeetingUrl?: string;
+  status?: 'UPCOMING' | 'ONGOING' | 'CLOSED';
   _count: {
     attendees: number;
     resources?: number;
@@ -95,9 +96,34 @@ export default function MeetingsPage() {
       const data = await response.json();
 
       // Filter meetings for non-admin users
-      let filteredMeetings = data.meetings;
+      // The API now returns an array directly instead of a wrapped object
+      let filteredMeetings = Array.isArray(data) ? data : [];
+
+      // Add any missing status fields based on date (for backward compatibility)
+      filteredMeetings = filteredMeetings.map(meeting => {
+        if (!meeting.status) {
+          const meetingDate = new Date(meeting.date);
+          const now = new Date();
+          const twoHoursAfterStart = new Date(meetingDate.getTime() + (2 * 60 * 60 * 1000));
+
+          let status = 'UPCOMING';
+          if (meetingDate <= now) {
+            if (now <= twoHoursAfterStart) {
+              status = 'ONGOING';
+            } else {
+              status = 'CLOSED';
+            }
+          }
+
+          return {
+            ...meeting,
+            status
+          };
+        }
+        return meeting;
+      });
       if (!auth.isAuthorized(["ADMIN", "DIRECTOR", "ASSISTANT_DIRECTOR"])) {
-        filteredMeetings = data.meetings.filter(
+        filteredMeetings = filteredMeetings.filter(
           (meeting: Meeting) => !hasEndedOverDay(meeting.date)
         );
       }
@@ -105,7 +131,8 @@ export default function MeetingsPage() {
       setMeetings((prev: Meeting[]) =>
         append ? [...prev, ...filteredMeetings] : filteredMeetings
       );
-      setHasMore(data.hasMore);
+      // Since the API no longer returns hasMore, we'll determine it based on the requested limit
+      setHasMore(filteredMeetings.length === 9); // If we got a full page of results, assume there are more
       setPage(pageNum);
       setError("");
     } catch (err) {
@@ -538,22 +565,21 @@ export default function MeetingsPage() {
                   <div className="bg-gray-50 px-4 py-3 flex justify-between items-center">
                     <span
                       className={`text-xs font-medium 
-                      ${
-                        getMeetingStatus(meeting.date) === "upcoming"
+                      ${meeting.status === "UPCOMING"
                           ? "text-[#014a2f]"
-                          : getMeetingStatus(meeting.date) === "ongoing"
+                          : meeting.status === "ONGOING"
                           ? "text-blue-600"
                           : "text-gray-500"
                       }`}
                     >
-                      {getMeetingStatus(meeting.date) === "upcoming" ? (
+                      {meeting.status === "UPCOMING" ? (
                         <>Starts in: {timeUntilMeeting(meeting.date)}</>
-                      ) : getMeetingStatus(meeting.date) === "ongoing" ? (
+                      ) : meeting.status === "ONGOING" ? (
                         <>Currently active</>
                       ) : hasEndedOverDay(meeting.date) ? (
                         <>Ended over 24h ago</>
                       ) : (
-                        <>Recently ended</>
+                        <>Registration closed</>
                       )}
                     </span>
 
@@ -565,7 +591,7 @@ export default function MeetingsPage() {
                         View Details
                       </Link>
 
-                      {isUpcoming(meeting.date) && (
+                      {meeting.status === "UPCOMING" && (
                         <Link
                           href={`/admin/meetings/${meeting.id}/edit`}
                           className="text-sm text-gray-600 hover:text-gray-800"

@@ -12,7 +12,7 @@ export default function CreateMeetingPage() {
   const auth = useSessionAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
+  const [successPopup, setSuccessPopup] = useState(false);
 
   // Form state
   const [title, setTitle] = useState('');
@@ -104,7 +104,7 @@ export default function CreateMeetingPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setSuccess(false);
+    setSuccessPopup(false);
     setLoading(true);
 
     try {
@@ -180,7 +180,12 @@ export default function CreateMeetingPage() {
       });
 
       if (response.ok) {
-        setSuccess(true);
+        // Show success popup and redirect to admin dashboard after a delay
+        setSuccessPopup(true);
+        // Longer delay (3 seconds) for better user experience
+        setTimeout(() => {
+          router.push('/admin');
+        }, 3000); // Redirect after 3 seconds
       } else {
         const data = await response.json();
         setError(data.error || 'Failed to create meeting');
@@ -239,49 +244,6 @@ export default function CreateMeetingPage() {
             </div>
             <div className="ml-3">
               <p className="text-sm text-red-700">{error}</p>
-            </div>
-          </div>
-        </div>
-      ) : success ? (
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-md shadow-sm mb-6">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <p className="text-green-700 font-medium">Meeting created successfully!</p>
-                <div className="mt-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSuccess(false);
-                      setTitle('');
-                      setDescription('');
-                      setDate('');
-                      setTime('');
-                      setLocation('');
-                      setSector('');
-                      setMeetingType('PHYSICAL');
-                      setMeetingCategory('INTERNAL');
-                      setOnlineMeetingUrl('');
-                      setResources([]);
-                    }}
-                    className="bg-green-100 hover:bg-green-200 text-green-800 px-3 py-1 rounded-md text-sm font-medium"
-                  >
-                    Create Another Meeting
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => window.location.href = '/admin/meetings'}
-                    className="ml-2 bg-white hover:bg-gray-100 text-gray-800 border border-gray-300 px-3 py-1 rounded-md text-sm font-medium"
-                  >
-                    View All Meetings
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
         </div>
