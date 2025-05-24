@@ -29,6 +29,7 @@ interface Stats {
   totalAttendees: number;
   sectorsRepresented: number;
   upcomingMeetings: number;
+  ongoingMeetings: number; // Add ongoing meetings count
   attendanceRate: number;
 }
 
@@ -38,6 +39,7 @@ export default function StatsSection() {
     totalAttendees: 0,
     sectorsRepresented: 0,
     upcomingMeetings: 0,
+    ongoingMeetings: 0,
     attendanceRate: 0
   });
   const [loading, setLoading] = useState(true);
@@ -80,6 +82,7 @@ export default function StatsSection() {
           totalAttendees: 0,
           sectorsRepresented: 0,
           upcomingMeetings: 0,
+          ongoingMeetings: 0,
           attendanceRate: 0
         });
         
@@ -90,6 +93,7 @@ export default function StatsSection() {
             totalAttendees: data.totalAttendees || 0,
             sectorsRepresented: data.sectorsRepresented || 0,
             upcomingMeetings: data.upcomingMeetings || 0,
+            ongoingMeetings: data.ongoingMeetings || 0,
             attendanceRate: data.attendanceRate || 0
           });
           console.log('Stats updated with values:', data);
@@ -244,6 +248,7 @@ export default function StatsSection() {
             }
           />
           
+            {/* Upcoming Meetings */}
             <StatItem 
               value={stats.upcomingMeetings}
               label="Upcoming Meetings"
@@ -251,6 +256,18 @@ export default function StatsSection() {
               icon={
               <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            }
+          />
+          
+            {/* Ongoing Meetings */}
+            <StatItem 
+              value={stats.ongoingMeetings}
+              label="Ongoing Meetings"
+              className="bg-gradient-to-r from-white to-yellow-50 border-l-4 border-yellow-500"
+              icon={
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
               </svg>
             }
           />

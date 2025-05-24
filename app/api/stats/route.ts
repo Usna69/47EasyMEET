@@ -64,17 +64,30 @@ export async function GET(request: Request) {
     const sectorsCount = sectorsData.length;
     console.log('Sectors represented in user-created meetings:', sectorsCount);
 
-    // Get upcoming user-created meetings (meetings from today onward)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Get upcoming user-created meetings (meetings that haven't started yet)
+    // This should match the same definition used in the meetings API with ?active=true
+    const now = new Date();
     
     const upcomingCount = await prisma.meeting.count({
       where: {
         ...userCreatedFilter,
-        date: { gte: today },
+        date: { gte: now }, // Use current time instead of midnight to exclude ongoing meetings
       },
     });
     console.log('Upcoming user-created meetings:', upcomingCount);
+    
+    // Get ongoing user-created meetings (started but within 2-hour registration window)
+    const twoHoursAgo = new Date(now.getTime() - (2 * 60 * 60 * 1000));
+    const ongoingCount = await prisma.meeting.count({
+      where: {
+        ...userCreatedFilter,
+        date: { 
+          gte: twoHoursAgo,
+          lt: now
+        },
+      },
+    });
+    console.log('Ongoing user-created meetings:', ongoingCount);
 
     // Calculate actual attendance rate based on real data
     // First, get all past meetings with their associated attendees
@@ -84,7 +97,7 @@ export async function GET(request: Request) {
     const pastMeetings = await prisma.meeting.findMany({
       where: {
         ...userCreatedFilter,
-        date: { lt: today }, // Only past meetings
+        date: { lt: now }, // Only past meetings (use the 'now' variable we defined earlier)
       },
       include: {
         attendees: true, // Include the actual attendees
@@ -130,6 +143,7 @@ export async function GET(request: Request) {
       totalAttendees: attendeeCount,
       sectorsRepresented: sectorsCount,
       upcomingMeetings: upcomingCount,
+      ongoingMeetings: ongoingCount, // Add ongoing meetings count
       attendanceRate: attendanceRate,
       timestamp: new Date().toISOString() // Add timestamp to show when stats were generated
     };
