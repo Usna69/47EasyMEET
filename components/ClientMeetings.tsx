@@ -171,21 +171,29 @@ export default function ClientMeetings({ initialMeetings }: { initialMeetings: M
           {sectorFilter ? `${getSectorName(sectorFilter)} Meetings` : viewMode === 'upcoming' ? 'Upcoming Meetings' : 'Ongoing Meetings'}
         </h2>
         
-        {/* Toggle Switch - Improved for mobile */}
+        {/* Simple text toggle for mobile */}
         <div className="flex flex-wrap items-center mt-2 sm:mt-0">
-          <div className="flex items-center mr-4 mb-2 sm:mb-0 min-h-[44px]">
-            <span className={`text-sm font-medium mr-2 ${viewMode === 'upcoming' ? 'text-[#014a2f]' : 'text-gray-500'}`}>Upcoming</span>
+          <div className="flex items-center space-x-4 mr-4 mb-2 sm:mb-0 min-h-[44px]">
             <button 
-              onClick={toggleViewMode}
-              className="relative inline-flex h-7 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 shadow-sm"
-              style={{ backgroundColor: viewMode === 'upcoming' ? '#014a2f' : '#aa8700' }}
-              aria-label={viewMode === 'upcoming' ? 'Switch to ongoing meetings' : 'Switch to upcoming meetings'}
+              onClick={() => viewMode !== 'upcoming' && toggleViewMode()}
+              className={`px-3 py-2 rounded-md font-medium text-sm min-w-[100px] text-center transition-colors ${viewMode === 'upcoming' 
+                ? 'bg-[#014a2f] text-white font-bold' 
+                : 'text-gray-600 hover:bg-gray-100'}`}
+              aria-label="View upcoming meetings"
+              disabled={viewMode === 'upcoming'}
             >
-              <span 
-                className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow ${viewMode === 'upcoming' ? 'translate-x-1.5' : 'translate-x-7.5'}`}
-              />
+              Upcoming
             </button>
-            <span className={`text-sm font-medium ml-2 ${viewMode === 'ongoing' ? 'text-[#aa8700]' : 'text-gray-500'}`}>Ongoing</span>
+            <button 
+              onClick={() => viewMode !== 'ongoing' && toggleViewMode()}
+              className={`px-3 py-2 rounded-md font-medium text-sm min-w-[100px] text-center transition-colors ${viewMode === 'ongoing' 
+                ? 'bg-[#aa8700] text-white font-bold' 
+                : 'text-gray-600 hover:bg-gray-100'}`}
+              aria-label="View ongoing meetings"
+              disabled={viewMode === 'ongoing'}
+            >
+              Ongoing
+            </button>
           </div>
           
           <div className="text-gray-500 flex-shrink-0">
