@@ -4,6 +4,10 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import RegForm from "../../../../components/RegForm";
 
+// Disable caching for this route to ensure fresh meeting data is always used
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 interface RegistrationPageParams {
   params: Promise<{
     id: string;

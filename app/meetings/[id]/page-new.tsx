@@ -43,7 +43,7 @@ export default function MeetingDetails() {
       console.log('Sector letterhead check:', sectorLetterhead);
       
       // Get the letterhead image if available
-      if (sectorLetterhead.hasLetterhead && meeting.sector === 'OG' && sectorLetterhead.headerImageData) {
+      if (sectorLetterhead.hasLetterhead && (meeting.sector === 'OG' || meeting.sector === 'DMC') && sectorLetterhead.headerImageData) {
         try {
           // Add the letterhead as background
           doc.addImage(

@@ -3,6 +3,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useSessionAuth } from '../../../../lib/session-auth';
+import { getAllSectors } from '../../../../utils/sectorUtils';
 
 // Using React hooks directly from React import
 const { useState, useEffect } = React;
@@ -28,20 +29,8 @@ export default function CreateMeetingPage() {
   const [physicalLocation, setPhysicalLocation] = useState('');
   const [resources, setResources] = useState<File[]>([]);
   
-  // Sectors data with official codes - exactly matching the sector filter dropdown
-  const [sectors, setSectors] = useState<Array<{name: string, code: string}>>([  
-    { name: 'Boroughs Administration and Personnel', code: 'BA&P' },
-    { name: 'Built Environment and Urban Planning Sector', code: 'BE&UP' },
-    { name: 'Business and Hustler Opportunities', code: 'B&HO' },
-    { name: 'Finance and Economic Planning Affairs', code: 'F&EPA' },
-    { name: 'Green Nairobi (Environment, Water, Food and Agriculture)', code: 'GN' },
-    { name: 'Health Wellness and Nutrition', code: 'HW&N' },
-    { name: 'Innovation and Digital Economy', code: 'IDE' },
-    { name: 'Inclusivity, Public Participation and Customer Service Sector', code: 'IPP&CS' },
-    { name: 'Mobility and Works', code: 'M&W' },
-    { name: 'Office of the Governor', code: 'OG' },
-    { name: 'Talents, Skills Development and Care', code: 'TS&DC' }
-  ]);
+  // Get sectors data from the utility function
+  const [sectors, setSectors] = useState<Array<{name: string, code: string}>>(getAllSectors());
   
   // Fetch sectors from API
   const [apiSectors, setApiSectors] = useState<string[]>([]);

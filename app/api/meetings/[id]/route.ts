@@ -87,6 +87,15 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       meetingId: existingMeeting.meetingId,
     };
     
+    // Always recalculate registrationEnd when the meeting date changes
+    // Registration ends 2 hours after meeting starts
+    const meetingDate = new Date(body.date);
+    const registrationEndTime = new Date(meetingDate);
+    registrationEndTime.setHours(registrationEndTime.getHours() + 2);
+    updateData.registrationEnd = registrationEndTime.toISOString();
+    
+    console.log('Recalculated registration end time:', updateData.registrationEnd);
+    
     // The meetingCategory field is not in the Prisma schema so we should not include it
     // Instead, we need to make sure we include the meetingType field if it exists
     if (body.meetingType || (existingMeeting as any).meetingType) {

@@ -7,6 +7,7 @@ const SECTOR_NAMES: Record<string, string> = {
   'BA&P': 'Boroughs Administration and Personnel',
   'BE&UP': 'Built Environment and Urban Planning Sector',
   'B&HO': 'Business and Hustler Opportunities',
+  'DMC': 'Disaster Management and Coordination',
   'F&EPA': 'Finance and Economic Planning Affairs',
   'GN': 'Green Nairobi (Environment, Water, Food and Agriculture)',
   'HW&N': 'Health Wellness and Nutrition',

@@ -13,18 +13,18 @@ export async function getSectorLetterhead(sectorCode: string): Promise<{
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
   
   // Check if this sector has a letterhead
-  if (sectorCode === 'OG') {
+  if (sectorCode === 'OG' || sectorCode === 'DMC') {
     try {
       // Use direct reference to the file in the public directory
-      const headerImagePath = `${baseUrl}/letterheads/OG.jpg`;
+      const headerImagePath = `${baseUrl}/letterheads/${sectorCode}.jpg`;
       
-      console.log('Using OG letterhead from public directory:', headerImagePath);
+      console.log(`Using ${sectorCode} letterhead from public directory:`, headerImagePath);
       
       // Return the image path - will be converted to data URL in the client code
       return {
         hasLetterhead: true,
         headerImageData: headerImagePath,
-        // No footer image as it will be included in the OG.jpg
+        // No footer image as it will be included in the letterhead jpg
         footerImageData: undefined
       };
     } catch (error) {

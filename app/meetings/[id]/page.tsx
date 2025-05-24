@@ -43,7 +43,7 @@ export default function MeetingDetails() {
       console.log('Sector letterhead check:', sectorLetterhead);
       
       // Get the letterhead image if available
-      if (sectorLetterhead.hasLetterhead && meeting.sector === 'OG' && sectorLetterhead.headerImageData) {
+      if (sectorLetterhead.hasLetterhead && (meeting.sector === 'OG' || meeting.sector === 'DMC') && sectorLetterhead.headerImageData) {
         try {
           // Need to fetch the image first to convert to data URL
           console.log('Fetching letterhead image from:', sectorLetterhead.headerImageData);
