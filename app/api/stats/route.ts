@@ -8,9 +8,6 @@ export async function GET(request: Request) {
   const headersList = headers();
   
   console.log('Stats API called with params:', Object.fromEntries(url.searchParams.entries()));
-  // Log important headers without using iterator
-  console.log('Cache-Control header:', headersList.get('cache-control'));
-  console.log('Pragma header:', headersList.get('pragma'));
   
   // Force a database connection refresh and clear the query cache
   await prisma.$disconnect();
