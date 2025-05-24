@@ -185,7 +185,7 @@ export default function MeetingsPage() {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
-          setPage((prevPage) => prevPage + 1);
+          setPage((prevPage: number) => prevPage + 1);
         }
       },
       { threshold: 0.5 }
