@@ -363,6 +363,16 @@ export default function MeetingDetails() {
               )}
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
+                {meeting.sector && (
+                  <div className="bg-gray-50 p-4 rounded-md">
+                    <h3 className="text-sm font-medium text-gray-500 mb-1">Sector</h3>
+                    <p className="text-gray-800">
+                      {getSectorName(meeting.sector)}
+                      <span className="text-xs text-gray-500 ml-2">({meeting.sector})</span>
+                    </p>
+                  </div>
+                )}
+                
                 <div className="bg-gray-50 p-4 rounded-md">
                   <h3 className="text-sm font-medium text-gray-500 mb-1">Date & Time</h3>
                   <p className="text-gray-800">{format(new Date(meeting.date), 'PPP p')}</p>
@@ -373,20 +383,26 @@ export default function MeetingDetails() {
                   <p className="text-gray-800">{meeting.location}</p>
                 </div>
                 
+                {meeting.onlineMeetingUrl && (
+                  <div className="bg-gray-50 p-4 rounded-md">
+                    <h3 className="text-sm font-medium text-gray-500 mb-1">Meeting Link</h3>
+                    <p className="text-gray-800 truncate">
+                      <a 
+                        href={meeting.onlineMeetingUrl} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="text-blue-600 hover:underline"
+                      >
+                        {meeting.onlineMeetingUrl}
+                      </a>
+                    </p>
+                  </div>
+                )}
+                
                 <div className="bg-gray-50 p-4 rounded-md">
                   <h3 className="text-sm font-medium text-gray-500 mb-1">Attendees</h3>
                   <p className="text-gray-800">{meeting._count?.attendees || meeting.attendees.length}</p>
                 </div>
-                
-                {meeting.sector && (
-                  <div className="bg-gray-50 p-4 rounded-md">
-                    <h3 className="text-sm font-medium text-gray-500 mb-1">Sector</h3>
-                    <p className="text-gray-800">
-                      {getSectorName(meeting.sector)}
-                      <span className="text-xs text-gray-500 ml-2">({meeting.sector})</span>
-                    </p>
-                  </div>
-                )}
                 
                 {meeting.meetingCategory && (
                   <div className="bg-gray-50 p-4 rounded-md">
@@ -408,26 +424,7 @@ export default function MeetingDetails() {
                 )}
               </div>
               
-              {meeting.onlineMeetingUrl && (
-                <div className="mb-6">
-                  <h2 className="text-lg font-semibold mb-2 text-[#014a2f]">Meeting Link</h2>
-                  {meeting.onlineMeetingUrl ? (
-                    <a 
-                      href={meeting.onlineMeetingUrl} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      className="text-blue-600 hover:underline break-words inline-flex items-center"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                      </svg>
-                      {meeting.onlineMeetingUrl}
-                    </a>
-                  ) : (
-                    <p className="text-gray-500 italic">Link will be available when the meeting starts</p>
-                  )}
-                </div>
-              )}
+
             </div>
 
             {meeting.attendees.length > 0 && (
