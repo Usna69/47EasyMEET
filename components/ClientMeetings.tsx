@@ -167,25 +167,28 @@ export default function ClientMeetings({ initialMeetings }: { initialMeetings: M
   return (
     <div>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-        <h2 className="text-3xl font-semibold">
+        <h2 className="text-2xl sm:text-3xl font-semibold">
           {sectorFilter ? `${getSectorName(sectorFilter)} Meetings` : viewMode === 'upcoming' ? 'Upcoming Meetings' : 'Ongoing Meetings'}
         </h2>
         
-        {/* Toggle Switch */}
-        <div className="flex items-center space-x-3">
-          <span className={`text-sm font-medium ${viewMode === 'upcoming' ? 'text-[#014a2f]' : 'text-gray-500'}`}>Upcoming</span>
-          <button 
-            onClick={toggleViewMode}
-            className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2"
-            style={{ backgroundColor: viewMode === 'upcoming' ? '#014a2f' : '#aa8700' }}
-          >
-            <span 
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${viewMode === 'upcoming' ? 'translate-x-1' : 'translate-x-6'}`}
-            />
-          </button>
-          <span className={`text-sm font-medium ${viewMode === 'ongoing' ? 'text-[#aa8700]' : 'text-gray-500'}`}>Ongoing</span>
+        {/* Toggle Switch - Improved for mobile */}
+        <div className="flex flex-wrap items-center mt-2 sm:mt-0">
+          <div className="flex items-center mr-4 mb-2 sm:mb-0 min-h-[44px]">
+            <span className={`text-sm font-medium mr-2 ${viewMode === 'upcoming' ? 'text-[#014a2f]' : 'text-gray-500'}`}>Upcoming</span>
+            <button 
+              onClick={toggleViewMode}
+              className="relative inline-flex h-7 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 shadow-sm"
+              style={{ backgroundColor: viewMode === 'upcoming' ? '#014a2f' : '#aa8700' }}
+              aria-label={viewMode === 'upcoming' ? 'Switch to ongoing meetings' : 'Switch to upcoming meetings'}
+            >
+              <span 
+                className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow ${viewMode === 'upcoming' ? 'translate-x-1.5' : 'translate-x-7.5'}`}
+              />
+            </button>
+            <span className={`text-sm font-medium ml-2 ${viewMode === 'ongoing' ? 'text-[#aa8700]' : 'text-gray-500'}`}>Ongoing</span>
+          </div>
           
-          <div className="ml-4 text-gray-500">
+          <div className="text-gray-500 flex-shrink-0">
             {isLoading ? (
               <div className="flex items-center">
                 <DualColorSpinner size={20} />
