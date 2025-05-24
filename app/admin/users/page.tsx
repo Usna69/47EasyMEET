@@ -371,7 +371,7 @@ export default function UserManagement() {
         </div>
       )}
 
-      <div className="mb-6 flex justify-between items-center">
+      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <Link
             href="/admin"
@@ -394,17 +394,17 @@ export default function UserManagement() {
             User Management
           </h1>
         </div>
-        <div className="flex space-x-3">
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
           <button
             onClick={handleClearAllData}
             disabled={clearingData}
-            className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md transition-colors disabled:opacity-50 flex items-center"
+            className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md transition-colors disabled:opacity-50 flex items-center justify-center w-full sm:w-auto"
           >
             {clearingData ? "Clearing..." : "Clear All Meeting Data"}
           </button>
           <button
-            onClick={() => setShowCreateForm(!showCreateForm)}
-            className="bg-[#014a2f] hover:bg-[#014a2f]/90 text-white font-medium py-2 px-4 rounded-md transition-colors flex items-center"
+            onClick={() => setShowCreateForm(true)}
+            className="bg-[#014a2f] hover:bg-[#014a2f]/90 text-white font-medium py-2 px-4 rounded-md transition-colors flex items-center justify-center w-full sm:w-auto"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -420,7 +420,7 @@ export default function UserManagement() {
                 d="M12 6v6m0 0v6m0-6h6m-6 0H6"
               />
             </svg>
-            {showCreateForm ? "Cancel" : "Create New User"}
+            Create New User
           </button>
         </div>
       </div>
@@ -583,7 +583,7 @@ export default function UserManagement() {
 
       {/* Delete User Confirmation Dialog */}
       {showDeleteConfirm && userToDelete && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white shadow-md rounded-lg p-6 border border-gray-200 max-w-md mx-auto">
             <h2 className="text-xl font-semibold text-[#014a2f] mb-4">
               Delete User Confirmation
@@ -770,13 +770,13 @@ export default function UserManagement() {
         </div>
       )}
 
-      {/* Users Table */}
-      <div className="bg-white shadow-md rounded-lg p-6 border border-gray-200">
+      {/* Users Table/Card View */}
+      <div className="bg-white shadow-md rounded-lg p-4 sm:p-6 border border-gray-200">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-[#014a2f]">System Users</h2>
           <button
             onClick={() => setShowResetForm(true)}
-            className="bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-1 px-4 rounded-md transition-colors flex items-center"
+            className="bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-1 px-4 rounded-md transition-colors flex items-center justify-center w-full sm:w-auto"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -834,8 +834,10 @@ export default function UserManagement() {
             No users found. Create your first user!
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full table-auto">
+          <>
+            {/* Desktop Table View - Hidden on Mobile */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full table-auto">
               <thead>
                 <tr className="bg-gray-100">
                   <th className="px-4 py-2 text-left">Name</th>
@@ -955,8 +957,133 @@ export default function UserManagement() {
                   </tr>
                 ))}
               </tbody>
-            </table>
-          </div>
+              </table>
+            </div>
+            
+            {/* Mobile Card View - Shown only on Mobile */}
+            <div className="md:hidden space-y-4">
+              {users.map((user: User) => (
+              <div key={user.id} className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+                <div className="flex flex-col space-y-4 sm:space-y-6">
+                  <div className="flex justify-between items-start">
+                    <h3 className="font-medium text-gray-900">{user.name}</h3>
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        user.role === "ADMIN"
+                          ? "bg-purple-100 text-purple-800"
+                          : "bg-blue-100 text-blue-800"
+                      }`}
+                    >
+                      {user.role}
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex items-center">
+                      <span className="font-medium text-gray-500 w-24">Email:</span>
+                      <span className="text-gray-900">{user.email}</span>
+                    </div>
+                    
+                    <div className="flex items-center">
+                      <span className="font-medium text-gray-500 w-24">Department:</span>
+                      <span className="text-gray-900">{user.department || "-"}</span>
+                    </div>
+                    
+                    <div className="flex items-center">
+                      <span className="font-medium text-gray-500 w-24">Status:</span>
+                      {user.passwordResetRequested ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                          Reset Requested
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          Active
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {auth.user?.role === "ADMIN" && (
+                    <div className="pt-2 border-t border-gray-200 mt-2">
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => {
+                            setSelectedUserId(user.id);
+                            setShowResetForm(true);
+                          }}
+                          className="text-yellow-600 hover:text-yellow-800 flex items-center text-sm"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4 mr-1"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+                            />
+                          </svg>
+                          Reset Password
+                        </button>
+
+                        {user.passwordResetRequested && (
+                          <button
+                            onClick={() => handleClearResetRequest(user.id)}
+                            className="text-gray-600 hover:text-gray-800 flex items-center text-sm"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-4 w-4 mr-1"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M6 18L18 6M6 6l12 12"
+                              />
+                            </svg>
+                            Clear Request
+                          </button>
+                        )}
+
+                        <button
+                          onClick={() => {
+                            setUserToDelete(user);
+                            setShowDeleteConfirm(true);
+                          }}
+                          className="text-red-600 hover:text-red-800 flex items-center text-sm"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4 mr-1"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
