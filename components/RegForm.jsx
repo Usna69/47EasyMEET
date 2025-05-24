@@ -2,8 +2,9 @@
 
 import React, { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import SignaturePadJSX from "./SignaturePadJSX";
 
-export default function RegForm(meetingId) {
+export default function RegForm({ meetingId }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -124,6 +125,11 @@ export default function RegForm(meetingId) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Save signature before submission if it exists
+    if (signatureRef.current && !signatureRef.current.isEmpty()) {
+      saveSignature();
+    }
 
     if (!validateForm()) {
       return;
@@ -132,26 +138,60 @@ export default function RegForm(meetingId) {
     setIsSubmitting(true);
 
     try {
+      // Ensure meetingId is available
+      if (!meetingId) {
+        console.error("No meetingId provided to registration form");
+        alert("Registration error: Meeting ID is missing");
+        return;
+      }
+      
+      console.log("Registration form data:", { meetingId, ...formData });
+      
+      // Create FormData object to match the API expectations
+      const formDataObj = new FormData();
+      formDataObj.append('meetingId', meetingId);
+      formDataObj.append('name', formData.name);
+      formDataObj.append('email', formData.email);
+      formDataObj.append('organization', formData.organization);
+      formDataObj.append('designation', formData.designation);
+      
+      // Only append signature if it exists
+      if (formData.signatureData) {
+        formDataObj.append('signatureData', formData.signatureData);
+      }
+      
+      console.log('Submitting registration for meeting:', meetingId);
+      
+      // Use classic form submission approach
       const response = await fetch("/api/attendees", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          meetingId,
-          ...formData,
-        }),
+        body: formDataObj,
       });
 
+      // Log the full response for debugging
+      console.log("Registration response status:", response.status);
+      const responseText = await response.text();
+      console.log("Registration response text:", responseText);
+      
+      // Parse the response if it's JSON
+      let errorData = {};
+      try {
+        if (responseText) {
+          errorData = JSON.parse(responseText);
+        }
+      } catch (e) {
+        console.error("Error parsing response:", e);
+      }
+      
       if (!response.ok) {
-        throw new Error("Failed to register");
+        throw new Error(errorData.error || "Failed to register");
       }
 
       // Navigate to success page
       router.push(`/meetings/${meetingId}/register/success`);
     } catch (error) {
       console.error("Registration error:", error);
-      alert("An error occurred while registering. Please try again.");
+      alert(error.message || "An error occurred while registering. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -268,6 +308,7 @@ export default function RegForm(meetingId) {
         </label>
         <div className="border rounded-md p-1 border-gray-300">
           <div className="bg-gray-50 flex flex-col items-center border border-gray-200 rounded">
+            <SignaturePadJSX ref={signatureRef} onEnd={saveSignature} />
             <div className="flex w-full p-2 bg-gray-50 justify-between">
               <p className="text-xs text-gray-500">
                 Sign above using finger or stylus

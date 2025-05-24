@@ -37,6 +37,17 @@ export default async function RegistrationPage(props: RegistrationPageParams) {
   const isRegistrationOpen =
     now >= meetingStartTime && now <= registrationEndTime && !isMeetingEnded;
 
+  // Add debugging for registration status
+  console.log('Meeting Status Debug:', {
+    meetingId: meeting.id,
+    meetingTitle: meeting.title,
+    currentTime: now.toISOString(),
+    meetingStartTime: meetingStartTime.toISOString(),
+    registrationEndTime: registrationEndTime.toISOString(),
+    isRegistrationOpen,
+    isMeetingEnded
+  });
+  
   return (
     <div
       className="py-8"
