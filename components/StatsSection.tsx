@@ -260,7 +260,10 @@ export default function StatsSection() {
             }
           />
           
-            {/* Ongoing Meetings */}
+            {/* Clear for a new row in mobile view but not on desktop */}
+            <div className="block md:hidden w-full"></div>
+            
+            {/* Ongoing Meetings - Take one column */}
             <StatItem 
               value={stats.ongoingMeetings}
               label="Ongoing Meetings"
@@ -271,9 +274,9 @@ export default function StatsSection() {
               </svg>
             }
           />
-          
-            {/* Enhanced Attendance Rate Card with Progress Bar */}
-            <div className="bg-white rounded-lg shadow-md p-6 col-span-1 md:col-span-2 lg:col-span-4">
+
+            {/* Attendance Rate Card - Take remaining space on the same row */}
+            <div className="bg-white rounded-lg shadow-md p-6 col-span-1 md:col-span-1 lg:col-span-3">
               <div className="flex items-center mb-4">
                 <div className="text-yellow-500 mr-4 text-3xl">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
