@@ -104,6 +104,9 @@ export default function ClientMeetings({ initialMeetings }: { initialMeetings: M
   // Listen for sector filter changes from the HomeSectorFilter component
   useEffect(() => {
     const handleSectorFilterChange = (event: Event) => {
+      // Store current scroll position before making changes
+      const scrollPosition = window.scrollY;
+      
       const customEvent = event as CustomEvent<{ sector: string }>;
       const newSector = customEvent.detail.sector;
       setSectorFilter(newSector || undefined);
@@ -115,6 +118,14 @@ export default function ClientMeetings({ initialMeetings }: { initialMeetings: M
       } else {
         sessionStorage.removeItem('selectedSector');
       }
+      
+      // Restore scroll position after a short delay to ensure DOM has updated
+      setTimeout(() => {
+        window.scrollTo({
+          top: scrollPosition,
+          behavior: 'auto' // Use 'auto' instead of 'smooth' to prevent visible scrolling
+        });
+      }, 100);
     };
 
     window.addEventListener('sectorfilterchange', handleSectorFilterChange as EventListener);
@@ -159,9 +170,20 @@ export default function ClientMeetings({ initialMeetings }: { initialMeetings: M
   
   // Toggle view mode between upcoming and ongoing meetings
   const toggleViewMode = () => {
+    // Store current scroll position before making changes
+    const scrollPosition = window.scrollY;
+    
     const newMode = viewMode === 'upcoming' ? 'ongoing' : 'upcoming';
     setViewMode(newMode);
     fetchMeetings(sectorFilter, newMode);
+    
+    // Restore scroll position after a short delay to ensure DOM has updated
+    setTimeout(() => {
+      window.scrollTo({
+        top: scrollPosition,
+        behavior: 'auto' // Use 'auto' instead of 'smooth' to prevent visible scrolling
+      });
+    }, 100);
   };
   
   return (
