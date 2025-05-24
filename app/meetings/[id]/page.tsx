@@ -232,8 +232,8 @@ export default function MeetingDetails() {
         position: 'relative',
       }}>
       <div className="absolute inset-0 bg-white bg-opacity-60 z-0"></div>
-      <div className="container relative z-10">
-      <div className="mb-6">
+      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <div className="max-w-6xl mx-auto">
         <Link href="/" className="text-gray-800 hover:text-[#014a2f] flex items-center">
           <svg className="w-4 h-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
@@ -242,11 +242,11 @@ export default function MeetingDetails() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
         <div className="md:col-span-2">
-          <div className="bg-white shadow-md rounded-lg p-6 border border-gray-100" style={{ minHeight: "580px" }}>
+              <div className="bg-white shadow-md rounded-lg p-4 sm:p-6 border border-gray-100" style={{ minHeight: "580px" }}>
             <div className="flex justify-between items-start mb-2">
-              <h1 className="text-2xl font-semibold text-[#014a2f]">{meeting.title}</h1>
+                  <h1 className="text-2xl sm:text-3xl font-bold text-[#014a2f]">{meeting.title}</h1>
               {meeting.meetingId && (
                 <span className="bg-yellow-100 text-[#014a2f] text-xs font-semibold px-2.5 py-0.5 rounded">
                   {meeting.meetingId}
@@ -255,18 +255,18 @@ export default function MeetingDetails() {
             </div>
             
             <div className="mb-6">
-              <p className="text-gray-700 whitespace-pre-wrap">{meeting.description}</p>
+                    <p className="text-gray-600 whitespace-pre-line text-sm sm:text-base">{meeting.description}</p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="bg-gray-50 p-4 rounded-md">
                 <h3 className="text-sm font-medium text-gray-500 mb-1">Date & Time</h3>
-                <p className="text-gray-800">{format(new Date(meeting.date), 'PPP p')}</p>
+                    <span className="text-gray-600 text-sm sm:text-base">{format(new Date(meeting.date), 'EEEE, MMMM d, yyyy h:mm a')}</span>
               </div>
               
               <div className="bg-gray-50 p-4 rounded-md">
                 <h3 className="text-sm font-medium text-gray-500 mb-1">Location</h3>
-                <p className="text-gray-800">{meeting.location}</p>
+                    <span className="text-gray-600 text-sm sm:text-base">{meeting.location}</span>
               </div>
               
               <div className="bg-gray-50 p-4 rounded-md">
@@ -357,13 +357,13 @@ export default function MeetingDetails() {
         </div>
 
         <div>
-          <div className="bg-white shadow-md rounded-lg p-6 border border-gray-100" style={{ minHeight: "580px", display: "flex", flexDirection: "column" }}>
+              <div className="bg-white shadow-md rounded-lg p-4 sm:p-6 border border-gray-100" style={{ minHeight: "580px", display: "flex", flexDirection: "column" }}>
             <h2 className="text-xl font-semibold mb-4 text-[#014a2f]">Meeting QR Code</h2>
             <p className="text-gray-600 mb-4">Scan this QR code to register for the meeting</p>
             <div className="flex justify-center mb-4">
               <QRCodeDisplay url={`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/meetings/${meeting.id}/register`} />
             </div>
-            <div className="text-center space-y-3">
+            <div className="lg:col-span-1 space-y-4 sm:space-y-6 mt-4 lg:mt-0">
               {/* Check if meeting has started, hasn't completely ended, and registration period hasn't ended yet */}
               {(() => {
                   const now = new Date();
@@ -385,7 +385,7 @@ export default function MeetingDetails() {
                     return (
                       <Link 
                         href={`/meetings/${meeting.id}/register`}
-                        className="bg-yellow-400 hover:bg-yellow-500 text-[#014a2f] px-6 py-3 rounded-md font-medium transition-colors inline-block w-full"
+                        className="bg-yellow-400 hover:bg-yellow-500 text-[#014a2f] px-6 py-3 rounded-md font-medium transition-colors w-full inline-block text-center text-sm sm:text-base"
                       >
                         Register for this Meeting
                       </Link>
@@ -429,7 +429,7 @@ export default function MeetingDetails() {
           {/* Resources Section */}
           {meeting && meeting.resources && meeting.resources.length > 0 && (
             <div className="my-8">
-              <div className="bg-white shadow-md rounded-lg border border-gray-200 overflow-hidden">
+                    <div className="flex items-start p-3 sm:p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
                 <div className="bg-gradient-to-r from-[#014a2f] to-[#016a3f] px-6 py-4 flex items-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -440,13 +440,14 @@ export default function MeetingDetails() {
                 <div className="p-6">
                   <p className="text-gray-700 mb-4">Download the following resources for this meeting:</p>
                   
-                  <div className="space-y-4">
+
+                  <div className="flex flex-wrap gap-2">
                     {meeting.resources.map((resource: any) => (
                       <div
                         key={resource.id}
-                        className="flex justify-between items-center p-4 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+                        className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-4 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
                       >
-                        <div className="flex items-center">
+                        <div className="flex items-center mb-3 sm:mb-4">
                           {/* File icon based on type */}
                           <div className="mr-4 bg-[#014a2f]/10 p-3 rounded-md">
                             {resource.fileType.includes('pdf') ? (
@@ -488,7 +489,7 @@ export default function MeetingDetails() {
                           download={resource.fileName}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center px-5 py-2.5 text-sm font-bold text-white bg-[#014a2f] rounded-md hover:bg-[#014a2f]/90 transition-colors shadow-sm"
+                          className="flex items-center px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-white bg-[#014a2f] rounded-md hover:bg-[#014a2f]/90 transition-colors shadow-sm"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -499,9 +500,10 @@ export default function MeetingDetails() {
                     ))}
                   </div>
                   
+
                   {/* Download all button if multiple resources */}
                   {meeting.resources.length > 1 && (
-                    <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="mt-6 sm:mt-8 mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
                       <div className="flex items-center text-gray-700">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />

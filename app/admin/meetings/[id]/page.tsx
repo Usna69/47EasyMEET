@@ -90,8 +90,8 @@ export default function AdminMeetingDetails() {
   // Instead of redirecting, show login message
   if (!auth?.isLoggedIn) {
     return (
-      <div className="container mx-auto py-8 px-4 text-center">
-        <div className="bg-white shadow-md rounded-lg p-8 border border-gray-100 max-w-md mx-auto">
+      <div className="container mx-auto py-6 sm:py-8 px-4 text-center">
+        <div className="bg-white shadow-md rounded-lg p-4 sm:p-8 border border-gray-100 col-span-2 w-md mx-auto">
           <h1 className="text-2xl font-semibold mb-6 text-[#014a2f]">Authentication Required</h1>
           <p className="text-gray-600 mb-6">Please log in to view meeting details.</p>
           <a 
@@ -107,7 +107,7 @@ export default function AdminMeetingDetails() {
 
   if (loading) {
     return (
-      <div className="container mx-auto py-8 px-4">
+      <div className="container mx-auto py-6 sm:py-8 px-4">
         <div className="text-center">
           <p>Loading meeting details...</p>
         </div>
@@ -117,7 +117,7 @@ export default function AdminMeetingDetails() {
 
   if (error || !meeting) {
     return (
-      <div className="container mx-auto py-8 px-4">
+      <div className="container mx-auto py-6 sm:py-8 px-4">
         <div className="text-center">
           <p className="text-red-500">{error || 'Meeting not found'}</p>
           <Link 
@@ -134,7 +134,7 @@ export default function AdminMeetingDetails() {
   // URL is now set in the useEffect hook above
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container mx-auto py-6 sm:py-8 px-4">
       <div className="mb-6">
         <Link href="/admin" className="text-gray-700 hover:text-gray-900 flex items-center">
           <svg className="w-4 h-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -144,11 +144,11 @@ export default function AdminMeetingDetails() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
         <div className="lg:col-span-2">
-          <div className="bg-white shadow-md rounded-lg p-6 border border-gray-100">
-            <div className="flex justify-between items-start mb-6">
-              <h1 className="text-2xl font-semibold text-[#014a2f]">{meeting.title}</h1>
+          <div className="bg-white shadow-md rounded-lg p-4 sm:p-6 border border-gray-100 mb-6">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-6">
+              <h1 className="text-2xl sm:text-3xl font-bold text-[#014a2f]">{meeting.title}</h1>
               <span className="bg-yellow-100 text-[#014a2f] text-xs font-semibold px-2.5 py-0.5 rounded">
                 {meeting.meetingId || 'No ID'}
               </span>
@@ -158,7 +158,7 @@ export default function AdminMeetingDetails() {
               <p className="text-gray-700 whitespace-pre-wrap">{meeting.description}</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
               <div className="bg-gray-50 p-4 rounded-md">
                 <h3 className="text-sm font-medium text-gray-500 mb-1">Date & Time</h3>
                 <p className="text-gray-800">{format(new Date(meeting.date), 'PPP p')}</p>
@@ -227,39 +227,37 @@ export default function AdminMeetingDetails() {
                 <div className="bg-gray-50 p-4 rounded-md">
                   <ul className="divide-y divide-gray-200">
                     {meeting.resources.map((resource: { id: string; fileName: string; fileType: string; fileUrl: string; fileSize: number; }) => (
-                      <li key={resource.id} className="py-3 flex justify-between items-center">
-                        <div className="flex items-center">
-                          <div className="bg-gray-200 rounded-md p-2 mr-3">
-                            {resource.fileType.includes('pdf') ? (
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                              </svg>
-                            ) : resource.fileType.includes('image') ? (
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
-                            ) : resource.fileType.includes('word') || resource.fileType.includes('document') ? (
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                              </svg>
-                            ) : resource.fileType.includes('sheet') || resource.fileType.includes('excel') ? (
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                              </svg>
-                            ) : resource.fileType.includes('presentation') || resource.fileType.includes('powerpoint') ? (
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-                              </svg>
-                            ) : (
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                              </svg>
-                            )}
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-900 truncate">{resource.fileName}</p>
-                            <p className="text-xs text-gray-500">{(resource.fileSize / 1024).toFixed(1)} KB</p>
-                          </div>
+                      <li key={resource.id} className="border border-gray-200 rounded-lg p-3 sm:p-4 bg-gray-50">
+                        <div className="flex flex-wrap gap-2">
+                          {resource.fileType.includes('pdf') ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                          ) : resource.fileType.includes('image') ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4-4 4 4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                            </svg>
+                          ) : resource.fileType.includes('word') || resource.fileType.includes('document') ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          ) : resource.fileType.includes('sheet') || resource.fileType.includes('excel') ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          ) : resource.fileType.includes('presentation') || resource.fileType.includes('powerpoint') ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                            </svg>
+                          ) : (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900 truncate">{resource.fileName}</p>
+                          <p className="text-xs text-gray-500">{(resource.fileSize / 1024).toFixed(1)} KB</p>
                         </div>
                         <a 
                           href={resource.fileUrl} 
@@ -313,8 +311,8 @@ export default function AdminMeetingDetails() {
         </div>
         
         <div>
-          <div className="bg-white shadow-md rounded-lg p-6 border border-gray-100">
-            <h2 className="text-lg font-semibold mb-4 text-[#014a2f]">QR Code</h2>
+          <div className="bg-white shadow-md rounded-lg p-4 sm:p-6 border border-gray-100 mb-6">
+            <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-[#014a2f]">QR Code</h2>
             <p className="text-gray-600 mb-4">Scan this QR code to access the meeting details.</p>
             
             <div className="flex justify-center mb-4">
@@ -333,8 +331,8 @@ export default function AdminMeetingDetails() {
           
           {/* Meeting card component removed */}
           
-          <div className="bg-white shadow-md rounded-lg p-6 border border-gray-100 mt-6">
-            <h2 className="text-lg font-semibold mb-4 text-[#014a2f]">Meeting ID</h2>
+          <div className="bg-white shadow-md rounded-lg p-4 sm:p-6 border border-gray-100 mt-6">
+            <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-[#014a2f]">Meeting ID</h2>
             <p className="text-gray-600 mb-4">Use this ID for reference:</p>
             <div className="bg-gray-100 p-3 rounded-md text-center font-mono text-sm break-all">
               {meeting.meetingId || 'Not assigned'}
