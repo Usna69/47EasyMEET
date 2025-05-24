@@ -51,17 +51,20 @@ export default function RegForm({ meetingId }) {
     }
   };
 
-  // Save signature data when completed
+  // Save signature data when completed - enhanced version
   const saveSignature = () => {
     if (signatureRef.current && !signatureRef.current.isEmpty()) {
       try {
         // Get signature as base64 encoded PNG with transparent background
         const signatureData = signatureRef.current.toDataURL("image/png");
 
-        console.log("Signature captured successfully");
+        console.log("Signature captured successfully", signatureData.substring(0, 50) + "...");
 
         // Verify it's a valid base64 image string before saving
         if (signatureData && signatureData.startsWith("data:image")) {
+          // Debug the size of the signature data
+          console.log(`Signature data length: ${signatureData.length} bytes`);
+          
           setFormData({
             ...formData,
             signatureData,
@@ -74,6 +77,12 @@ export default function RegForm({ meetingId }) {
               ...errors,
               signatureData: "",
             });
+          }
+          
+          // Show visual confirmation of signature capture
+          const signatureContainer = document.querySelector(".signature-container");
+          if (signatureContainer) {
+            signatureContainer.classList.add("signature-saved");
           }
         } else {
           console.error("Invalid signature format - not a valid image");
@@ -129,6 +138,8 @@ export default function RegForm({ meetingId }) {
     // Save signature before submission if it exists
     if (signatureRef.current && !signatureRef.current.isEmpty()) {
       saveSignature();
+      // Small delay to ensure signature is processed
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
 
     if (!validateForm()) {
@@ -306,12 +317,14 @@ export default function RegForm({ meetingId }) {
         >
           Signature (Optional)
         </label>
-        <div className="border rounded-md p-1 border-gray-300">
+        <div className="border rounded-md p-1 border-gray-300 signature-container">
           <div className="bg-gray-50 flex flex-col items-center border border-gray-200 rounded">
             <SignaturePadJSX ref={signatureRef} onEnd={saveSignature} />
             <div className="flex w-full p-2 bg-gray-50 justify-between">
               <p className="text-xs text-gray-500">
-                Sign above using finger or stylus
+                {formData.signatureData ? 
+                  "✓ Signature saved" : 
+                  "Sign above using finger or stylus"}
               </p>
               <button
                 type="button"

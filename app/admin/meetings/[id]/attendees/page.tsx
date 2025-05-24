@@ -17,6 +17,7 @@ interface Attendee {
   phoneNumber: string;
   designation: string;
   organization: string;
+  signatureData?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -95,6 +96,12 @@ export default function AdminAttendeesList() {
       
       // Create table with attendees
       const tableColumn = ['Name', 'Email', 'Phone', 'Organization', 'Designation'];
+      // Create log for debugging signatures
+      console.log('PDF Generation - Processing signatures for attendees:');
+      attendees.forEach((a: Attendee) => {
+        console.log(`Attendee ${a.name}: ${a.signatureData ? 'Has signature data' : 'No signature data'}`);
+      });
+
       const tableRows = attendees.map((attendee: Attendee) => [
         attendee.name,
         attendee.email,
@@ -110,21 +117,51 @@ export default function AdminAttendeesList() {
       tableRows.forEach((row: any[], index: number) => {
         const attendee = attendees[index];
         try {
-          // Simplified signature handling - focus on reliability
-          if (attendee.signatureData && attendee.signatureData.length > 100) {
-            console.log(`Admin PDF - Adding signature for ${attendee.name}`);
-            // Just include the minimal required properties
-            row.push({
-              image: attendee.signatureData,
-              width: 30, // Slightly larger for better visibility
-              height: 15
-            });
+          // Better, more resilient signature handling with detailed debugging
+          if (attendee.signatureData && attendee.signatureData.length > 20) {
+            console.log(`PDF: Adding signature for ${attendee.name}`);
+            console.log(`Signature data sample: ${attendee.signatureData.substring(0, 50)}...`);
+            
+            // Apply different strategies to fix signature data format
+            let signatureData = attendee.signatureData;
+            
+            // First strategy: Make sure it's a data URL
+            if (!signatureData.startsWith('data:image')) {
+              console.log('Applying strategy 1: Adding data:image/png;base64, prefix');
+              signatureData = `data:image/png;base64,${signatureData.replace(/^data:image\/(png|jpeg|jpg);base64,/, '')}`;              
+            }
+            
+            // Second strategy: Try direct render with simpler properties
+            try {
+              console.log('Adding signature to PDF with enhanced properties');
+              row.push({
+                image: signatureData,
+                width: 30,
+                height: 15,
+                cellPadding: 1
+              });
+              console.log('Signature added successfully');
+            } catch (innerErr) {
+              console.error('Error with first signature rendering strategy:', innerErr);
+              
+              // Fallback strategy: Try with minimal properties
+              try {
+                console.log('Trying fallback signature rendering strategy');
+                row.push({
+                  image: signatureData
+                });
+                console.log('Fallback signature added successfully');
+              } catch (fallbackErr) {
+                console.error('All signature rendering strategies failed:', fallbackErr);
+                row.push(''); // Empty cell as last resort
+              }
+            }
           } else {
-            console.log(`Admin PDF - No signature for ${attendee.name}`);
+            console.log(`No usable signature for ${attendee.name}`);
             row.push(''); // Empty cell if no signature
           }
         } catch (sigErr) {
-          console.error('Error rendering signature in admin PDF:', sigErr);
+          console.error('Error processing signature:', sigErr);
           row.push('');
         }
       });

@@ -29,7 +29,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return jsonResponse({ error: 'Meeting not found' }, 404);
     }
 
-    // Get all attendees for the meeting
+    // Get all attendees for the meeting, explicitly including signature data
     const attendees = await prisma.attendee.findMany({
       where: {
         meetingId: id,
@@ -37,6 +37,25 @@ export async function GET(request: NextRequest, context: RouteContext) {
       orderBy: {
         createdAt: 'desc',
       },
+      select: {
+        id: true,
+        name: true,
+        email: true, 
+        phoneNumber: true,
+        organization: true,
+        designation: true,
+        signatureData: true,
+        createdAt: true
+      }
+    });
+    
+    // Log the presence of signature data for debugging
+    attendees.forEach(attendee => {
+      if (attendee.signatureData) {
+        console.log(`API: Attendee ${attendee.name} has signature data (${attendee.signatureData.length} chars)`);
+      } else {
+        console.log(`API: Attendee ${attendee.name} has no signature data`);
+      }
     });
 
     return jsonResponse(attendees);
