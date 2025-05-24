@@ -44,6 +44,7 @@ export default function MeetingsPage() {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [showDepartmentMeetings, setShowDepartmentMeetings] = useState(true);
   const observerTarget = React.useRef<HTMLDivElement>(null);
 
   // Get time of day for greeting
@@ -81,10 +82,18 @@ export default function MeetingsPage() {
       });
 
       // Add filters based on user role
-      if (auth.user?.role === "CREATOR" && auth.user?.email) {
-        queryParams.set("creatorEmail", auth.user.email);
-        if (auth.user?.department) {
+      if (auth.user?.role === "ADMIN") {
+        queryParams.set("isAdmin", "true");
+      } else if (auth.user?.role === "CREATOR" && auth.user?.email) {
+        queryParams.set("isCreator", "true");
+        
+        if (showDepartmentMeetings && auth.user?.department) {
+          // Show all meetings from this creator's department
+          queryParams.set("sameDepartment", "true");
           queryParams.set("department", auth.user.department);
+        } else {
+          // Show only this creator's own meetings
+          queryParams.set("creatorEmail", auth.user.email);
         }
       }
 
@@ -173,32 +182,25 @@ export default function MeetingsPage() {
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
-    if (!auth.isLoggedIn || !hasMore || loading || loadingMore) return;
-
     const observer = new IntersectionObserver(
       (entries) => {
-        const target = entries[0];
-        if (target.isIntersecting && hasMore && !loadingMore && !loading) {
-          fetchMeetings(page + 1, true);
+        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
+          setPage((prevPage) => prevPage + 1);
         }
       },
-      {
-        threshold: 0.1,
-        rootMargin: "100px",
-      }
+      { threshold: 0.5 }
     );
 
-    const currentTarget = observerTarget.current;
-    if (currentTarget) {
-      observer.observe(currentTarget);
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
     }
 
     return () => {
-      if (currentTarget) {
-        observer.unobserve(currentTarget);
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
       }
     };
-  }, [hasMore, loadingMore, loading, page, auth.isLoggedIn]);
+  }, [hasMore, loadingMore, loading]);
 
   // Format date for display
   const formatDate = (dateString: string) => {
@@ -395,6 +397,23 @@ export default function MeetingsPage() {
                 Show Only Active Meetings
               </span>
             </label>
+
+            {auth.user?.role === "CREATOR" && auth.user?.department && (
+              <button
+                onClick={() => {
+                  setShowDepartmentMeetings(!showDepartmentMeetings);
+                  setPage(0);
+                  fetchMeetings(0, false);
+                }}
+                className={`px-4 py-2 rounded-md transition-colors text-sm font-medium ${
+                  showDepartmentMeetings
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                }`}
+              >
+                {showDepartmentMeetings ? "Department Meetings" : "My Meetings Only"}
+              </button>
+            )}
 
             <button
               onClick={() => fetchMeetings(0, false)}

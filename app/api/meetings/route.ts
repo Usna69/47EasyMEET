@@ -58,16 +58,45 @@ export async function GET(request: NextRequest) {
       console.log('Using where clause for ongoing meetings query:', JSON.stringify(where));
     }
 
-    // Filter by creator email and department
-    if (creatorEmail && department) {
-      where.OR = [{ creatorEmail }, { sector: department }];
-    } else {
+    // Handle different filtering scenarios
+    // 1. Admin users: no filtering by default unless specific filters are applied
+    // 2. Creator users: see their own meetings AND meetings from their department
+    // 3. Other roles: filtered based on explicit parameters
+    
+    const isAdminRequest = searchParams.get("isAdmin") === "true";
+    const isCreatorRequest = searchParams.get("isCreator") === "true";
+    const requestSameDepartment = searchParams.get("sameDepartment") === "true";
+    
+    // For creators viewing within their department
+    if (isCreatorRequest && department && requestSameDepartment) {
+      // Show all meetings in the creator's department
+      where.sector = department;
+      console.log('Creator viewing department meetings, filtering by sector:', department);
+    } 
+    // For creators viewing only their own meetings
+    else if (isCreatorRequest && creatorEmail && !requestSameDepartment) {
+      where.creatorEmail = creatorEmail;
+      console.log('Creator viewing own meetings, filtering by creatorEmail:', creatorEmail);
+    }
+    // For admin viewing with specific filters
+    else if (isAdminRequest) {
       if (creatorEmail) {
         where.creatorEmail = creatorEmail;
       }
       if (department) {
         where.sector = department;
       }
+      console.log('Admin viewing meetings with filters:', { creatorEmail, department });
+    }
+    // For other specific filter combinations
+    else {
+      if (creatorEmail) {
+        where.creatorEmail = creatorEmail;
+      }
+      if (department) {
+        where.sector = department;
+      }
+      console.log('Applying standard filters:', { creatorEmail, department });
     }
 
     // Get total count
