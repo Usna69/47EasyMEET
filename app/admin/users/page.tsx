@@ -265,11 +265,43 @@ export default function UserManagement() {
 
       const response = await fetch("/api/admin/clear-data", {
         method: "POST",
+        // Add cache-busting to prevent cached responses
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+        }
       });
 
       if (response.ok) {
         const data = await response.json();
         setClearDataSuccess(data.message || "All data cleared successfully");
+        
+        // Trigger stats refresh through multiple methods to ensure it updates
+        console.log('Triggering stats refresh after data clearing');
+        
+        // Method 1: Use the global function if available
+        if (typeof window !== 'undefined' && (window as any).refreshStatsSection) {
+          (window as any).refreshStatsSection();
+        }
+        
+        // Method 2: Dispatch a custom event
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('meetingDataChanged'));
+        }
+        
+        // Method 3: Force refresh of API cache
+        try {
+          // Invalidate stats cache
+          const statsRefresh = await fetch(`/api/stats?t=${new Date().getTime()}`);
+          console.log('Stats API refresh status:', statsRefresh.status);
+        } catch (refreshErr) {
+          console.error('Error refreshing stats:', refreshErr);
+        }
+        
+        // Refresh the page after a short delay to ensure everything updates
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
       } else {
         const data = await response.json();
         setClearDataError(data.error || "Failed to clear data");

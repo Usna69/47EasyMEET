@@ -19,6 +19,8 @@ interface Meeting {
   creatorType?: string | null;
   meetingId?: string | null;
   meetingCategory?: string | null;
+  meetingType?: string | null;
+  onlineMeetingUrl?: string | null;
 }
 
 interface MeetingFormProps {
@@ -69,6 +71,8 @@ export default function MeetingForm({
     sector: meeting?.sector || "IDE",
     creatorType: meeting?.creatorType || defaultCreatorType, // Use default creator type
     meetingCategory: meeting?.meetingCategory || "INTERNAL",
+    meetingType: meeting?.meetingType || "PHYSICAL",
+    onlineMeetingUrl: meeting?.onlineMeetingUrl || "",
   });
 
   const [errors, setErrors] = useState({
@@ -284,27 +288,52 @@ export default function MeetingForm({
     const url = isEditing ? `/api/meetings/${meeting?.id}` : "/api/meetings";
     const method = isEditing ? "PUT" : "POST";
     try {
+      // Create the request body, handling the meetingId differently for new vs existing meetings
+      const requestBody = {
+        title: formData.title,
+        description: formData.description,
+        date: new Date(formData.date).toISOString(),
+        location: formData.location,
+        creatorEmail: auth.user?.email || meeting?.creatorEmail,
+        sector: formData.sector,
+        creatorType: formData.creatorType,
+        meetingCategory: formData.meetingCategory,
+        meetingType: formData.meetingType || "PHYSICAL",
+        onlineMeetingUrl: formData.onlineMeetingUrl || "",
+        // For edits, preserve the existing meeting ID if it exists
+        meetingId: isEditing ? meeting?.meetingId : meetingIdPreview,
+      };
+
+      console.log('Submitting meeting data:', requestBody);
+      
+      // Debug the current meeting data in case of an edit
+      if (isEditing && meeting) {
+        console.log('Original meeting data:', {
+          id: meeting.id,
+          title: meeting.title,
+          meetingId: meeting.meetingId,
+          creatorEmail: meeting.creatorEmail,
+          // Add other relevant fields
+        });
+      }
+      
       const response = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          title: formData.title,
-          description: formData.description,
-          date: new Date(formData.date).toISOString(),
-          location: formData.location,
-          creatorEmail: auth.user?.email,
-          sector: formData.sector,
-          creatorType: formData.creatorType,
-          meetingCategory: formData.meetingCategory,
-          meetingId: meetingIdPreview,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
+        // Try to get detailed error information from the response
+        const errorData = await response.json().catch(() => null);
+        console.error('API error response:', errorData);
+        
         throw new Error(
-          isEditing ? "Failed to update meeting" : "Failed to create meeting"
+          isEditing 
+            ? `Failed to update meeting: ${errorData?.error || response.statusText}` 
+            : `Failed to create meeting: ${errorData?.error || response.statusText}`
         );
       }
 
@@ -315,7 +344,14 @@ export default function MeetingForm({
       router.refresh();
     } catch (error) {
       console.error("Form submission error:", error);
-      alert(`An error occurred. Please try again.`);
+      
+      // Try to get more detailed error information
+      let errorMessage = 'An error occurred. Please try again.';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      alert(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const searchParams = url.searchParams;
     const showActive = searchParams.get("active") === "true";
+    const showOngoing = searchParams.get("ongoing") === "true";
     const creatorEmail = searchParams.get("creatorEmail");
     const department = searchParams.get("department");
     const page = parseInt(searchParams.get("page") || "0");
@@ -31,11 +32,29 @@ export async function GET(request: NextRequest) {
     // Build the where clause based on query parameters
     let where: any = {};
 
-    // Filter by meeting date (active/upcoming meetings)
+    // Filter by meeting date based on filter type
     if (showActive) {
+      // Upcoming meetings: those that haven't started yet
+      console.log('Filtering for upcoming meetings. Current time:', now);
       where.date = {
         gte: now,
       };
+      console.log('Using where clause for upcoming meetings query:', JSON.stringify(where));
+    } else if (showOngoing) {
+      // Ongoing meetings: those that have started but are still within the 2-hour registration window
+      // Based on the meeting registration requirements from memory
+      const twoHoursAgo = new Date(now.getTime() - (2 * 60 * 60 * 1000));
+      
+      console.log('Filtering for ongoing meetings. Current time:', now);
+      console.log('Registration window cutoff (2 hours ago):', twoHoursAgo);
+      
+      // Between 2 hours ago and now
+      where.date = {
+        gte: twoHoursAgo,
+        lte: now,
+      };
+      
+      console.log('Using where clause for ongoing meetings query:', JSON.stringify(where));
     }
 
     // Filter by creator email and department
@@ -70,12 +89,21 @@ export async function GET(request: NextRequest) {
       skip: page * limit,
       take: limit,
     });
+    
+    console.log(`Found ${meetings.length} meetings matching criteria:`, 
+      meetings.map(m => ({ id: m.id, title: m.title, date: m.date })));
 
-    return json({
+    // Return meetings with more detailed information for debugging
+    const response = {
       meetings,
       total,
       hasMore: (page + 1) * limit < total,
-    });
+      query: { showActive, department, creatorEmail },
+      timestamp: now.toISOString()
+    };
+    
+    console.log('Returning API response with meetings count:', meetings.length);
+    return json(response);
   } catch (error) {
     console.error("Error fetching meetings:", error);
     return json({ error: "Failed to fetch meetings" }, { status: 500 });

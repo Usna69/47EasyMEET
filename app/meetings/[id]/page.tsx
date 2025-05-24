@@ -8,6 +8,7 @@ import { notFound, useParams } from 'next/navigation';
 import Link from 'next/link';
 import QRCodeDisplay from '../../../components/QRCodeDisplay';
 import { format } from 'date-fns';
+import { getSectorName } from '../../../utils/sectorUtils';
 
 // We won't use dynamic imports for jsPDF to ensure it's available immediately when needed
 
@@ -307,7 +308,10 @@ export default function MeetingDetails() {
               {meeting.sector && (
                 <div className="bg-gray-50 p-4 rounded-md">
                   <h3 className="text-sm font-medium text-gray-500 mb-1">Sector</h3>
-                  <p className="text-gray-800">{meeting.sector}</p>
+                  <p className="text-gray-800">
+                    {getSectorName(meeting.sector)}
+                    <span className="text-xs text-gray-500 ml-2">({meeting.sector})</span>
+                  </p>
                 </div>
               )}
               {meeting.meetingCategory && (

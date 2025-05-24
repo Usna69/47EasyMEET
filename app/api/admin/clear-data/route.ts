@@ -16,16 +16,24 @@ export async function POST(request: Request) {
     await prisma.meeting.deleteMany({});
     console.log('All meetings deleted');
     
+    // Create a response with special headers to prevent caching
     return new Response(JSON.stringify({ 
       message: 'Successfully cleared all meetings, attendees, and resources data',
       deletedData: {
         meetings: true,
         attendees: true,
         resources: true
-      }
+      },
+      refreshStats: true, // Signal to the client that stats should be refreshed
+      timestamp: new Date().toISOString()
     }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
     });
   } catch (error) {
     console.error('Error clearing database:', error);
