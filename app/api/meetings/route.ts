@@ -78,9 +78,12 @@ export async function GET(request: NextRequest) {
     // Get paginated meetings
     const meetings = await prisma.meeting.findMany({
       where,
-      orderBy: {
-        date: "asc",
-      },
+      orderBy: [
+        // Order by creation date (newest first)
+        { createdAt: "desc" },
+        // Secondary ordering by meeting date
+        { date: "asc" }
+      ],
       include: {
         _count: {
           select: { attendees: true },

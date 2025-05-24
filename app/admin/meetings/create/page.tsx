@@ -12,6 +12,7 @@ export default function CreateMeetingPage() {
   const auth = useSessionAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [errorPopup, setErrorPopup] = useState(false);
   const [successPopup, setSuccessPopup] = useState(false);
 
   // Form state
@@ -104,6 +105,7 @@ export default function CreateMeetingPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setErrorPopup(false);
     setSuccessPopup(false);
     setLoading(true);
 
@@ -138,6 +140,16 @@ export default function CreateMeetingPage() {
 
       // Combine date and time into a single DateTime
       const meetingDateTime = new Date(`${date}T${time}`);
+      const now = new Date();
+      
+      // Validate meeting is not in the past
+      if (meetingDateTime < now) {
+        setError('Cannot create meetings in the past. Please select a future date and time.');
+        setErrorPopup(true);
+        setLoading(false);
+        return;
+      }
+      
       const registrationEnd = calculateRegistrationEnd();
 
       // Create form data for file uploads
@@ -196,9 +208,11 @@ export default function CreateMeetingPage() {
       } else {
         const data = await response.json();
         setError(data.error || 'Failed to create meeting');
+        setErrorPopup(true);
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred');
+      setErrorPopup(true);
       console.error('Error creating meeting:', err);
     } finally {
       setLoading(false);
@@ -253,6 +267,32 @@ export default function CreateMeetingPage() {
         </div>
       )}
       
+      {/* Error Popup */}
+      {errorPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-xl border-2 border-red-500">
+            <div className="flex items-center justify-center mb-4">
+              <div className="bg-red-500 rounded-full p-2">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+            </div>
+            <h2 className="text-2xl font-bold text-center text-red-500 mb-2">Error</h2>
+            <p className="text-gray-600 text-center mb-6">{error}</p>
+            
+            <div className="text-center">
+              <button 
+                onClick={() => setErrorPopup(false)} 
+                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 inline-block"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="flex justify-between items-center mb-6 max-w-4xl mx-auto">
         <h1 className="text-2xl font-semibold text-[#014a2f]">Create New Meeting</h1>
         <a href="/admin" className="text-gray-600 hover:text-gray-800 flex items-center">
@@ -267,19 +307,6 @@ export default function CreateMeetingPage() {
         <div className="text-center py-12">
           <div className="spinner-border" role="status">
             <span className="sr-only">Loading...</span>
-          </div>
-        </div>
-      ) : error ? (
-        <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
           </div>
         </div>
       ) : (

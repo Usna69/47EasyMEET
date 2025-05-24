@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import "../styles/mobileOptimizations.css";
+import "../styles/createMeetingButton.css";
 import React from "react";
 import NavHeader from "../components/NavHeader";
 import Footer from "../components/Footer";

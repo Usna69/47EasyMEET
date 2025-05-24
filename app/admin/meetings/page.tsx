@@ -310,7 +310,7 @@ export default function MeetingsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-6 flex justify-between items-center">
+      <div className="mb-6 meetings-header-container flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0">
         <div>
           <Link
             href="/admin"
@@ -342,10 +342,10 @@ export default function MeetingsPage() {
           )}
         </div>
 
-        <div className="flex space-x-3">
+        <div className="meetings-actions-container flex space-x-3">
           <Link
             href="/admin/meetings/create"
-            className="bg-[#014a2f] hover:bg-[#014a2f]/90 text-white font-medium py-2 px-4 rounded-md transition-colors flex items-center"
+            className="create-meeting-btn"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
