@@ -275,47 +275,41 @@ export default function StatsSection() {
             }
           />
 
-            {/* Attendance Rate Card - Take remaining space on the same row */}
-            <div className="bg-white rounded-lg shadow-md p-6 col-span-1 md:col-span-1 lg:col-span-3">
-              <div className="flex items-center mb-4">
-                <div className="text-yellow-500 mr-4 text-3xl">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
+            {/* Attendance Rate Card - Minimal height version */}
+            <div className="bg-white rounded-lg shadow-md px-4 py-3 col-span-1 md:col-span-1 lg:col-span-3" style={{ maxHeight: '110px' }}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="text-yellow-500 mr-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold text-gray-800 leading-none">Attendance Rate</h3>
+                  </div>
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-gray-800">Attendance Rate</h3>
-                  <p className="text-sm text-gray-500">Actual vs. expected meeting attendance</p>
+                  <span className="text-xl font-bold text-gray-800">{stats.attendanceRate}%</span>
                 </div>
               </div>
               
-              <div className="mt-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-3xl font-bold text-gray-800">{stats.attendanceRate}%</span>
-                  <span className="text-sm font-medium text-gray-500">
-                    {stats.attendanceRate >= 75 ? '🟢 Excellent' : 
-                     stats.attendanceRate >= 50 ? '🟡 Good' : 
-                     stats.attendanceRate > 0 ? '🔴 Needs improvement' : 'No past meetings yet'}
-                  </span>
-                </div>
-                
-                {/* Progress bar with color based on rate */}
-                <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
-                  <div 
-                    className={`h-2.5 rounded-full ${stats.attendanceRate >= 75 ? 'bg-green-500' : 
-                                                    stats.attendanceRate >= 50 ? 'bg-yellow-500' : 
-                                                    'bg-red-500'}`} 
-                    style={{ width: `${Math.max(stats.attendanceRate, 3)}%` }}
-                  ></div>
-                </div>
-                
-                <div className="text-sm text-gray-600 mt-2">
-                  {stats.attendanceRate > 0 ?
-                    <p>The attendance rate shows how many invited attendees actually participated in meetings. Higher attendance indicates effective meeting organization and engagement.</p>
-                    :
-                    <p>No past meetings data available yet. The attendance rate will be calculated once meetings are completed.</p>
-                  }
-                </div>
+              {/* Progress bar with color based on rate */}
+              <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
+                <div 
+                  className={`h-1.5 rounded-full ${stats.attendanceRate >= 75 ? 'bg-green-500' : 
+                                                  stats.attendanceRate >= 50 ? 'bg-yellow-500' : 
+                                                  'bg-red-500'}`} 
+                  style={{ width: `${Math.max(stats.attendanceRate, 3)}%` }}
+                ></div>
+              </div>
+              
+              <div className="flex justify-between mt-1">
+                <span className="text-xs text-gray-500">
+                  {stats.attendanceRate >= 75 ? 'Excellent' : 
+                   stats.attendanceRate >= 50 ? 'Good' : 
+                   stats.attendanceRate > 0 ? 'Needs improvement' : 'No data'}
+                </span>
+                <span className="text-xs text-gray-500">{stats.totalAttendees} attendees</span>
               </div>
             </div>
           </div>
