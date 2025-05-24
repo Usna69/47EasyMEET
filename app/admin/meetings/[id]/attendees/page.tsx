@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { useAuth } from '../../../../../lib/auth';
 import { useParams } from 'next/navigation';
+import { getSectorLetterhead } from '../../../../../lib/docx-to-pdf';
+import { getSectorName } from '../../../../../utils/sectorUtils';
 
 const { useState, useEffect } = React;
 
@@ -25,7 +27,17 @@ interface Attendee {
 interface Meeting {
   id: string;
   title: string;
+  description?: string;
+  date: string;
+  location: string;
+  sector?: string;
   meetingId?: string;
+  meetingCategory?: string;
+  creatorEmail?: string;
+  attendees?: Attendee[];
+  _count?: {
+    attendees: number;
+  };
 }
 
 export default function AdminAttendeesList() {
@@ -36,12 +48,16 @@ export default function AdminAttendeesList() {
   const [meeting, setMeeting] = useState<Meeting | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [pdfGenerating, setPdfGenerating] = useState(false);
 
   // Function to generate and download PDF using client-side import
   const generatePDF = async () => {
     if (!meeting || !attendees.length) return;
     
     try {
+      // Show loading indicator
+      setPdfGenerating(true);
+      
       // Dynamically import jsPDF only when the function is called
       const jsPDFModule = await import('jspdf');
       const jsPDF = jsPDFModule.default;
@@ -50,151 +66,238 @@ export default function AdminAttendeesList() {
       const autoTableModule = await import('jspdf-autotable');
       const autoTable = autoTableModule.default;
       
-      // Create new PDF document
-      const doc = new jsPDF();
+      // Create a new document - A4 size in portrait
+      const doc = new jsPDF('portrait', 'mm', 'a4');
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
       
-      // Add Nairobi County logo centered at the top
-      const nairobiLogoPath = `data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjA0NDAwIDIwNTkwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxTcGFjZT0icHJlc2VydmUiIHZlcnNpb249IjEuMSIgc2hhcGVSZW5kZXJpbmc9Imdlb21ldHJpY1ByZWNpc2lvbiIgdGV4dFJlbmRlcmluZz0iZ2VvbWV0cmljUHJlY2lzaW9uIiBpbWFnZVJlbmRlcmluZz0ib3B0aW1pemVRdWFsaXR5IiBmaWxsUnVsZT0iZXZlbm9kZCIgY2xpcFJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGZpbGw9IiNGRkRDMDAiIGQ9Ik0xMDIyMDAgMjExMmM1NTY5MSwwIDEwMDgzOCw0NTE0NyAxMDA4MzgsMTAwODM4IDAsNTU2OTEgLTQ1MTQ3LDEwMDgzOCAtMTAwODM4LDEwMDgzOCAtNTU2OTEsMCAtMTAwODM4LC00NTE0NyAtMTAwODM4LC0xMDA4MzggMCwtNTU2OTEgNDUxNDcsLTEwMDgzOCAxMDA4MzgsLTEwMDgzOHptMCA0NTgxYzUzMTYxLDAgOTYyNTcsNDMwOTYgOTYyNTcsOTYyNTcgMCw1MzE2MSAtNDMwOTYsOTYyNTcgLTk2MjU3LDk2MjU3IC01MzE2MSwwIC05NjI1NywtNDMwOTYgLTk2MjU3LC05NjI1NyAwLC01MzE2MSA0MzA5NiwtOTYyNTcgOTYyNTcsLTk2MjU3em0tMTYzNyAxMzM4OTBjLTIyMjU4MywwIDIwMDg1MywwIDAsMHoiLz48Y2lyY2xlIGZpbGw9IndoaXRlIiBjeD0iMTAyOTc3IiBjeT0iMTAyMzc0IiByPSI4NTAzMSIvPjxwYXRoIGZpbGw9IiMwMDQzMUQiIGQ9Ik0xMDIyMDAgNjY5M2M1MzE2MSwwIDk2MjU3LDQzMDk2IDk2MjU3LDk2MjU3IDAsNTMxNjEgLTQzMDk2LDk2MjU3IC05NjI1Nyw5NjI1NyAtNTMxNjEsMCAtOTYyNTcsLTQzMDk2IC05NjI1NywtOTYyNTcgMCwtNTMxNjEgNDMwOTYsLTk2MjU3IDk2MjU3LC05NjI1N3ptNzcxNTAgOTYyNjBjMCwyMjMyMiAtOTQ2Niw0MjQ0NyAtMjQ2MTMsNTY1NDIgLTI1NiwyMzggMzI5MSwyNzY5IDI4NjMsNDQ5OCAtMjUwLDEwMTMgLTYxNSwxMTc0IC00MTAwLDU5MyA3MjEsMjMwMCAxMTg2LDE1NzggMTU1MSw0ODI4IDU1LDQ4MyA1NSwxNDc3IC0zNzAsMTkzNCAtNDA2LDQzNyAtMTIzMywzNTMgLTE0NjEsMTc2IC01ODQ0LC00NTM4IC05NDkwLC0zNDk2IC05ODQ1LC0zMjcyIC0xMTkxMCw3NTI3IC0yNjAyOCwxMTg3NiAtNDExNzUsMTE4NTEgLTE1Nzg3LC0yNyAtMzA0NjQsLTQ3NzYgLTQyNjg2LC0xMjkwNCAtMTg5LC0xMjYgLTMzOSwtMzk1IC01NjUsLTM4MCAtMTA2NzgsNzM1IC0xMTc1OSwtMjE1OSAtMTE0ODgsLTM0MDQgMzksLTE3OCA1MDg2LC0xNzgzIDQ5MzksLTE4OTkgLTM5MCwtMzA3IC0yMDQyLC0xMzY1IC0yNTg4LC0xNzEzIC0xMjE4LC03NzYgLTE0ODksLTg5NCAtMjI0OCwtMTYzNiAtMTcwLC0xNjYgLTM2NywtODA2IC0yNTEsLTEyNzIgMTIzLC00OTcgNTYyLC04MjAgMzg1LC0xMDAxIC0xMzcwOCwtMTM5MjUgLTIyNjcyLC0zMTg5NSAtMjI2NTAsLTUyOTQ0IDEwNCwtMTAxNTAyIDE1NDMwMiwtMTAxNDU1IDE1NDMwMiwzeiIvPjwvc3ZnPg==`;
-
-      // Add the logo centered at the top
-      try {
-        // Get page dimensions
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const pageHeight = doc.internal.pageSize.getHeight();
-        
-        // Logo dimensions (keeping 1:1 aspect ratio)
-        const logoSize = 30; // Size of logo in mm
-        const logoX = (pageWidth - logoSize) / 2; // Center horizontally
-        const logoY = 10; // Top margin
-        
-        // Try multiple formats to ensure the logo appears
+      // Check if sector has a custom letterhead
+      const sectorLetterhead = await getSectorLetterhead(meeting.sector || '');
+      console.log('Sector letterhead check:', sectorLetterhead);
+      
+      // Get the letterhead image if available
+      if (sectorLetterhead.hasLetterhead && meeting.sector === 'OG' && sectorLetterhead.headerImageData) {
         try {
-          doc.addImage(nairobiLogoPath, 'SVG', logoX, logoY, logoSize, logoSize);
-        } catch (svgErr) {
-          console.warn('SVG format failed, trying PNG:', svgErr);
-          // Convert to PNG format as a fallback
-          doc.addImage(nairobiLogoPath, 'PNG', logoX, logoY, logoSize, logoSize);
+          // Need to fetch the image first to convert to data URL
+          console.log('Fetching letterhead image from:', sectorLetterhead.headerImageData);
+          
+          // Fetch the image and convert to blob
+          const response = await fetch(sectorLetterhead.headerImageData);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch letterhead image: ${response.status}`);
+          }
+          
+          const blob = await response.blob();
+          
+          // Convert blob to data URL
+          const reader = new FileReader();
+          const imageDataPromise = new Promise<string>((resolve, reject) => {
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+          
+          const imageData = await imageDataPromise;
+          console.log('Converted image to data URL successfully');
+          
+          // Add the letterhead as background for the entire page
+          doc.addImage(
+            imageData,
+            'JPEG',  // format
+            0,       // x position
+            0,       // y position
+            pageWidth, // width - full page width
+            pageHeight // height - full page height
+          );
+          console.log('Added letterhead image successfully');
+        } catch (imgError) {
+          console.error('Error adding letterhead image:', imgError);
         }
-      } catch (logoErr) {
-        console.error('Error adding logo:', logoErr);
-        // Continue with the PDF even if logo fails
       }
       
-      // Add header with meeting information
-      doc.setFontSize(18);
-      doc.setTextColor(1, 74, 47); // #014a2f
-      doc.text('EasyMEET - Attendance Form', 14, 22);
+      // Create a white background for the content area positioned higher on the page
+      // This will ensure text is readable on top of the letterhead image
+      const contentStartY = pageHeight * 0.22; // Start content area at 22% from the top
+      const contentHeight = pageHeight * 0.58; // Content area takes up 58% of the page height
+      const contentMargin = pageWidth * 0.1; // 10% margin on both sides
       
-      doc.setFontSize(12);
-      doc.setTextColor(0, 0, 0);
-      doc.text(`Meeting: ${meeting.title}`, 14, 30);
-      doc.text(`Date: ${format(new Date(), 'PPP')}`, 14, 36);
-      doc.text(`Total Attendees: ${attendees.length}`, 14, 42);
-      if (meeting.meetingId) {
-        doc.text(`Meeting ID: ${meeting.meetingId}`, 14, 48);
+      // Add semi-transparent white rectangle for better text readability
+      doc.setFillColor(255, 255, 255); // Pure white
+      doc.rect(
+        contentMargin, 
+        contentStartY, 
+        pageWidth - (contentMargin * 2), 
+        contentHeight, 
+        'F'
+      );
+      
+      // No border around content area
+      
+      // Add title centered and in all caps at the top of the content area
+      const titleY = contentStartY + 6; // 6mm from the top of content area
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14); // Slightly smaller title
+      doc.setTextColor(1, 74, 47); // Green text for title (#014a2f)
+      doc.text('MEETING ATTENDANCE FORM', pageWidth / 2, titleY, { align: 'center' }); // Centered and all caps
+      
+      // Meeting details in grid format
+      // First extract the data we need to display
+      const meetingTitle = meeting.title || 'Untitled Meeting';
+      const meetingDate = meeting.date ? format(new Date(meeting.date), 'PPP p') : 'No date specified';
+      const meetingLocation = meeting.location || 'No location specified';
+      const attendeeCount = attendees.length.toString();
+      const meetingId = meeting.meetingId || 'N/A';
+      const sectorName = meeting.sector ? getSectorName(meeting.sector) : 'N/A';
+      
+      // Grid of information cards
+      const detailsY = titleY + 8; // Spacing after title
+      const detailsX = contentMargin + 2; // Small indent from left margin
+      
+      // Meeting details as a simple table with clear formatting
+      const meetingDetails = [
+        ['Meeting:', meetingTitle],
+        ['Date:', meetingDate],
+        ['Location:', meetingLocation],
+        ['Attendees:', attendeeCount],
+        ['Meeting ID:', meetingId]
+      ];
+      
+      if (meeting.sector) {
+        meetingDetails.push(['Sector:', `${sectorName} (${meeting.sector})`]);
       }
       
-      // Create table with attendees
-      const tableColumn = ['Name', 'Email', 'Phone', 'Organization', 'Designation'];
-      // Create log for debugging signatures
-      console.log('PDF Generation - Processing signatures for attendees:');
-      attendees.forEach((a: Attendee) => {
-        console.log(`Attendee ${a.name}: ${a.signatureData ? 'Has signature data' : 'No signature data'}`);
+      // Add meeting details table with compact styling
+      autoTable(doc, {
+        startY: detailsY,
+        head: [],
+        body: meetingDetails,
+        theme: 'plain',
+        styles: { 
+          cellPadding: 1.5, // Minimal padding
+          fontSize: 9, // Smaller font size
+          overflow: 'linebreak',
+          textColor: [89, 89, 89], // Dark gray text (#595959)
+          minCellHeight: 4 // Smaller row height
+        },
+        columnStyles: {
+          0: { 
+            cellWidth: 24, // Narrower label column
+            fontStyle: 'bold',
+            textColor: [89, 89, 89], // Dark gray text
+            fontSize: 9 // Consistent size
+          },
+          1: { 
+            cellWidth: 'auto',
+            fontStyle: 'normal',
+            fontSize: 9, // Consistent size
+            textColor: [89, 89, 89] // Dark gray text
+          }
+        },
+        margin: { left: detailsX, right: detailsX },
       });
-
+      
+      // Get the Y position after the details table
+      const finalY = (doc as any).lastAutoTable.finalY + 1; // Minimal spacing
+      
+      // Add attendees table with signatures
+      const tableHeaders = [['Name', 'Email', 'Organization', 'Designation', 'Signature']];
+      
       const tableRows = attendees.map((attendee: Attendee) => [
-        attendee.name,
-        attendee.email,
-        attendee.phoneNumber || 'N/A',
+        attendee.name || 'N/A',
+        attendee.email || 'N/A',
         attendee.organization || 'N/A',
-        attendee.designation || 'N/A'
+        attendee.designation || 'N/A',
+        // Add signature if available
+        attendee.signatureData ? {
+          image: attendee.signatureData,
+          width: 25,
+          height: 10
+        } : '—'
       ]);
       
-      // Add signature column to the table
-      tableColumn.push('Signature');
-      
-      // Configure table options with column-specific settings
-      const tableOptions = {
-        headStyles: { fillColor: [1, 74, 47] },
-        startY: 50,
-        margin: { top: 10 },
-        styles: { overflow: 'linebreak' },
+      // Add attendees table with improved styling and minimal spacing
+      autoTable(doc, {
+        startY: finalY + 1, // Almost no spacing
+        head: tableHeaders,
+        body: tableRows,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [1, 74, 47], // #014a2f Green header background
+          textColor: 255, // White text for headers
+          fontSize: 8, // Smaller header text
+          fontStyle: 'bold',
+          halign: 'left',
+          valign: 'middle',
+          cellPadding: 2 // Less padding
+        },
+        styles: {
+          cellPadding: 1.5, // Minimal padding
+          fontSize: 8, // Smaller text
+          overflow: 'linebreak',
+          lineWidth: 0.1, // Even thinner grid lines
+          lineColor: [220, 220, 220], // Light gray grid lines
+          textColor: [89, 89, 89] // Dark gray text for all cells (#595959)
+        },
         columnStyles: {
-          // Make signature column wider (last column index is 5)
-          5: { cellWidth: 40 }
-        }
-      };
+          0: { fontStyle: 'bold' }, // Bold names
+          4: { halign: 'center' } // Center signatures
+        },
+        alternateRowStyles: {
+          fillColor: [248, 248, 248] // Light gray for alternate rows
+        },
+        margin: { left: contentMargin, right: contentMargin }
+      });
+      
+      // Position certification near the bottom of the page but not too far down
+      const certY = pageHeight - 45; // 45mm from bottom of page
+      
+      // Add certification text
+      doc.setFontSize(9); // Smaller font
+      doc.setTextColor(89, 89, 89); // Dark gray text for certification (#595959)
+      doc.text('I certify that this is an accurate record of attendance for the above meeting.', 
+        pageWidth / 2, certY, { align: 'center' });
+      
+      // Add signature lines
+      const signLineY = certY + 12; // Spacing after certification text
+      const signWidth = 70;
+      
+      // Secretary signature line
+      doc.setLineWidth(0.5);
+      doc.line(25, signLineY, 25 + signWidth, signLineY);
+      doc.setFontSize(8); // Smaller font
+      doc.text('Meeting Secretary', 25 + signWidth/2, signLineY + 5, { align: 'center' });
+      
+      // Chairperson signature line
+      doc.line(pageWidth - 25 - signWidth, signLineY, pageWidth - 25, signLineY);
+      doc.text('Chairperson', pageWidth - 25 - signWidth/2, signLineY + 5, { align: 'center' });
       
       // Update the rows to include signature images if available
       tableRows.forEach((row: any[], index: number) => {
         const attendee = attendees[index];
         try {
-          // Mobile-friendly signature handling with simplified approach
-          if (attendee.signatureData && attendee.signatureData.length > 20) {
-            console.log(`PDF: Processing signature for ${attendee.name}`);
-            
-            // Ensure we have a clean data URL format
-            let signatureData = attendee.signatureData;
-            if (!signatureData.startsWith('data:image')) {
-              signatureData = `data:image/png;base64,${signatureData.replace(/^data:image\/(png|jpeg|jpg);base64,/, '')}`;              
-            }
-            
-            // Create a simplified signature cell with just the essential properties
-            // This approach works better across devices including mobile
-            try {
-              // Use a simple text placeholder for signature to avoid {object Object}
-              // Using just a checkmark and "Signed" to keep it compact
-              const signaturePlaceholder = "✓ Signed";
-              
-              // Always use text placeholder - more consistent across all devices
-              // This prevents the {object Object} issue completely
-              row.push(signaturePlaceholder);
-            } catch (err) {
-              console.error('Signature rendering error:', err);
-              row.push('✓ Signed'); // Simple fallback
-            }
-          } else {
-            console.log(`No usable signature for ${attendee.name}`);
-            row.push('Not signed'); // Clear indication that no signature was provided
+          // Add signature if available
+          if (attendee.signatureData) {
+            row[4] = {
+              image: attendee.signatureData,
+              width: 25,
+              height: 10
+            };
           }
         } catch (sigErr) {
           console.error('Error processing signature:', sigErr);
-          row.push('');
         }
       });
       
-      // Generate the table with column width specifications
-      autoTable(doc, {
-        head: [tableColumn],
-        body: tableRows,
-        startY: 55,
-        theme: 'grid',
-        styles: { fontSize: 10 },
-        headStyles: { fillColor: [1, 74, 47] }, // #014a2f
-        columnStyles: {
-          0: { cellWidth: 35 }, // Name column
-          1: { cellWidth: 40 }, // Email column
-          2: { cellWidth: 25 }, // Phone column
-          3: { cellWidth: 35 }, // Organization column
-          4: { cellWidth: 35 }, // Designation column
-          5: { cellWidth: 25 }  // Signature column
-        },
-        didDrawPage: function(data: any) {
-          // Footer
-          doc.setFontSize(10);
-          doc.text(
-            'Nairobi County Meeting Attendance System',
-            data.settings.margin.left,
-            doc.internal.pageSize.height - 10
-          );
-        }
-      });
+      // Save the PDF with a meaningful filename
+      const filename = `${meeting.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-attendance.pdf`;
+      doc.save(filename);
       
-      // Save the PDF
-      doc.save(`attendance-${meeting.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.pdf`);
-    } catch (err) {
-      console.error('Error generating PDF:', err);
+      // Hide loading indicator
+      setPdfGenerating(false);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
       alert('Failed to generate PDF. Please try again.');
+      setPdfGenerating(false);
     }
   };
 
@@ -305,30 +408,12 @@ export default function AdminAttendeesList() {
           
           <div className="mt-4 md:mt-0">
             <button
-              onClick={() => window.print()}
-              className="bg-[#014a2f] hover:bg-[#014a2f]/90 text-white px-4 py-2 rounded-md font-medium transition-colors mr-2"
+              onClick={generatePDF}
+              className="bg-[#014a2f] hover:bg-[#014a2f]/90 text-white px-4 py-2 rounded-md font-medium transition-colors"
+              disabled={pdfGenerating}
             >
-              Print List
+              {pdfGenerating ? 'Generating PDF...' : 'Generate PDF with Letterhead'}
             </button>
-            <button
-              onClick={() => {
-                try {
-                  generatePDF();
-                } catch (err) {
-                  console.error('Error calling generatePDF:', err);
-                  alert('Failed to generate PDF. Please try again.');
-                }
-              }}
-              className="bg-[#014a2f] hover:bg-[#014a2f]/90 text-white px-4 py-2 rounded-md font-medium transition-colors mr-2"
-            >
-              Download PDF Form
-            </button>
-            <Link
-              href={`/api/meetings/${id}/attendees/export`}
-              className="bg-yellow-400 hover:bg-yellow-500 text-[#014a2f] px-4 py-2 rounded-md font-medium transition-colors"
-            >
-              Export CSV
-            </Link>
           </div>
         </div>
 
