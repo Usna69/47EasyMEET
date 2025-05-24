@@ -180,12 +180,19 @@ export default function CreateMeetingPage() {
       });
 
       if (response.ok) {
-        // Show success popup and redirect to admin dashboard after a delay
+        // Show success popup and scroll to top
         setSuccessPopup(true);
-        // Longer delay (3 seconds) for better user experience
+        
+        // Scroll to the top of the page
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+        
+        // Extended delay (5 seconds) for better user experience
         setTimeout(() => {
           router.push('/admin');
-        }, 3000); // Redirect after 3 seconds
+        }, 5000); // Redirect after 5 seconds
       } else {
         const data = await response.json();
         setError(data.error || 'Failed to create meeting');
@@ -218,6 +225,34 @@ export default function CreateMeetingPage() {
   
   return (
     <div className="container mx-auto py-8 px-4">
+      {/* Success Popup */}
+      {successPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-xl border-2 border-[#014a2f]">
+            <div className="flex items-center justify-center mb-4">
+              <div className="bg-[#014a2f] rounded-full p-2">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </div>
+            <h2 className="text-2xl font-bold text-center text-[#014a2f] mb-2">Meeting Created!</h2>
+            <p className="text-gray-600 text-center mb-6">Your meeting has been successfully created. You will be redirected to the dashboard in 5 seconds.</p>
+            
+            {/* Progress bar */}
+            <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+              <div className="bg-[#014a2f] h-2.5 rounded-full progress-bar-success"></div>
+            </div>
+            
+            <div className="text-center">
+              <a href="/admin" className="px-4 py-2 bg-[#014a2f] text-white rounded-md hover:bg-[#014a2f]/90 inline-block">
+                Go to Dashboard Now
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="flex justify-between items-center mb-6 max-w-4xl mx-auto">
         <h1 className="text-2xl font-semibold text-[#014a2f]">Create New Meeting</h1>
         <a href="/admin" className="text-gray-600 hover:text-gray-800 flex items-center">

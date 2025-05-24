@@ -25,8 +25,8 @@
   }
 }
 
-.animate-progress-bar {
-  animation: progressAnimation 3s linear forwards;
+.animate-progress-bar, .progress-bar-success {
+  animation: progressAnimation 5s linear forwards;
 }
 
 /* Mobile-first optimizations */
