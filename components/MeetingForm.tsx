@@ -403,7 +403,7 @@ export default function MeetingForm({
           </div>
         </div>
       )}
-    <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
       <div>
         <label
           htmlFor="title"
@@ -628,8 +628,7 @@ export default function MeetingForm({
           )}
         </button>
       </div>
-    </form>
-  );
+      </form>
     </>
   );
 }

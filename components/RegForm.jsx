@@ -1,12 +1,15 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import SignaturePadJSX from "./SignaturePadJSX";
 
 export default function RegForm({ meetingId }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [meeting, setMeeting] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -23,6 +26,59 @@ export default function RegForm({ meetingId }) {
     designation: "",
     signatureData: "",
   });
+
+  // Fetch meeting data when component mounts
+  useEffect(() => {
+    const fetchMeetingData = async () => {
+      if (!meetingId) {
+        setLoadError("Meeting ID not provided");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/meetings/${meetingId}`);
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch meeting data: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Calculate meeting status
+        const now = new Date();
+        const meetingTime = new Date(data.date);
+        const registrationEndTime = data.registrationEnd
+          ? new Date(data.registrationEnd)
+          : new Date(meetingTime.getTime() + 2 * 60 * 60 * 1000); // 2 hours after start
+
+        // Check if meeting is more than a day old (considered ended)
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const isMeetingEnded = meetingTime < yesterday;
+
+        let status = 'UPCOMING';
+        if (now >= meetingTime) {
+          status = now <= registrationEndTime && !isMeetingEnded ? 'ONGOING' : 'CLOSED';
+        }
+
+        // Add status to meeting data
+        setMeeting({
+          ...data,
+          status,
+          registrationEndTime
+        });
+      } catch (error) {
+        console.error('Error fetching meeting:', error);
+        setLoadError("Could not load meeting data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMeetingData();
+  }, [meetingId]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -64,7 +120,7 @@ export default function RegForm({ meetingId }) {
         if (signatureData && signatureData.startsWith("data:image")) {
           // Debug the size of the signature data
           console.log(`Signature data length: ${signatureData.length} bytes`);
-          
+
           setFormData({
             ...formData,
             signatureData,
@@ -78,7 +134,7 @@ export default function RegForm({ meetingId }) {
               signatureData: "",
             });
           }
-          
+
           // Show visual confirmation of signature capture
           const signatureContainer = document.querySelector(".signature-container");
           if (signatureContainer) {
@@ -134,7 +190,7 @@ export default function RegForm({ meetingId }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Save signature before submission if it exists
     if (signatureRef.current && !signatureRef.current.isEmpty()) {
       saveSignature();
@@ -155,8 +211,15 @@ export default function RegForm({ meetingId }) {
         alert("Registration error: Meeting ID is missing");
         return;
       }
-      
+
       console.log("Registration form data:", { meetingId, ...formData });
+
+      // Check meeting status before submitting
+      if (!meeting || meeting.status !== 'ONGOING') {
+        throw new Error(meeting ? 
+          meeting.status === 'UPCOMING' ? "Registration is not open yet" : "Registration period has ended"
+          : "Meeting information not available");
+      }
       
       // Create FormData object to match the API expectations
       const formDataObj = new FormData();
@@ -171,19 +234,17 @@ export default function RegForm({ meetingId }) {
         formDataObj.append('signatureData', formData.signatureData);
       }
       
-      console.log('Submitting registration for meeting:', meetingId);
+      console.log('Submitting registration form data for meeting:', meetingId);
       
-      // Use classic form submission approach
-      const response = await fetch("/api/attendees", {
+      const response = await fetch(`/api/attendees`, {
         method: "POST",
         body: formDataObj,
       });
 
-      // Log the full response for debugging
       console.log("Registration response status:", response.status);
       const responseText = await response.text();
       console.log("Registration response text:", responseText);
-      
+
       // Parse the response if it's JSON
       let errorData = {};
       try {
@@ -368,25 +429,58 @@ export default function RegForm({ meetingId }) {
           </div>
         </div>
 
-        <div>
-          <button
-            type="submit"
-            disabled={isSubmitting || (meeting && meeting.status !== 'ONGOING')}
-            className="w-full bg-yellow-400 hover:bg-yellow-500 text-[#014a2f] py-3 px-4 rounded-md font-medium transition-colors mobile-touch-feedback"
-          >
-            {isSubmitting ? "Registering..." : 
-             (meeting && meeting.status === 'UPCOMING') ? "Registration not open yet" :
-             (meeting && meeting.status !== 'ONGOING') ? "Registration closed" : 
-             "Register"}
-          </button>
-          
-          {/* Mobile-friendly timing note */}
-          {meeting && meeting.status === 'ONGOING' && (
-            <p className="text-xs text-center text-gray-500 mt-2">
-              Registration closes 2 hours after meeting start
-            </p>
-          )}
-        </div>
+        {loading ? (
+          <div className="text-center py-4">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#014a2f]"></div>
+            <p className="mt-2 text-gray-600">Loading meeting information...</p>
+          </div>
+        ) : loadError ? (
+          <div className="text-center py-4">
+            <p className="text-red-500">{loadError}</p>
+          </div>
+        ) : (
+          <div>
+            {/* Meeting status indicator */}
+            {meeting && (
+              <div className={`p-3 mb-4 rounded-md ${meeting.status === 'ONGOING' ? 'bg-green-100' : meeting.status === 'UPCOMING' ? 'bg-yellow-100' : 'bg-red-100'}`}>
+                <div className="flex items-center">
+                  <span className={`inline-block w-3 h-3 rounded-full mr-2 ${meeting.status === 'ONGOING' ? 'bg-green-500' : meeting.status === 'UPCOMING' ? 'bg-yellow-500' : 'bg-red-500'}`}></span>
+                  <span className="font-medium">
+                    {meeting.status === 'ONGOING' ? 'Registration Open' : 
+                     meeting.status === 'UPCOMING' ? 'Registration Not Open Yet' : 
+                     'Registration Closed'}
+                  </span>
+                </div>
+                <p className="text-xs mt-1">
+                  {meeting.status === 'ONGOING' ? 
+                    `Registration closes at ${new Date(meeting.registrationEndTime).toLocaleTimeString()}` : 
+                   meeting.status === 'UPCOMING' ? 
+                    `Registration opens when the meeting starts at ${new Date(meeting.date).toLocaleTimeString()}` : 
+                    'Registration period has ended'}
+                </p>
+              </div>
+            )}
+            
+            <button
+              type="submit"
+              disabled={isSubmitting || !meeting || meeting.status !== 'ONGOING'}
+              className={`w-full py-3 px-4 rounded-md font-medium transition-colors mobile-touch-feedback ${meeting && meeting.status === 'ONGOING' ? 'bg-yellow-400 hover:bg-yellow-500 text-[#014a2f]' : 'bg-gray-300 text-gray-600 cursor-not-allowed'}`}
+            >
+              {isSubmitting ? "Registering..." : 
+               (!meeting) ? "Loading..." :
+               (meeting.status === 'UPCOMING') ? "Registration not open yet" :
+               (meeting.status !== 'ONGOING') ? "Registration closed" : 
+               "Register"}
+            </button>
+            
+            {/* Mobile-friendly timing note */}
+            {meeting && meeting.status === 'ONGOING' && (
+              <p className="text-xs text-center text-gray-500 mt-2">
+                Registration closes 2 hours after meeting start
+              </p>
+            )}
+          </div>
+        )}
       </form>
     </div>
   );

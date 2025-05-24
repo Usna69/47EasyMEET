@@ -45,36 +45,14 @@ export default function MeetingDetails() {
       // Get the letterhead image if available
       if (sectorLetterhead.hasLetterhead && meeting.sector === 'OG' && sectorLetterhead.headerImageData) {
         try {
-          // Need to fetch the image first to convert to data URL
-          console.log('Fetching letterhead image from:', sectorLetterhead.headerImageData);
-          
-          // Fetch the image and convert to blob
-          const response = await fetch(sectorLetterhead.headerImageData);
-          if (!response.ok) {
-            throw new Error(`Failed to fetch letterhead image: ${response.status}`);
-          }
-          
-          const blob = await response.blob();
-          
-          // Convert blob to data URL
-          const reader = new FileReader();
-          const imageDataPromise = new Promise<string>((resolve, reject) => {
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-          });
-          
-          const imageData = await imageDataPromise;
-          console.log('Converted image to data URL successfully');
-          
-          // Add the letterhead as background for the entire page
+          // Add the letterhead as background
           doc.addImage(
-            imageData,
+            sectorLetterhead.headerImageData,
             'JPEG',  // format
             0,       // x position
             0,       // y position
             pageWidth, // width - full page width
-            pageHeight // height - full page height
+            pageHeight * 0.25  // height - top 25% of page
           );
           console.log('Added letterhead image successfully');
         } catch (imgError) {
@@ -82,102 +60,61 @@ export default function MeetingDetails() {
         }
       }
       
-      // Create a white background for the content area positioned higher on the page
-      // This will ensure text is readable on top of the letterhead image
-      const contentStartY = pageHeight * 0.22; // Start content area at 22% from the top (moved even higher)
-      const contentHeight = pageHeight * 0.58; // Content area takes up 58% of the page height
-      const contentMargin = pageWidth * 0.1; // 10% margin on both sides
-      
-      // Add semi-transparent white rectangle for better text readability
-      doc.setFillColor(255, 255, 255); // Pure white
-      doc.rect(
-        contentMargin, 
-        contentStartY, 
-        pageWidth - (contentMargin * 2), 
-        contentHeight, 
-        'F'
-      );
-      
-      // No border around content area
-      
-      // Add title centered and in all caps at the top of the content area
-      const titleY = contentStartY + 6; // 6mm from the top of content area (reduced from 10mm)
+      // Add title centered in the middle of the page
+      const titleY = pageHeight * 0.3; // Position title below letterhead
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(14); // Slightly smaller title
-      doc.setTextColor(1, 74, 47); // Green text for title (#014a2f)
-      doc.text('MEETING ATTENDANCE FORM', pageWidth / 2, titleY, { align: 'center' }); // Centered and all caps
+      doc.setFontSize(16);
+      doc.setTextColor(1, 74, 47); // #014a2f
+      doc.text('Meeting Attendance Form', pageWidth / 2, titleY, { align: 'center' });
       
-      // Add meeting details in a compact, left-aligned format with dark gray text
+      // Add meeting details in a clean table format
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(11);
-      doc.setTextColor(89, 89, 89); // Dark gray text (#595959)
+      doc.setTextColor(0, 0, 0);
       
-      const detailsY = titleY + 5; // Further reduced spacing between title and details
-      const detailsX = contentMargin + 2; // Align with title, closer to left margin
+      const detailsY = titleY + 10;
+      const detailsX = pageWidth * 0.15; // 15% margin from left
       
-      // Meeting details as a simple table with better formatting
-      // First extract the data we need to display
-      const meetingTitle = meeting.title || 'Untitled Meeting';
-      const meetingDate = format(new Date(meeting.date), 'PPPP'); // Full date format
-      const meetingLocation = meeting.location || 'No location specified';
-      const attendeeCount = (meeting._count?.attendees || meeting.attendees.length).toString();
-      const meetingId = meeting.meetingId || 'N/A';
-      
-      // Meeting details as a simple table with clear formatting
+      // Meeting details as a simple table
       const meetingDetails = [
-        ['Meeting:', meetingTitle],
-        ['Date:', meetingDate],
-        ['Location:', meetingLocation],
-        ['Attendees:', attendeeCount],
-        ['Meeting ID:', meetingId]
+        ['Meeting:', meeting.title],
+        ['Date:', format(new Date(meeting.date), 'PPP')],
+        ['Location:', meeting.location],
+        ['Attendees:', meeting._count?.attendees || meeting.attendees.length.toString()]
       ];
       
-      // Elegant meeting details styling with green text
-      doc.setDrawColor(220, 220, 220); // Light gray for borders
+      if (meeting.meetingId) {
+        meetingDetails.push(['Meeting ID:', meeting.meetingId]);
+      }
       
-      // Add meeting details table with compact, elegant styling
+      // Add meeting details table
       autoTable(doc, {
         startY: detailsY,
         head: [],
         body: meetingDetails,
         theme: 'plain',
         styles: { 
-          cellPadding: 1.5, // Even further reduced padding
-          fontSize: 9, // Smaller font size
-          overflow: 'linebreak',
-          textColor: [89, 89, 89], // Dark gray text (#595959)
-          minCellHeight: 4 // Even smaller row height
+          cellPadding: 2,
+          fontSize: 10,
+          overflow: 'linebreak'
         },
         columnStyles: {
-          0: { 
-            cellWidth: 24, // Narrower label column
-            fontStyle: 'bold',
-            textColor: [89, 89, 89], // Dark gray text for labels (#595959)
-            fontSize: 9 // Consistent size
-          },
-          1: { 
-            cellWidth: 'auto',
-            fontStyle: 'normal',
-            fontSize: 9, // Consistent size
-            textColor: [89, 89, 89] // Dark gray text (#595959)
-          }
+          0: { cellWidth: 25, fontStyle: 'bold' },
+          1: { cellWidth: 'auto' }
         },
-        margin: { left: detailsX, right: detailsX },
-        // No cell border drawing
+        margin: { left: detailsX }
       });
       
       // Get the Y position after the details table
-      const finalY = (doc as any).lastAutoTable.finalY + 1; // Minimal spacing
-      
-      // Removed the 'Attendee List' heading as requested
+      const finalY = (doc as any).lastAutoTable.finalY + 10;
       
       // Add attendees table with signatures
       const tableHeaders = [['Name', 'Email', 'Organization', 'Designation', 'Signature']];
       
       const tableRows = meeting.attendees && meeting.attendees.length > 0 ?
         meeting.attendees.map((attendee: any) => [
-          attendee.name || 'N/A',
-          attendee.email || 'N/A',
+          attendee.name,
+          attendee.email,
           attendee.organization || 'N/A',
           attendee.designation || 'N/A',
           // Add signature if available
@@ -189,56 +126,46 @@ export default function MeetingDetails() {
         ]) : 
         Array(6).fill(0).map(() => ['', '', '', '', '']);
       
-      // Add attendees table with improved styling and minimal spacing
+      // Add attendees table
       autoTable(doc, {
-        startY: finalY + 1, // Almost no spacing
+        startY: finalY,
         head: tableHeaders,
         body: tableRows,
         theme: 'grid',
         headStyles: {
-          fillColor: [1, 74, 47], // #014a2f Green header background
-          textColor: 255, // White text for headers
-          fontSize: 8, // Smaller header text
+          fillColor: [1, 74, 47], // #014a2f
+          textColor: 255,
+          fontSize: 10,
           fontStyle: 'bold',
-          halign: 'left',
-          valign: 'middle',
-          cellPadding: 2 // Less padding
+          halign: 'left'
         },
         styles: {
-          cellPadding: 1.5, // Minimal padding
-          fontSize: 8, // Smaller text
-          overflow: 'linebreak',
-          lineWidth: 0.1, // Even thinner grid lines
-          lineColor: [220, 220, 220], // Light gray grid lines
-          textColor: [89, 89, 89] // Dark gray text for all cells (#595959)
+          cellPadding: 2,
+          fontSize: 9,
+          overflow: 'linebreak'
         },
         columnStyles: {
-          0: { fontStyle: 'bold' }, // Bold names
           4: { halign: 'center' } // Center signatures
         },
-        alternateRowStyles: {
-          fillColor: [248, 248, 248] // Light gray for alternate rows
-        },
-        margin: { left: contentMargin, right: contentMargin }
+        margin: { left: 15, right: 15 }
       });
       
-      // Position certification near the bottom of the page but not too far down
-      const certY = pageHeight - 45; // 45mm from bottom of page (moved up slightly)
+      // Get the Y position after the attendees table
+      const certY = (doc as any).lastAutoTable.finalY + 15;
       
       // Add certification text
-      doc.setFontSize(9); // Smaller font
-      doc.setTextColor(89, 89, 89); // Dark gray text for certification (#595959)
+      doc.setFontSize(10);
       doc.text('I certify that this is an accurate record of attendance for the above meeting.', 
         pageWidth / 2, certY, { align: 'center' });
       
       // Add signature lines
-      const signLineY = certY + 12; // Slightly closer to certification text
+      const signLineY = certY + 20;
       const signWidth = 70;
       
       // Secretary signature line
       doc.setLineWidth(0.5);
       doc.line(25, signLineY, 25 + signWidth, signLineY);
-      doc.setFontSize(8); // Smaller font
+      doc.setFontSize(9);
       doc.text('Meeting Secretary', 25 + signWidth/2, signLineY + 5, { align: 'center' });
       
       // Chairperson signature line
