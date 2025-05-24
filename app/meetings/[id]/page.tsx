@@ -343,11 +343,11 @@ export default function MeetingDetails() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="md:col-span-2">
-            <div className="bg-white shadow-md rounded-lg p-6 border border-gray-100" style={{ minHeight: "580px" }}>
-              <div className="flex justify-between items-start mb-2">
-                <h1 className="text-2xl font-semibold text-[#014a2f]">{meeting.title}</h1>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
+          <div className="lg:col-span-2">
+            <div className="bg-white shadow-md rounded-lg p-4 sm:p-6 border border-gray-100 mb-6">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-6">
+                <h1 className="text-2xl sm:text-3xl font-bold text-[#014a2f]">{meeting.title}</h1>
                 {meeting.meetingId && (
                   <span className="bg-yellow-100 text-[#014a2f] text-xs font-semibold px-2.5 py-0.5 rounded">
                     {meeting.meetingId}
@@ -355,17 +355,58 @@ export default function MeetingDetails() {
                 )}
               </div>
               
-              <div className="mb-6">
-                <p className="text-gray-500 text-sm">{format(new Date(meeting.date), 'EEEE, MMMM d, yyyy • h:mm a')}</p>
-                <p className="text-gray-700">{meeting.location}</p>
-              </div>
-
               {meeting.description && (
                 <div className="mb-6">
                   <h2 className="text-lg font-semibold mb-2 text-[#014a2f]">Description</h2>
-                  <p className="text-gray-700 whitespace-pre-line">{meeting.description}</p>
+                  <p className="text-gray-700 whitespace-pre-wrap">{meeting.description}</p>
                 </div>
               )}
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
+                <div className="bg-gray-50 p-4 rounded-md">
+                  <h3 className="text-sm font-medium text-gray-500 mb-1">Date & Time</h3>
+                  <p className="text-gray-800">{format(new Date(meeting.date), 'PPP p')}</p>
+                </div>
+                
+                <div className="bg-gray-50 p-4 rounded-md">
+                  <h3 className="text-sm font-medium text-gray-500 mb-1">Location</h3>
+                  <p className="text-gray-800">{meeting.location}</p>
+                </div>
+                
+                <div className="bg-gray-50 p-4 rounded-md">
+                  <h3 className="text-sm font-medium text-gray-500 mb-1">Attendees</h3>
+                  <p className="text-gray-800">{meeting._count?.attendees || meeting.attendees.length}</p>
+                </div>
+                
+                {meeting.sector && (
+                  <div className="bg-gray-50 p-4 rounded-md">
+                    <h3 className="text-sm font-medium text-gray-500 mb-1">Sector</h3>
+                    <p className="text-gray-800">
+                      {getSectorName(meeting.sector)}
+                      <span className="text-xs text-gray-500 ml-2">({meeting.sector})</span>
+                    </p>
+                  </div>
+                )}
+                
+                {meeting.meetingCategory && (
+                  <div className="bg-gray-50 p-4 rounded-md">
+                    <h3 className="text-sm font-medium text-gray-500 mb-1">Meeting Category</h3>
+                    <p className="text-gray-800">
+                      {meeting.meetingCategory === 'INTERNAL' ? 'Internal' : 
+                      meeting.meetingCategory === 'EXTERNAL' ? 'External' : 
+                      meeting.meetingCategory === 'STAKEHOLDER' ? 'Stakeholder' : 
+                      meeting.meetingCategory}
+                    </p>
+                  </div>
+                )}
+                
+                {meeting.creatorEmail && (
+                  <div className="bg-gray-50 p-4 rounded-md">
+                    <h3 className="text-sm font-medium text-gray-500 mb-1">Created By</h3>
+                    <p className="text-gray-800">{meeting.creatorEmail}</p>
+                  </div>
+                )}
+              </div>
               
               {meeting.onlineMeetingUrl && (
                 <div className="mb-6">
@@ -390,8 +431,8 @@ export default function MeetingDetails() {
             </div>
 
             {meeting.attendees.length > 0 && (
-              <div className="bg-white shadow-md rounded-lg p-6 border border-gray-100 mt-8">
-                <h2 className="text-xl font-semibold mb-4">Attendees</h2>
+              <div className="bg-white shadow-md rounded-lg p-4 sm:p-6 border border-gray-100">
+                <h2 className="text-xl font-semibold mb-4 text-[#014a2f]">Attendees</h2>
                 <ul className="divide-y divide-gray-200">
                   {meeting.attendees.map((attendee: any) => (
                     <li key={attendee.id} className="py-3">
@@ -412,9 +453,9 @@ export default function MeetingDetails() {
           </div>
 
           <div>
-            <div className="bg-white shadow-md rounded-lg p-6 border border-gray-100" style={{ minHeight: "580px", display: "flex", flexDirection: "column" }}>
+            <div className="bg-white shadow-md rounded-lg p-4 sm:p-6 border border-gray-100" style={{ display: "flex", flexDirection: "column" }}>
               <h2 className="text-xl font-semibold mb-4 text-[#014a2f]">Meeting QR Code</h2>
-              <p className="text-gray-600 mb-4">Scan this QR code to register for the meeting</p>
+              <p className="text-gray-600 mb-4 text-sm">Scan this QR code to register for the meeting</p>
               <div className="flex justify-center mb-4">
                 <QRCodeDisplay url={`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/meetings/${meeting.id}/register`} />
               </div>
@@ -555,38 +596,7 @@ export default function MeetingDetails() {
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 mt-6">
-          <div className="bg-gray-50 p-4 rounded-md">
-            <h3 className="text-sm font-medium text-gray-500 mb-1">Attendees</h3>
-            <p className="text-gray-800">{meeting._count?.attendees || meeting.attendees.length}</p>
-          </div>
-          {meeting.sector && (
-            <div className="bg-gray-50 p-4 rounded-md">
-              <h3 className="text-sm font-medium text-gray-500 mb-1">Sector</h3>
-              <p className="text-gray-800">
-                {getSectorName(meeting.sector)}
-                <span className="text-xs text-gray-500 ml-2">({meeting.sector})</span>
-              </p>
-            </div>
-          )}
-          {meeting.meetingCategory && (
-            <div className="bg-gray-50 p-4 rounded-md">
-              <h3 className="text-sm font-medium text-gray-500 mb-1">Meeting Category</h3>
-              <p className="text-gray-800">
-                {meeting.meetingCategory === 'INTERNAL' ? 'Internal' : 
-                 meeting.meetingCategory === 'EXTERNAL' ? 'External' : 
-                 meeting.meetingCategory === 'STAKEHOLDER' ? 'Stakeholder' : 
-                 meeting.meetingCategory}
-              </p>
-            </div>
-          )}
-          {meeting.creatorEmail && (
-            <div className="bg-gray-50 p-4 rounded-md">
-              <h3 className="text-sm font-medium text-gray-500 mb-1">Created By</h3>
-              <p className="text-gray-800">{meeting.creatorEmail}</p>
-            </div>
-          )}
-        </div>
+
       </div>
     </div>
   );
