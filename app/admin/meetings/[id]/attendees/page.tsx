@@ -113,6 +113,18 @@ export default function AdminAttendeesList() {
       // Add signature column to the table
       tableColumn.push('Signature');
       
+      // Configure table options with column-specific settings
+      const tableOptions = {
+        headStyles: { fillColor: [1, 74, 47] },
+        startY: 50,
+        margin: { top: 10 },
+        styles: { overflow: 'linebreak' },
+        columnStyles: {
+          // Make signature column wider (last column index is 5)
+          5: { cellWidth: 40 }
+        }
+      };
+      
       // Update the rows to include signature images if available
       tableRows.forEach((row: any[], index: number) => {
         const attendee = attendees[index];
@@ -130,33 +142,20 @@ export default function AdminAttendeesList() {
             // Create a simplified signature cell with just the essential properties
             // This approach works better across devices including mobile
             try {
-              // Use a string placeholder for signature to avoid {object Object}
-              const signaturePlaceholder = `✓ Signed (${new Date().toLocaleDateString()})`;
+              // Use a simple text placeholder for signature to avoid {object Object}
+              // Using just a checkmark and "Signed" to keep it compact
+              const signaturePlaceholder = "✓ Signed";
               
-              // In development or if you prefer to show actual signature image (may not work on all devices)
-              if (process.env.NODE_ENV === 'development') {
-                try {
-                  // Simple image object with minimal properties
-                  row.push({
-                    image: signatureData,
-                    width: 25,
-                    height: 12
-                  });
-                } catch (e) {
-                  // Fall back to text placeholder if image fails
-                  row.push(signaturePlaceholder);
-                }
-              } else {
-                // In production, always use the reliable text placeholder
-                row.push(signaturePlaceholder);
-              }
+              // Always use text placeholder - more consistent across all devices
+              // This prevents the {object Object} issue completely
+              row.push(signaturePlaceholder);
             } catch (err) {
               console.error('Signature rendering error:', err);
               row.push('✓ Signed'); // Simple fallback
             }
           } else {
             console.log(`No usable signature for ${attendee.name}`);
-            row.push(''); // Empty cell if no signature
+            row.push('Not signed'); // Clear indication that no signature was provided
           }
         } catch (sigErr) {
           console.error('Error processing signature:', sigErr);
@@ -164,7 +163,7 @@ export default function AdminAttendeesList() {
         }
       });
       
-      // Generate the table
+      // Generate the table with column width specifications
       autoTable(doc, {
         head: [tableColumn],
         body: tableRows,
@@ -172,6 +171,14 @@ export default function AdminAttendeesList() {
         theme: 'grid',
         styles: { fontSize: 10 },
         headStyles: { fillColor: [1, 74, 47] }, // #014a2f
+        columnStyles: {
+          0: { cellWidth: 35 }, // Name column
+          1: { cellWidth: 40 }, // Email column
+          2: { cellWidth: 25 }, // Phone column
+          3: { cellWidth: 35 }, // Organization column
+          4: { cellWidth: 35 }, // Designation column
+          5: { cellWidth: 25 }  // Signature column
+        },
         didDrawPage: function(data: any) {
           // Footer
           doc.setFontSize(10);
