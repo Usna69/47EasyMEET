@@ -13,7 +13,7 @@ export async function getSectorLetterhead(sectorCode: string): Promise<{
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
   
   // Check if this sector has a letterhead
-  if (sectorCode === 'OG' || sectorCode === 'DMC') {
+  if (sectorCode === 'OG' || sectorCode === 'DMC' || sectorCode === 'IDE') {
     try {
       // Use direct reference to the file in the public directory
       const headerImagePath = `${baseUrl}/letterheads/${sectorCode}.jpg`;
