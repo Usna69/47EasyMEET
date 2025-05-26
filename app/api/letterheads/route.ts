@@ -23,8 +23,8 @@ export async function GET(request: NextRequest) {
     // Sanitize file name to prevent directory traversal attacks
     const sanitizedFileName = file.replace(/\.\.|\/|\\/g, '');
     
-    // Determine letterhead file path in LETTERHEADS directory
-    const letterheadPath = path.join(process.cwd(), 'LETTERHEADS', sanitizedFileName);
+    // Determine letterhead file path in public/letterheads directory
+    const letterheadPath = path.join(process.cwd(), 'public', 'letterheads', sanitizedFileName);
     
     console.log(`Attempting to serve letterhead file: ${letterheadPath}`);
     
