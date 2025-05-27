@@ -8,7 +8,6 @@ import QRCodeDisplay from '../../../components/QRCodeDisplay';
 import { format } from 'date-fns';
 import { getSectorLetterhead } from '../../../lib/docx-to-pdf';
 import { getSectorName } from '../../../utils/sectorUtils';
-import ProtectedResourceLink from '../../../components/ProtectedResourceLink';
 
 export default function MeetingDetails() {
   const params = useParams();
@@ -277,6 +276,8 @@ export default function MeetingDetails() {
       }
       
       const data = await response.json();
+      console.log('Meeting data:', data);
+      console.log('Meeting resources:', data.resources);
       setMeeting(data);
     } catch (err) {
       console.error('Error fetching meeting:', err);
@@ -338,6 +339,33 @@ export default function MeetingDetails() {
       backgroundSize: 'cover',
       position: 'relative',
     }}>
+      {/* Resources Section - Green color scheme with downloads */}
+      <div className="container mx-auto px-4 mb-6 bg-green-100 p-4 rounded-lg border border-green-300">
+        <p className="mb-2 font-medium text-green-800">Resources Count: {meeting.resources ? meeting.resources.length : 'No resources'}</p>
+        
+        {meeting.resources && meeting.resources.length > 0 ? (
+          <div>
+            <p className="font-semibold mb-1 text-green-800">Available Resources:</p>
+            <ul className="list-disc pl-5 mb-3">
+              {meeting.resources.map((resource: any) => (
+                <li key={resource.id} className="text-green-800">
+                  {resource.fileName} - 
+                  <a 
+                    href={`/api/resources/${resource.id}`} 
+                    download={resource.fileName}
+                    className="text-green-700 underline font-medium hover:text-green-900"
+                  >
+                    Direct Download Link
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <p className="italic text-green-700">No resources available for this meeting</p>
+        )}
+      </div>
+      
       <div className="container mx-auto px-4">
         <div className="mb-6">
           <Link href="/#meetings" className="text-[#014a2f] hover:underline flex items-center">
@@ -519,83 +547,7 @@ export default function MeetingDetails() {
               </div>
             </div>
             
-            {/* Resources Section */}
-            {meeting.resources && meeting.resources.length > 0 && (
-              <div className="mt-8">
-                <div className="bg-white shadow-md rounded-lg border border-gray-200 overflow-hidden">
-                  <div className="bg-gradient-to-r from-[#014a2f] to-[#016a3f] px-6 py-4 flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <h2 className="text-xl font-bold text-white">Meeting Resources</h2>
-                  </div>
-                  
-                  <div className="p-6">
-                    <p className="text-gray-700 mb-4">Download the following resources for this meeting:</p>
-                    
-                    <div className="space-y-4">
-                      {meeting.resources.map((resource: any) => (
-                        <div
-                          key={resource.id}
-                          className="flex justify-between items-center p-4 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
-                        >
-                          <div className="flex items-center">
-                            {/* File icon based on type */}
-                            <div className="mr-4 bg-[#014a2f]/10 p-3 rounded-md">
-                              {resource.fileType.includes('pdf') ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-[#014a2f]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                </svg>
-                              ) : resource.fileType.includes('image') ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-[#014a2f]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                              ) : resource.fileType.includes('word') || resource.fileType.includes('doc') ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-[#014a2f]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                              ) : resource.fileType.includes('excel') || resource.fileType.includes('sheet') || resource.fileType.includes('csv') ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-[#014a2f]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                              ) : (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-[#014a2f]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                              )}
-                            </div>
-                            
-                            {/* File name and type */}
-                            <div>
-                              <p className="font-semibold text-gray-800 text-lg">{resource.fileName}</p>
-                              <p className="text-sm text-gray-500">
-                                {resource.fileType.replace('application/', '').toUpperCase()} 
-                                {resource.fileSize && <span>({(resource.fileSize / 1024).toFixed(1)} KB)</span>}
-                              </p>
-                            </div>
-                          </div>
-                          
-                          {/* Download button - wrapped with password protection */}
-                          <ProtectedResourceLink 
-                            resourceId={resource.id}
-                            fileName={resource.fileName}
-                          >
-                            <button 
-                              className="flex items-center px-5 py-2.5 text-sm font-bold text-white bg-[#014a2f] rounded-md hover:bg-[#014a2f]/90 transition-colors shadow-sm"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                              </svg>
-                              Download
-                            </button>
-                          </ProtectedResourceLink>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* No resources card - only debug info section at the top of page */}
           </div>
         </div>
         
