@@ -153,10 +153,6 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     const updateData: any = {};
     
     // Only update fields that are explicitly provided
-    if (body.documentSecretCode !== undefined) {
-      updateData.documentSecretCode = body.documentSecretCode;
-    }
-    
     if (body.customLetterhead !== undefined) {
       updateData.customLetterhead = body.customLetterhead;
     }

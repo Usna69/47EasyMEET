@@ -22,7 +22,6 @@ model Meeting {
   registrationEnd   DateTime?         // When registration closes (default: 2 hours after meeting start)
   resources         MeetingResource[] // Attached documents, presentations, etc.
   attendees         Attendee[]
-  documentSecretCode String?           // Secret code for document downloads
   customLetterhead  String?           // Path to custom letterhead image
   meetingCategory   String?           // INTERNAL, EXTERNAL, or STAKEHOLDER
   createdAt         DateTime          @default(now())

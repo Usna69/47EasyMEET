@@ -15,7 +15,6 @@ export async function POST(request: NextRequest) {
     // Extract form fields
     const meetingId = formData.get('meetingId') as string;
     const file = formData.get('letterhead') as File;
-    const password = formData.get('password') as string;
     
     // Validate required fields
     if (!meetingId) {
@@ -77,20 +76,9 @@ export async function POST(request: NextRequest) {
     // Update meeting with letterhead path
     const letterheadPath = `/uploads/letterheads/${filename}`;
     
-    // Generate a secure code for password protection if a password was provided
-    let documentSecretCode = null;
-    if (password && password.trim().length > 0) {
-      // Generate a random token to use as the secret code
-      documentSecretCode = crypto.randomBytes(16).toString('hex');
-      
-      console.log(`Setting document protection with password for meeting ${meetingId}`);
-    }
-    
-    // Use a more flexible approach for TypeScript compatibility
-    const updateData: any = { 
-      customLetterhead: letterheadPath,
-      // Only set the secret code if a password was provided
-      ...(documentSecretCode && { documentSecretCode })
+    // Update meeting with letterhead path
+    const updateData = { 
+      customLetterhead: letterheadPath
     };
     
     await prisma.meeting.update({

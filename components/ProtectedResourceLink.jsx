@@ -1,56 +1,20 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import ResourcePasswordPrompt from './ResourcePasswordPrompt';
+import React from 'react';
 
 export default function ProtectedResourceLink({ 
   resourceId, 
   fileName, 
-  isProtected = false,
   children
 }) {
-  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
   
-  // Check if the resource is already authenticated from session storage
-  useEffect(() => {
-    if (isProtected) {
-      const token = sessionStorage.getItem(`resource_token_${resourceId}`);
-      setIsAuthenticated(!!token);
-    } else {
-      setIsAuthenticated(true);
-    }
-  }, [resourceId, isProtected]);
-  
-  const handleResourceClick = (e) => {
-    if (isProtected && !isAuthenticated) {
-      e.preventDefault();
-      setShowPasswordPrompt(true);
-    }
-  };
-  
-  const handlePasswordValidated = (token) => {
-    setShowPasswordPrompt(false);
-    
-    if (token) {
-      setIsAuthenticated(true);
-      
-      // Automatically download the resource after successful authentication
-      downloadResource(token);
-    }
-  };
-  
-  const downloadResource = async (token) => {
+  const downloadResource = async () => {
     setIsLoading(true);
     
     try {
-      // Fetch the resource with the token in the Authorization header
-      const response = await fetch(`/api/resources/${resourceId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      // Fetch the resource directly without any authentication
+      const response = await fetch(`/api/resources/${resourceId}`);
       
       if (!response.ok) {
         throw new Error('Failed to download resource');
@@ -75,29 +39,17 @@ export default function ProtectedResourceLink({
       
     } catch (error) {
       console.error('Error downloading resource:', error);
-      // If there's an error, reset the authentication
-      setIsAuthenticated(false);
-      sessionStorage.removeItem(`resource_token_${resourceId}`);
     } finally {
       setIsLoading(false);
     }
   };
   
   return (
-    <>
-      <div 
-        onClick={handleResourceClick} 
-        className={`${isLoading ? 'opacity-50 pointer-events-none' : ''}`}
-      >
-        {children}
-      </div>
-      
-      {showPasswordPrompt && (
-        <ResourcePasswordPrompt
-          resourceId={resourceId}
-          onValidated={handlePasswordValidated}
-        />
-      )}
-    </>
+    <div 
+      onClick={downloadResource} 
+      className={`${isLoading ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}`}
+    >
+      {children}
+    </div>
   );
 }

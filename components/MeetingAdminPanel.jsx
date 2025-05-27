@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import DocumentPasswordProtection from './DocumentPasswordProtection';
 import LetterheadUploader from './LetterheadUploader';
 import AttendeeManager from './AttendeeManager';
 
@@ -39,12 +38,6 @@ export default function MeetingAdminPanel({ meeting }) {
                 Letterhead
               </button>
               <button
-                onClick={() => setActiveTab('password')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'password' ? 'border-[#014a2f] text-[#014a2f]' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
-              >
-                Document Password
-              </button>
-              <button
                 onClick={() => setActiveTab('attendees')}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'attendees' ? 'border-[#014a2f] text-[#014a2f]' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
               >
@@ -59,17 +52,6 @@ export default function MeetingAdminPanel({ meeting }) {
                 meetingId={meeting.id} 
                 onUploadSuccess={(path) => {
                   console.log('Letterhead uploaded:', path);
-                  // You could refresh the meeting data here if needed
-                }}
-              />
-            )}
-            
-            {activeTab === 'password' && (
-              <DocumentPasswordProtection 
-                meetingId={meeting.id} 
-                currentSecretCode={meeting.documentSecretCode}
-                onSave={(code) => {
-                  console.log('Secret code saved:', code);
                   // You could refresh the meeting data here if needed
                 }}
               />
