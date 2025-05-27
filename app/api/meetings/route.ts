@@ -285,6 +285,39 @@ export async function POST(request: Request) {
       },
     });
 
+    // Process uploaded letterhead file
+    let customLetterheadPath = null;
+    
+    // Check for letterhead file in form data
+    const letterheadFile = formData.get('letterhead');
+    if (letterheadFile instanceof File) {
+      // Validate file type (only JPG)
+      if (!letterheadFile.type.includes('image/jpeg')) {
+        return json({ error: 'Letterhead must be a JPG image' }, { status: 400 });
+      }
+      
+      // Validate file size (max 5MB)
+      if (letterheadFile.size > 5 * 1024 * 1024) {
+        return json({ error: 'Letterhead image must be less than 5MB' }, { status: 400 });
+      }
+      
+      // Create unique file name
+      const fileId = uuidv4();
+      const filename = `${fileId}.jpg`;
+      
+      // Create letterheads directory if it doesn't exist
+      const letterheadsDir = join(process.cwd(), 'public', 'uploads', 'letterheads');
+      await mkdir(letterheadsDir, { recursive: true });
+      
+      // Save file to disk
+      const fileBuffer = Buffer.from(await letterheadFile.arrayBuffer());
+      const filePath = join(letterheadsDir, filename);
+      await writeFile(filePath, fileBuffer);
+      
+      // Set the letterhead path
+      customLetterheadPath = `/uploads/letterheads/${filename}`;
+    }
+    
     // Process uploaded resource files
     const resourceFiles: {
       id: string;
@@ -348,6 +381,22 @@ export async function POST(request: Request) {
       } catch (error) {
         console.error("Error creating meeting resources:", error);
         // Continue execution even if resource creation fails
+      }
+    }
+    
+    // Update meeting with letterhead path if it was uploaded
+    if (customLetterheadPath) {
+      try {
+        // Use a flexible approach to avoid TypeScript errors
+        const updateData: any = { customLetterhead: customLetterheadPath };
+        
+        await prisma.meeting.update({
+          where: { id: meeting.id },
+          data: updateData
+        });
+      } catch (error) {
+        console.error("Error updating meeting with letterhead path:", error);
+        // Continue execution even if letterhead update fails
       }
     }
 
