@@ -487,7 +487,11 @@ export default function MeetingDetails() {
               <h2 className="text-xl font-semibold mb-4 text-[#014a2f]">Meeting QR Code</h2>
               <p className="text-gray-600 mb-4 text-sm">Scan this QR code to register for the meeting</p>
               <div className="flex justify-center mb-4">
-                <QRCodeDisplay url={`${window.location.origin}/meetings/${meeting.id}/register`} />
+                {/* More flexible QR code that automatically handles URL conversion */}
+                <QRCodeDisplay 
+                  url={`/meetings/${meeting.id}/register`}
+                  size={180}
+                />
               </div>
               <div className="text-center space-y-3 mt-auto">
                 {/* Check if meeting has started, hasn't completely ended, and registration period hasn't ended yet */}
