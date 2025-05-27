@@ -5,8 +5,13 @@ import path from 'path';
 // This API route serves letterhead images directly from the public folder
 // to ensure they're properly loaded with correct content-type headers
 
+// Export configuration to tell Next.js this route should be dynamically rendered
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
-  const searchParams = new URL(request.url).searchParams;
+  // Use the URL constructor directly with the request url
+  const url = new URL(request.url);
+  const searchParams = url.searchParams;
   const imagePath = searchParams.get('path');
   
   if (!imagePath) {

@@ -13,13 +13,18 @@ const json = (data: any, init?: ResponseInit) => {
   });
 };
 
-export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
-  const params = await props.params;
+interface RouteParams {
+  params: {
+    id: string;
+  };
+}
+
+export async function POST(request: NextRequest, context: RouteParams) {
   try {
     // For this endpoint, we don't have proper server-side session checking
     // In a production app, you would verify the admin session here
 
-    const userId = params.id;
+    const userId = context.params.id;
     const { newPassword } = await request.json();
 
     // Validate input

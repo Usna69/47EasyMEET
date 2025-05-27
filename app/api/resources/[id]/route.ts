@@ -6,15 +6,20 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+interface RouteParams {
+  params: {
+    id: string;
+  };
+}
+
 /**
  * GET handler for resource downloads
  * Returns the file with appropriate content type
  */
-export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
-  const params = await props.params;
+export async function GET(request: NextRequest, context: RouteParams) {
   try {
     // Get the resource ID from the params
-    const resourceId = params.id;
+    const resourceId = context.params.id;
     
     // Check for authorization header (contains the security code token if validated)
     const authHeader = request.headers.get('Authorization');

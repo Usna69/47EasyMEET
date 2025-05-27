@@ -3,9 +3,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 // API route to provide letterhead documents or images based on sector code
+// Export configuration to tell Next.js this route should be dynamically rendered
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = new URL(request.url).searchParams;
+    // Use the URL constructor directly with the request url
+    const url = new URL(request.url);
+    const searchParams = url.searchParams;
     
     // Get file parameter from URL query string
     const file = searchParams.get('file');

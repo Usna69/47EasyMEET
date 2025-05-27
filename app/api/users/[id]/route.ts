@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../../lib/prisma";
 
+interface RouteParams {
+  params: {
+    id: string;
+  };
+}
+
 // GET a single user by ID
-export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
-  const params = await props.params;
+export async function GET(request: Request, context: RouteParams) {
   try {
-    const { id } = params;
+    const { id } = context.params;
     const user = await prisma.user.findUnique({
       where: { id },
     });
