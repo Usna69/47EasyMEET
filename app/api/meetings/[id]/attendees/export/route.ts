@@ -1,14 +1,8 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '../../../../../../lib/prisma';
 
-interface RouteContext {
-  params: Promise<{
-    id: string;
-  }>;
-}
-
 // GET /api/meetings/[id]/attendees/export - Export attendees as CSV
-export async function GET(request: NextRequest, context: RouteContext) {
+export async function GET(request: NextRequest, context: { params: { id: string } }) {
   try {
     const { id } = (await context.params);
 

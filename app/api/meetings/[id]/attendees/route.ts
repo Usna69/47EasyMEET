@@ -1,12 +1,6 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '../../../../../lib/prisma';
 
-interface RouteContext {
-  params: Promise<{
-    id: string;
-  }>;
-}
-
 // Helper function for consistent JSON responses (from memory)
 function jsonResponse(data: any, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -16,7 +10,7 @@ function jsonResponse(data: any, status = 200) {
 }
 
 // GET /api/meetings/[id]/attendees - Get all attendees for a meeting
-export async function GET(request: NextRequest, context: RouteContext) {
+export async function GET(request: NextRequest, context: { params: { id: string } }) {
   try {
     const { id } = (await context.params);
 
@@ -66,7 +60,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 }
 
 // POST /api/meetings/[id]/attendees - Add an attendee to a meeting
-export async function POST(request: NextRequest, context: RouteContext) {
+export async function POST(request: NextRequest, context: { params: { id: string } }) {
   try {
     const { id } = (await context.params);
     const body = await request.json();

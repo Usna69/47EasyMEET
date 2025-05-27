@@ -15,11 +15,11 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     // Get the resource ID from the params
-    const resourceId = params.id;
+    const resourceId = context.params.id;
     
     console.log(`Resource download request for ID: ${resourceId}`);
     

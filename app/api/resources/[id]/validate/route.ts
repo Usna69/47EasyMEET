@@ -4,17 +4,11 @@ import crypto from 'crypto';
 
 const prisma = new PrismaClient();
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
 /**
  * POST handler for validating a password for a protected resource
  * Returns a token if the password is valid
  */
-export async function POST(request: NextRequest, context: RouteParams) {
+export async function POST(request: NextRequest, context: { params: { id: string } }) {
   try {
     // Get the resource ID from the params
     const resourceId = context.params.id;
