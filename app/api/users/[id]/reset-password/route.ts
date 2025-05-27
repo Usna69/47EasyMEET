@@ -13,18 +13,18 @@ const json = (data: any, init?: ResponseInit) => {
   });
 };
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
+// Add dynamic mode to ensure this route is properly rendered server-side
+export const dynamic = 'force-dynamic';
 
-export async function POST(request: NextRequest, context: RouteParams) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     // For this endpoint, we don't have proper server-side session checking
     // In a production app, you would verify the admin session here
 
-    const userId = context.params.id;
+    const userId = params.id;
     const { newPassword } = await request.json();
 
     // Validate input

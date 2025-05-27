@@ -1,16 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../../lib/prisma";
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
+// Add dynamic mode to ensure this route is properly rendered server-side
+export const dynamic = 'force-dynamic';
 
 // GET a single user by ID
-export async function GET(request: Request, context: RouteParams) {
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
   try {
-    const { id } = context.params;
+    const { id } = params;
     const user = await prisma.user.findUnique({
       where: { id },
     });
