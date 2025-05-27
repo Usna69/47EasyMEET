@@ -33,7 +33,6 @@ export default function AdminLayout({
           });
           if (response.ok) {
             const data = await response.json();
-            console.log("Password reset requests found:", data.length);
             setResetRequestCount(data.length);
           }
         } catch (err) {
