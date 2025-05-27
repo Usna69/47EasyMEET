@@ -3,9 +3,9 @@ import type { NextRequest } from "next/server";
 import { prisma } from "../../../../lib/prisma";
 
 // GET /api/meetings/[id] - Get a specific meeting
-export async function GET(request: NextRequest, context: { params: { id: string } }) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = (await context.params);
+    const { id } = await context.params;
 
     const meeting = await prisma.meeting.findUnique({
       where: {
@@ -38,9 +38,9 @@ export async function GET(request: NextRequest, context: { params: { id: string 
 }
 
 // PUT /api/meetings/[id] - Update a meeting
-export async function PUT(request: NextRequest, context: { params: { id: string } }) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = (await context.params);
+    const { id } = await context.params;
     console.log('Attempting to update meeting with ID:', id);
     
     // First check if meeting exists
@@ -129,9 +129,9 @@ export async function PUT(request: NextRequest, context: { params: { id: string 
 }
 
 // PATCH /api/meetings/[id] - Partially update a meeting (for document secret code and custom letterhead)
-export async function PATCH(request: NextRequest, context: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = (await context.params);
+    const { id } = await context.params;
     const body = await request.json();
     
     // Check if meeting exists
@@ -172,9 +172,9 @@ export async function PATCH(request: NextRequest, context: { params: { id: strin
 }
 
 // DELETE /api/meetings/[id] - Delete a meeting
-export async function DELETE(request: NextRequest, context: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = (await context.params);
+    const { id } = await context.params;
 
     // Check if meeting exists
     const existingMeeting = await prisma.meeting.findUnique({
