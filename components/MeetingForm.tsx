@@ -593,6 +593,36 @@ export default function MeetingForm({
         </div>
       )}
 
+      {/* Document Conversion Tool Section */}
+      <div className="mb-4 bg-blue-50 p-3 rounded-md border-2 border-blue-200">
+        <div className="flex flex-col md:flex-row items-start md:items-center md:justify-between">
+          <div className="mb-3 md:mb-0">
+            <p className="text-sm text-blue-700 mb-1 font-medium">
+              Need to convert DOCX files to JPG?
+            </p>
+            <p className="text-xs text-blue-600">
+              For letterhead and document uploads, JPG format is required
+            </p>
+          </div>
+          <div className="flex space-x-2 w-full md:w-auto">
+            <a
+              href="/convert"
+              target="_self"
+              className="bg-green-700 text-white py-2 px-4 rounded hover:bg-green-800 transition-colors text-sm font-medium flex-1 md:flex-initial text-center"
+            >
+              Use EasyMEET Converter
+            </a>
+            <button
+              type="button"
+              onClick={() => window.open('https://convertio.co/docx-jpg/', '_blank')}
+              className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors text-sm font-medium flex-1 md:flex-initial"
+            >
+              Use Convertio
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div>
         <button
           type="submit"

@@ -8,6 +8,8 @@ import QRCodeDisplay from '../../../components/QRCodeDisplay';
 import { format } from 'date-fns';
 import { getSectorLetterhead } from '../../../lib/docx-to-pdf';
 import { getSectorName } from '../../../utils/sectorUtils';
+import MeetingAdminPanel from '../../../components/MeetingAdminPanel';
+import DocumentDownloadDialog from '../../../components/DocumentDownloadDialog';
 
 export default function MeetingDetails() {
   const params = useParams();
@@ -16,6 +18,39 @@ export default function MeetingDetails() {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState('');
   const [pdfGenerating, setPdfGenerating] = React.useState(false);
+  
+  // Document download dialog state
+  const [downloadDialogOpen, setDownloadDialogOpen] = React.useState(false);
+  const [selectedResource, setSelectedResource] = React.useState<any>(null);
+  
+  // Function to handle resource download click
+  const handleResourceClick = (resource: any) => {
+    // If meeting has password protection, open dialog
+    if (meeting.documentSecretCode) {
+      setSelectedResource(resource);
+      setDownloadDialogOpen(true);
+    } else {
+      // No password protection, download directly
+      downloadResource(resource);
+    }
+  };
+  
+  // Function to download a resource
+  const downloadResource = (resource: any) => {
+    if (!resource) return;
+    
+    // Get the download URL
+    const downloadUrl = resource.fileUrl ? resource.fileUrl : `/api/resources/${resource.id}`;
+    
+    // Create a temporary link and trigger download
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = resource.fileName;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   // Function to generate PDF with jsPDF
   const generatePDF = async () => {
@@ -38,12 +73,12 @@ export default function MeetingDetails() {
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
       
-      // Check if sector has a custom letterhead
-      const sectorLetterhead = await getSectorLetterhead(meeting.sector || '');
-      console.log('Sector letterhead check:', sectorLetterhead);
+      // Check if meeting has a custom letterhead or use sector letterhead
+      const sectorLetterhead = await getSectorLetterhead(meeting.sector || '', meeting.customLetterhead);
+      console.log('Letterhead check:', sectorLetterhead);
       
       // Get the letterhead image if available
-      if (sectorLetterhead.hasLetterhead && (meeting.sector === 'OG' || meeting.sector === 'DMC' || meeting.sector === 'IDE') && sectorLetterhead.headerImageData) {
+      if (sectorLetterhead.hasLetterhead && sectorLetterhead.headerImageData) {
         try {
           // Add the letterhead as background
           doc.addImage(
@@ -460,18 +495,15 @@ export default function MeetingDetails() {
                           </div>
                           
                           {/* Download button */}
-                          <a 
-                            href={resource.fileUrl ? resource.fileUrl : `/api/resources/${resource.id}`} 
-                            download={resource.fileName}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <button
+                            onClick={() => handleResourceClick(resource)}
                             className="flex items-center px-5 py-2.5 text-sm font-bold text-white bg-[#014a2f] rounded-md hover:bg-[#014a2f]/90 transition-colors shadow-sm"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
-                            Download
-                          </a>
+                            {meeting.documentSecretCode ? 'Download (Protected)' : 'Download'}
+                          </button>
                         </div>
                       ))}
                     </div>
@@ -513,8 +545,30 @@ export default function MeetingDetails() {
               <p className="text-gray-800">{meeting.creatorEmail}</p>
             </div>
           )}
+          {meeting.documentSecretCode && (
+            <div className="bg-gray-50 p-4 rounded-md">
+              <h3 className="text-sm font-medium text-gray-500 mb-1">Document Password Protection</h3>
+              <p className="text-gray-800">Enabled</p>
+            </div>
+          )}
         </div>
+        
+        {/* Meeting Admin Panel - only visible to the meeting creator */}
+        <MeetingAdminPanel meeting={meeting} />
       </div>
+      
+      {/* Document Download Dialog */}
+      <DocumentDownloadDialog
+        isOpen={downloadDialogOpen}
+        onClose={() => setDownloadDialogOpen(false)}
+        onDownload={() => {
+          downloadResource(selectedResource);
+          setDownloadDialogOpen(false);
+        }}
+        resourceName={selectedResource?.fileName || 'document'}
+        resourceId={selectedResource?.id || ''}
+        hasPasswordProtection={Boolean(meeting?.documentSecretCode)}
+      />
     </div>
   );
 }

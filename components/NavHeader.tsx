@@ -4,15 +4,20 @@ import React from 'react';
 const { useState, useEffect } = React;
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useSessionAuth } from '@/lib/session-auth';
 import './navheader.css';
 
 export default function NavHeader() {
   const pathname = usePathname();
   const router = useRouter();
+  const auth = useSessionAuth();
   const [meetClickCount, setMeetClickCount] = React.useState(0);
   const [meetAnimation, setMeetAnimation] = React.useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const isAdmin = pathname?.startsWith('/admin');
+  
+  // Determine if the user is a meeting creator or admin
+  const isCreatorOrAdmin = auth?.user?.role === 'ADMIN' || auth?.user?.role === 'CREATOR';
   
   // Handle MEET click animation
   const handleMeetClick = () => {
@@ -77,6 +82,11 @@ export default function NavHeader() {
             <Link href="/" className={`hover:text-[#FFC107] py-2 ${pathname === '/' ? 'text-[#FFC107]' : 'text-white'}`}>
               Home
             </Link>
+            {isCreatorOrAdmin && (
+              <Link href="/convert" className={`hover:text-[#FFC107] py-2 ${pathname === '/convert' ? 'text-[#FFC107]' : 'text-white'}`}>
+                DOCX to JPG
+              </Link>
+            )}
           </nav>
         </div>
         
@@ -91,6 +101,15 @@ export default function NavHeader() {
               >
                 Home
               </Link>
+              {isCreatorOrAdmin && (
+                <Link 
+                  href="/convert" 
+                  className={`hover:bg-[#013d28] py-2 px-3 rounded ${pathname === '/convert' ? 'text-[#FFC107]' : 'text-white'}`}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  DOCX to JPG
+                </Link>
+              )}
             </nav>
           </div>
         )}

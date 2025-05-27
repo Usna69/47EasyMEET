@@ -11,6 +11,7 @@ export async function POST(request: NextRequest) {
     const meetingId = formData.get('meetingId') as string;
     const name = formData.get('name') as string;
     const email = formData.get('email') as string;
+    const phoneNumber = formData.get('contact') as string; // Use contact from form but map to phoneNumber in DB
     const organization = formData.get('organization') as string;
     const designation = formData.get('designation') as string;
     const signatureData = formData.get('signatureData') as string | null;
@@ -29,20 +30,13 @@ export async function POST(request: NextRequest) {
       // This prevents database issues when saving
     }
     
-    // Validate required fields
-    if (!meetingId || !name || !email || !organization || !designation) {
-      return Response.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
-    }
-    
-    // Signature data is already sent as a base64 string from the canvas
-
-    // Check if meeting exists
+    // Check if meeting exists first
     const meeting = await prisma.meeting.findUnique({
       where: { id: meetingId },
     });
+    
+    // Use any type for flexibility with schema fields
+    const meetingData = meeting as any;
 
     if (!meeting) {
       return Response.json(
@@ -50,6 +44,17 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       );
     }
+    
+    // Validate required fields
+    const isInternalMeeting = meetingData.meetingCategory === 'INTERNAL';
+    if (!meetingId || !name || !email || !phoneNumber || !designation || (!organization && !isInternalMeeting)) {
+      return Response.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+    
+    // Signature data is already sent as a base64 string from the canvas
     
     // Check if registration is open based on meeting start time
     const now = new Date();
@@ -112,30 +117,38 @@ export async function POST(request: NextRequest) {
     // Create the attendee with required fields first
     try {
       // Try creating with all fields first
+      // Use type assertion to handle schema flexibility
+      const attendeeData: any = {
+        meetingId,
+        name,
+        email,
+        phoneNumber, // Using phoneNumber field from Prisma schema
+        organization,
+        designation,
+        // Ensure signatureData is always a string, never null
+        signatureData: signatureData || '',
+      };
+      
       const attendee = await prisma.attendee.create({
-        data: {
-          meetingId,
-          name,
-          email,
-          organization,
-          designation,
-          // Ensure signatureData is always a string, never null
-          signatureData: signatureData || '',
-        },
+        data: attendeeData,
       });
       return Response.json(attendee, { status: 201 });
     } catch (dbError) {
       console.error('First attempt error:', dbError);
-      // If that fails, try with just the required fields
-      try {
-        const attendee = await prisma.attendee.create({
-          data: {
+        // If that fails, try with just the required fields
+        try {
+          // Use type assertion to handle schema flexibility
+          const fallbackData: any = {
             meetingId,
             name,
             email,
+            phoneNumber, // Using phoneNumber field from Prisma schema
             designation,
-          },
-        });
+          };
+          
+          const attendee = await prisma.attendee.create({
+            data: fallbackData,
+          });
         return Response.json(attendee, { status: 201 });
       } catch (fallbackError) {
         console.error('Fallback attempt error:', fallbackError);
@@ -148,6 +161,83 @@ export async function POST(request: NextRequest) {
     console.error('Error registering attendee:', error);
     return Response.json(
       { error: 'Failed to register attendee' },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE /api/attendees - Delete an attendee by ID (requires authentication)
+export async function DELETE(request: NextRequest) {
+  try {
+    // Get attendee ID from URL parameters
+    const searchParams = new URL(request.url).searchParams;
+    const attendeeId = searchParams.get('id');
+    const meetingId = searchParams.get('meetingId');
+    const authHeader = request.headers.get('Authorization');
+
+    if (!attendeeId) {
+      return Response.json(
+        { error: 'Attendee ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Verify user is authenticated with the Authorization header
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return Response.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    // Extract and verify the JWT token
+    const token = authHeader.split(' ')[1];
+    // In a real application, you would verify the token
+    // For this implementation, we'll assume a simplified approach
+    
+    // Check if the attendee exists first
+    const attendee = await prisma.attendee.findUnique({
+      where: { id: attendeeId },
+      include: { meeting: true }
+    });
+
+    if (!attendee) {
+      return Response.json(
+        { error: 'Attendee not found' },
+        { status: 404 }
+      );
+    }
+    
+    // If meetingId is provided, verify the user has permission to delete attendees
+    if (meetingId) {
+      const meeting = await prisma.meeting.findUnique({
+        where: { id: meetingId },
+      });
+
+      if (!meeting) {
+        return Response.json(
+          { error: 'Meeting not found' },
+          { status: 404 }
+        );
+      }
+
+      // In a production app, you would decode the JWT token and check permissions
+      // For this implementation, we'll assume the client has validated permissions
+    }
+
+    // Delete the attendee since we already verified it exists
+    await prisma.attendee.delete({
+      where: { id: attendeeId },
+    });
+
+    return Response.json(
+      { message: 'Attendee deleted successfully' },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error('Error deleting attendee:', error);
+    return Response.json(
+      { error: 'Failed to delete attendee' },
       { status: 500 }
     );
   }

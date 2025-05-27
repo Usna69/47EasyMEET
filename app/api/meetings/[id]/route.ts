@@ -134,6 +134,53 @@ export async function PUT(request: NextRequest, context: RouteContext) {
   }
 }
 
+// PATCH /api/meetings/[id] - Partially update a meeting (for document secret code and custom letterhead)
+export async function PATCH(request: NextRequest, context: RouteContext) {
+  try {
+    const { id } = (await context.params);
+    const body = await request.json();
+    
+    // Check if meeting exists
+    const existingMeeting = await prisma.meeting.findUnique({
+      where: { id },
+    });
+
+    if (!existingMeeting) {
+      return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
+    }
+    
+    // Prepare update data
+    const updateData: any = {};
+    
+    // Only update fields that are explicitly provided
+    if (body.documentSecretCode !== undefined) {
+      updateData.documentSecretCode = body.documentSecretCode;
+    }
+    
+    if (body.customLetterhead !== undefined) {
+      updateData.customLetterhead = body.customLetterhead;
+    }
+    
+    if (body.meetingCategory !== undefined) {
+      updateData.meetingCategory = body.meetingCategory;
+    }
+    
+    // Update the meeting
+    const updatedMeeting = await prisma.meeting.update({
+      where: { id },
+      data: updateData,
+    });
+
+    return NextResponse.json(updatedMeeting);
+  } catch (error) {
+    console.error("Error updating meeting:", error);
+    return NextResponse.json(
+      { error: "Failed to update meeting" },
+      { status: 500 }
+    );
+  }
+}
+
 // DELETE /api/meetings/[id] - Delete a meeting
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {

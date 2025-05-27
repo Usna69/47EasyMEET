@@ -28,6 +28,7 @@ export default function CreateMeetingPage() {
   const [onlineMeetingUrl, setOnlineMeetingUrl] = useState('');
   const [physicalLocation, setPhysicalLocation] = useState('');
   const [resources, setResources] = useState<File[]>([]);
+  const [letterheadFile, setLetterheadFile] = useState<File | null>(null);
   
   // Get sectors data from the utility function
   const [sectors, setSectors] = useState<Array<{name: string, code: string}>>(getAllSectors());
@@ -85,6 +86,28 @@ export default function CreateMeetingPage() {
     }
   };
 
+  // Handle letterhead file upload
+  const handleLetterheadUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      
+      // Validate file type (only JPG)
+      if (!file.type.includes('image/jpeg')) {
+        setError('Letterhead must be a JPG image');
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Letterhead image must be less than 5MB');
+        return;
+      }
+      
+      setLetterheadFile(file);
+      setError('');
+    }
+  };
+
   // Remove a resource file
   const removeResource = (index: number) => {
     setResources((prev: File[]) => prev.filter((_, i: number) => i !== index));
@@ -111,6 +134,21 @@ export default function CreateMeetingPage() {
         setError('Please provide a physical location for the meeting');
         setLoading(false);
         return;
+      }
+      
+      // Validate letterhead if provided
+      if (letterheadFile) {
+        if (!letterheadFile.type.includes('image/jpeg')) {
+          setError('Letterhead must be a JPG image');
+          setLoading(false);
+          return;
+        }
+        
+        if (letterheadFile.size > 5 * 1024 * 1024) {
+          setError('Letterhead image must be less than 5MB');
+          setLoading(false);
+          return;
+        }
       }
 
       // Validate online meeting URL if meeting type is ONLINE or HYBRID
@@ -155,12 +193,15 @@ export default function CreateMeetingPage() {
       if (meetingType === 'PHYSICAL') {
         formData.append('location', location);
       } else if (meetingType === 'ONLINE') {
-        // For online meetings, use the URL as location too for compatibility
-        formData.append('location', 'Online Meeting');
         formData.append('onlineMeetingUrl', onlineMeetingUrl);
       } else if (meetingType === 'HYBRID') {
         formData.append('location', location);
         formData.append('onlineMeetingUrl', onlineMeetingUrl);
+      }
+      
+      // Append letterhead file if available
+      if (letterheadFile) {
+        formData.append('letterhead', letterheadFile);
       }
 
       // Add creator information
@@ -470,6 +511,46 @@ export default function CreateMeetingPage() {
               </div>
             </div>
           )}
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Custom Letterhead (Optional)
+          </label>
+          <div className="border border-dashed border-gray-300 rounded-md p-4">
+            <input
+              type="file"
+              onChange={handleLetterheadUpload}
+              className="hidden"
+              id="letterhead-upload"
+              accept="image/jpeg"
+            />
+            <label
+              htmlFor="letterhead-upload"
+              className="cursor-pointer bg-gray-100 hover:bg-gray-200 p-2 rounded-md inline-block"
+            >
+              Select Letterhead Image
+            </label>
+            <p className="text-sm text-gray-500 mt-1">
+              Upload a JPG image to use as a custom letterhead (max 5MB)
+            </p>
+
+            {letterheadFile && (
+              <div className="mt-4 flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Selected Letterhead:</p>
+                  <p>{letterheadFile.name} ({(letterheadFile.size / 1024).toFixed(1)} KB)</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setLetterheadFile(null)}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  Remove
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">

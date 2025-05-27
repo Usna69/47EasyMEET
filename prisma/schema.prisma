@@ -8,22 +8,25 @@ generator client {
 }
 
 model Meeting {
-  id               String            @id @default(cuid())
-  title            String
-  description      String
-  date             DateTime
-  location         String
-  creatorEmail     String?
-  sector           String?
-  creatorType      String?
-  meetingId        String?
-  meetingType      String            @default("PHYSICAL") // Can be PHYSICAL or ONLINE
-  onlineMeetingUrl String?           // For online meetings (Zoom, Teams, Google Meet)
-  registrationEnd  DateTime?         // When registration closes (default: 2 hours after meeting start)
-  resources        MeetingResource[] // Attached documents, presentations, etc.
-  attendees        Attendee[]
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  id                String            @id @default(cuid())
+  title             String
+  description       String
+  date              DateTime
+  location          String
+  creatorEmail      String?
+  sector            String?
+  creatorType       String?
+  meetingId         String?
+  meetingType       String            @default("PHYSICAL") // Can be PHYSICAL or ONLINE
+  onlineMeetingUrl  String?           // For online meetings (Zoom, Teams, Google Meet)
+  registrationEnd   DateTime?         // When registration closes (default: 2 hours after meeting start)
+  resources         MeetingResource[] // Attached documents, presentations, etc.
+  attendees         Attendee[]
+  documentSecretCode String?           // Secret code for document downloads
+  customLetterhead  String?           // Path to custom letterhead image
+  meetingCategory   String?           // INTERNAL, EXTERNAL, or STAKEHOLDER
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 }
 
 model Attendee {
