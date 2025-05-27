@@ -39,17 +39,19 @@ export default function MeetingDetails() {
   const downloadResource = (resource: any) => {
     if (!resource) return;
     
-    // Get the download URL
-    const downloadUrl = resource.fileUrl ? resource.fileUrl : `/api/resources/${resource.id}`;
+    // Always use the API endpoint for reliable downloads
+    const downloadUrl = `/api/resources/${resource.id}`;
     
     // Create a temporary link and trigger download
     const link = document.createElement('a');
     link.href = downloadUrl;
-    link.download = resource.fileName;
-    link.target = '_blank';
+    link.setAttribute('download', resource.fileName);
+    // Don't use target='_blank' as it can interfere with the download attribute
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    
+    console.log(`Downloading resource: ${resource.fileName} from ${downloadUrl}`);
   };
 
   // Function to generate PDF with jsPDF

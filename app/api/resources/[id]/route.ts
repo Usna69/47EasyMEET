@@ -112,15 +112,24 @@ export async function GET(
         contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
       }
       
-      // Set headers for file download
-      const headers = new Headers();
-      headers.set('Content-Type', contentType);
-      headers.set('Content-Disposition', `attachment; filename="${resource.fileName}"`);
+      // Log the download attempt for debugging
+      console.log(`Serving file: ${resource.fileName}, Size: ${fileBuffer.length} bytes, Type: ${contentType}`);
+      
+      // Set headers for file download - using a plain object for better compatibility
+      const headers = {
+        'Content-Type': contentType,
+        'Content-Disposition': `attachment; filename="${encodeURIComponent(resource.fileName)}"`,
+        'Content-Length': fileBuffer.length.toString(),
+        // Disable caching to prevent issues with file downloads
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      };
       
       // Return the file as a response
-      return new NextResponse(fileBuffer, {
+      return new Response(fileBuffer, {
         status: 200,
-        headers,
+        headers: headers,
       });
       
     } catch (fileError) {

@@ -260,9 +260,8 @@ export default function AdminMeetingDetails() {
                           <p className="text-xs text-gray-500">{(resource.fileSize / 1024).toFixed(1)} KB</p>
                         </div>
                         <a 
-                          href={resource.fileUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
+                          href={`/api/resources/${resource.id}`} 
+                          download={resource.fileName}
                           className="text-blue-600 hover:text-blue-800 text-sm flex items-center hover:underline transition-colors"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
