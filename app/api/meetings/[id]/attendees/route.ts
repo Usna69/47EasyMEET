@@ -12,10 +12,11 @@ function jsonResponse(data: any, status = 200) {
 // GET /api/meetings/[id]/attendees - Get all attendees for a meeting
 export async function GET(
   request: NextRequest, 
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await context.params;
+    // In Next.js 15, params is now a Promise, so we need to await it
+    const { id } = await params;
     
     // Validate that the meeting exists
     const meeting = await prisma.meeting.findUnique({
@@ -65,10 +66,11 @@ export async function GET(
 // POST /api/meetings/[id]/attendees - Add an attendee to a meeting
 export async function POST(
   request: NextRequest, 
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await context.params;
+    // In Next.js 15, params is now a Promise, so we need to await it
+    const { id } = await params;
     const body = await request.json();
     
     // Validate required fields

@@ -18,13 +18,15 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // For this endpoint, we don't have proper server-side session checking
     // In a production app, you would verify the admin session here
 
-    const userId = params.id;
+    // In Next.js 15, params is now a Promise, so we need to await it
+    const { id } = await params;
+    const userId = id;
     const { newPassword } = await request.json();
 
     // Validate input

@@ -7,10 +7,11 @@ export const dynamic = 'force-dynamic';
 // GET a single user by ID
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = context.params;
+    // In Next.js 15, params is now a Promise, so we need to await it
+    const { id } = await params;
     const user = await prisma.user.findUnique({
       where: { id },
     });
@@ -36,9 +37,10 @@ export async function GET(
 }
 
 // DELETE a user by ID
-export async function DELETE(request: Request, context: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = context.params;
+    // In Next.js 15, params is now a Promise, so we need to await it
+    const { id } = await params;
 
     // Check if user exists
     const existingUser = await prisma.user.findUnique({
