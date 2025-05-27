@@ -10,11 +10,11 @@ const prisma = new PrismaClient();
  */
 export async function POST(
   request: NextRequest,
-  props: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     // Get the resource ID from the params
-    const resourceId = props.params.id;
+    const resourceId = params.id;
     
     // Parse the request body to get the password
     const { password } = await request.json();
