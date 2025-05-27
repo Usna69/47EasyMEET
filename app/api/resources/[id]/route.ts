@@ -15,11 +15,11 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Get the resource ID from the params
-    const resourceId = context.params.id;
+    // In Next.js 15, params is now a Promise, so we need to await it
+    const { id: resourceId } = await params;
     
     console.log(`Resource download request for ID: ${resourceId}`);
     
