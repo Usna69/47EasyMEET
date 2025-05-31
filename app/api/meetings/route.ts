@@ -36,47 +36,59 @@ export async function GET(request: NextRequest) {
     if (showActive) {
       // Upcoming meetings: those that haven't started yet
       // Convert the date to ISO string for accurate comparison
-      console.log('Filtering for upcoming meetings. Current time:', now);
+      console.log("Filtering for upcoming meetings. Current time:", now);
       where.date = {
         gte: now.toISOString(),
       };
-      console.log('Using where clause for upcoming meetings query:', JSON.stringify(where));
+      console.log(
+        "Using where clause for upcoming meetings query:",
+        JSON.stringify(where)
+      );
     } else if (showOngoing) {
       // Ongoing meetings: those that have started but are still within the 2-hour registration window
       // Based on the meeting registration requirements from memory
-      const twoHoursAgo = new Date(now.getTime() - (2 * 60 * 60 * 1000));
-      
-      console.log('Filtering for ongoing meetings. Current time:', now);
-      console.log('Registration window cutoff (2 hours ago):', twoHoursAgo);
-      
+      const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+
+      console.log("Filtering for ongoing meetings. Current time:", now);
+      console.log("Registration window cutoff (2 hours ago):", twoHoursAgo);
+
       // Between 2 hours ago and now
       where.date = {
         gte: twoHoursAgo.toISOString(),
         lte: now.toISOString(),
       };
-      
-      console.log('Using where clause for ongoing meetings query:', JSON.stringify(where));
+
+      console.log(
+        "Using where clause for ongoing meetings query:",
+        JSON.stringify(where)
+      );
     }
 
     // Handle different filtering scenarios
     // 1. Admin users: no filtering by default unless specific filters are applied
     // 2. Creator users: see their own meetings AND meetings from their department
     // 3. Other roles: filtered based on explicit parameters
-    
+
     const isAdminRequest = searchParams.get("isAdmin") === "true";
     const isCreatorRequest = searchParams.get("isCreator") === "true";
     const requestSameDepartment = searchParams.get("sameDepartment") === "true";
-    
+
     // For creators viewing within their department
     if (isCreatorRequest && department && requestSameDepartment) {
       // Show all meetings in the creator's department
       where.sector = department;
-      console.log('Creator viewing department meetings, filtering by sector:', department);
-    } 
+      console.log(
+        "Creator viewing department meetings, filtering by sector:",
+        department
+      );
+    }
     // For creators viewing only their own meetings
     else if (isCreatorRequest && creatorEmail && !requestSameDepartment) {
       where.creatorEmail = creatorEmail;
-      console.log('Creator viewing own meetings, filtering by creatorEmail:', creatorEmail);
+      console.log(
+        "Creator viewing own meetings, filtering by creatorEmail:",
+        creatorEmail
+      );
     }
     // For admin viewing with specific filters
     else if (isAdminRequest) {
@@ -86,7 +98,10 @@ export async function GET(request: NextRequest) {
       if (department) {
         where.sector = department;
       }
-      console.log('Admin viewing meetings with filters:', { creatorEmail, department });
+      console.log("Admin viewing meetings with filters:", {
+        creatorEmail,
+        department,
+      });
     }
     // For other specific filter combinations
     else {
@@ -96,7 +111,7 @@ export async function GET(request: NextRequest) {
       if (department) {
         where.sector = department;
       }
-      console.log('Applying standard filters:', { creatorEmail, department });
+      console.log("Applying standard filters:", { creatorEmail, department });
     }
 
     // Get total count
@@ -111,7 +126,7 @@ export async function GET(request: NextRequest) {
         // Order by creation date (newest first)
         { createdAt: "desc" },
         // Secondary ordering by meeting date
-        { date: "asc" }
+        { date: "asc" },
       ],
       include: {
         _count: {
@@ -122,40 +137,48 @@ export async function GET(request: NextRequest) {
       skip: page * limit,
       take: limit,
     });
-    
-    console.log(`Found ${meetings.length} meetings matching criteria:`, 
-      meetings.map(m => ({ id: m.id, title: m.title, date: m.date })));
+
+    console.log(
+      `Found ${meetings.length} meetings matching criteria:`,
+      meetings.map((m) => ({ id: m.id, title: m.title, date: m.date }))
+    );
 
     // Return the meetings array directly as the client expects
-    console.log('Returning API response with meetings count:', meetings.length);
-    
+    console.log("Returning API response with meetings count:", meetings.length);
+
     // Add meeting status to each meeting based on the date
-    const meetingsWithStatus = meetings.map(meeting => {
+    const meetingsWithStatus = meetings.map((meeting) => {
       // Calculate meeting status based on registration requirements
       // Meeting registration is only allowed for ongoing meetings (not upcoming ones)
       // Registration closes automatically 2 hours after meeting start
       const meetingDate = new Date(meeting.date);
-      const twoHoursAfterStart = new Date(meetingDate.getTime() + (2 * 60 * 60 * 1000));
-      
+      const twoHoursAfterStart = new Date(
+        meetingDate.getTime() + 2 * 60 * 60 * 1000
+      );
+
       // Log meeting date information for debugging
-      console.log(`Meeting ${meeting.id}: Date=${meetingDate.toISOString()}, Now=${now.toISOString()}`);
+      console.log(
+        `Meeting ${
+          meeting.id
+        }: Date=${meetingDate.toISOString()}, Now=${now.toISOString()}`
+      );
       console.log(`  - Is Upcoming: ${meetingDate > now}`);
-      
-      let status = 'UPCOMING';
+
+      let status = "UPCOMING";
       if (meetingDate <= now) {
         if (now <= twoHoursAfterStart) {
-          status = 'ONGOING'; // Meeting is in progress and registration is still open
+          status = "ONGOING"; // Meeting is in progress and registration is still open
         } else {
-          status = 'CLOSED'; // Meeting has ended or registration period is over
+          status = "CLOSED"; // Meeting has ended or registration period is over
         }
       }
-      
+
       return {
         ...meeting,
-        status
+        status,
       };
     });
-    
+
     return json(meetingsWithStatus);
   } catch (error) {
     console.error("Error fetching meetings:", error);
@@ -173,8 +196,10 @@ export async function POST(request: Request) {
     const title = formData.get("title") as string;
     const description = formData.get("description") as string;
     const dateStr = formData.get("date") as string;
+    const organization = formData.get("organization") as string;
     const location = formData.get("location") as string;
     const sector = formData.get("sector") as string;
+    const password = formData.get("password") as string;
     const creatorEmail = formData.get("creatorEmail") as string;
     const creatorType = formData.get("creatorType") as string;
     const meetingType = (formData.get("meetingType") as string) || "PHYSICAL";
@@ -182,7 +207,7 @@ export async function POST(request: Request) {
       (formData.get("meetingCategory") as string) || "INTERNAL";
     const onlineMeetingUrl = formData.get("onlineMeetingUrl") as string;
     const registrationEndStr = formData.get("registrationEnd") as string;
-
+    console.log(formData);
     // Validate required fields
     if (!title || !description || !dateStr || !location) {
       return json({ error: "Missing required fields" }, { status: 400 });
@@ -212,21 +237,27 @@ export async function POST(request: Request) {
 
     // Convert date strings to Date objects
     const date = new Date(dateStr);
-    
+
     // Validate that the meeting date is not in the past
     const now = new Date();
     if (date < now) {
-      return json({ error: "Cannot create meetings in the past" }, { status: 400 });
+      return json(
+        { error: "Cannot create meetings in the past" },
+        { status: 400 }
+      );
     }
 
     // Set registration end time (default: 2 hours after meeting start)
     let registrationEnd: Date | undefined;
     if (registrationEndStr) {
       registrationEnd = new Date(registrationEndStr);
-      
+
       // Validate that registration end is after meeting start
       if (registrationEnd < date) {
-        return json({ error: "Registration end time must be after meeting start time" }, { status: 400 });
+        return json(
+          { error: "Registration end time must be after meeting start time" },
+          { status: 400 }
+        );
       }
     } else {
       registrationEnd = new Date(date);
@@ -272,13 +303,16 @@ export async function POST(request: Request) {
         date,
         location,
         creatorEmail,
+        ...(password ? { password } : {}),
         sector: sector || "IDE", // Default sector if not provided
         creatorType: creatorType || "ORG", // Default creator type if not provided
         meetingId,
+        ...(organization ? { organization } : {}),
         // Add these fields only if they are defined in the schema
+        ...(meetingCategory ? { meetingCategory } : {}),
         ...(meetingType && { meetingType }),
-        ...((meetingType === "ONLINE" || meetingType === "HYBRID") &&
-        onlineMeetingUrl
+        ...(meetingType === "ONLINE" ||
+        (meetingType === "HYBRID" && onlineMeetingUrl)
           ? { onlineMeetingUrl }
           : {}),
         ...(registrationEnd ? { registrationEnd } : {}),
@@ -287,37 +321,48 @@ export async function POST(request: Request) {
 
     // Process uploaded letterhead file
     let customLetterheadPath = null;
-    
+
     // Check for letterhead file in form data
-    const letterheadFile = formData.get('letterhead');
+    const letterheadFile = formData.get("letterhead");
     if (letterheadFile instanceof File) {
       // Validate file type (only JPG)
-      if (!letterheadFile.type.includes('image/jpeg')) {
-        return json({ error: 'Letterhead must be a JPG image' }, { status: 400 });
+      if (!letterheadFile.type.includes("image/jpeg")) {
+        return json(
+          { error: "Letterhead must be a JPG image" },
+          { status: 400 }
+        );
       }
-      
+
       // Validate file size (max 5MB)
       if (letterheadFile.size > 5 * 1024 * 1024) {
-        return json({ error: 'Letterhead image must be less than 5MB' }, { status: 400 });
+        return json(
+          { error: "Letterhead image must be less than 5MB" },
+          { status: 400 }
+        );
       }
-      
+
       // Create unique file name
       const fileId = uuidv4();
       const filename = `${fileId}.jpg`;
-      
+
       // Create letterheads directory if it doesn't exist
-      const letterheadsDir = join(process.cwd(), 'public', 'uploads', 'letterheads');
+      const letterheadsDir = join(
+        process.cwd(),
+        "public",
+        "uploads",
+        "letterheads"
+      );
       await mkdir(letterheadsDir, { recursive: true });
-      
+
       // Save file to disk
       const fileBuffer = Buffer.from(await letterheadFile.arrayBuffer());
       const filePath = join(letterheadsDir, filename);
       await writeFile(filePath, fileBuffer);
-      
+
       // Set the letterhead path
       customLetterheadPath = `/uploads/letterheads/${filename}`;
     }
-    
+
     // Process uploaded resource files
     const resourceFiles: {
       id: string;
@@ -383,16 +428,16 @@ export async function POST(request: Request) {
         // Continue execution even if resource creation fails
       }
     }
-    
+
     // Update meeting with letterhead path if it was uploaded
     if (customLetterheadPath) {
       try {
         // Use a flexible approach to avoid TypeScript errors
         const updateData: any = { customLetterhead: customLetterheadPath };
-        
+
         await prisma.meeting.update({
           where: { id: meeting.id },
-          data: updateData
+          data: updateData,
         });
       } catch (error) {
         console.error("Error updating meeting with letterhead path:", error);

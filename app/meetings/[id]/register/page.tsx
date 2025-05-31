@@ -5,7 +5,7 @@ import Link from "next/link";
 import RegForm from "../../../../components/RegForm";
 
 // Disable caching for this route to ensure fresh meeting data is always used
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 interface RegistrationPageParams {
@@ -41,17 +41,8 @@ export default async function RegistrationPage(props: RegistrationPageParams) {
   const isRegistrationOpen =
     now >= meetingStartTime && now <= registrationEndTime && !isMeetingEnded;
 
-  // Add debugging for registration status
-  console.log('Meeting Status Debug:', {
-    meetingId: meeting.id,
-    meetingTitle: meeting.title,
-    currentTime: now.toISOString(),
-    meetingStartTime: meetingStartTime.toISOString(),
-    registrationEndTime: registrationEndTime.toISOString(),
-    isRegistrationOpen,
-    isMeetingEnded
-  });
-  
+  console.log(meeting);
+
   return (
     <div
       className="py-8"

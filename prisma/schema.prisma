@@ -1,36 +1,37 @@
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL") 
-  }
-
 generator client {
   provider = "prisma-client-js"
 }
 
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
 model Meeting {
-  id                String            @id @default(cuid())
-  title             String
-  description       String
-  date              DateTime
-  location          String
-  creatorEmail      String?
-  sector            String?
-  creatorType       String?
-  meetingId         String?
-  meetingType       String            @default("PHYSICAL") // Can be PHYSICAL or ONLINE
-  onlineMeetingUrl  String?           // For online meetings (Zoom, Teams, Google Meet)
-  registrationEnd   DateTime?         // When registration closes (default: 2 hours after meeting start)
-  resources         MeetingResource[] // Attached documents, presentations, etc.
-  attendees         Attendee[]
-  customLetterhead  String?           // Path to custom letterhead image
-  meetingCategory   String?           // INTERNAL, EXTERNAL, or STAKEHOLDER
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+  id               String            @id @default(cuid())
+  title            String
+  description      String
+  date             DateTime
+  location         String
+  creatorEmail     String?
+  sector           String?
+  creatorType      String?
+  organization     String?
+  password         String?
+  meetingId        String?
+  meetingType      String            @default("PHYSICAL")
+  onlineMeetingUrl String?
+  registrationEnd  DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  customLetterhead String?
+  meetingCategory  String?
+  attendees        Attendee[]
+  resources        MeetingResource[]
 }
 
 model Attendee {
-  id            String    @id @default(cuid())
-  meeting       Meeting   @relation(fields: [meetingId], references: [id])
+  id            String   @id @default(cuid())
   meetingId     String
   name          String
   email         String
@@ -38,35 +39,32 @@ model Attendee {
   designation   String
   signatureData String?
   phoneNumber   String?
-  createdAt     DateTime  @default(now())
+  createdAt     DateTime @default(now())
+  meeting       Meeting  @relation(fields: [meetingId], references: [id])
 }
 
 model MeetingResource {
   id          String   @id @default(cuid())
-  meeting     Meeting  @relation(fields: [meetingId], references: [id])
   meetingId   String
-  fileName    String   // Original filename
-  fileType    String   // MIME type (e.g., application/pdf)
-  fileSize    Int      // Size in bytes
-  fileUrl     String   // Path to stored file
-  description String?  // Optional description
+  fileName    String
+  fileType    String
+  fileSize    Int
+  fileUrl     String
+  description String?
   uploadedAt  DateTime @default(now())
+  meeting     Meeting  @relation(fields: [meetingId], references: [id])
 }
 
 model User {
-  id                      String     @id @default(cuid())
-  email                   String     @unique
-  name                    String
-  password                String     // Hashed password
-  role                    String     @default("ADMIN") // ADMIN, DIRECTOR, ASSISTANT_DIRECTOR, CCO, CECM, CREATOR
-  department              String?
-  designation             String?
-  passwordResetRequested  Boolean    @default(false)
+  id                       String    @id @default(cuid())
+  email                    String    @unique
+  name                     String
+  password                 String
+  role                     String    @default("ADMIN")
+  department               String?
+  designation              String?
+  passwordResetRequested   Boolean   @default(false)
   passwordResetRequestedAt DateTime?
-  createdAt               DateTime   @default(now())
-  updatedAt               DateTime   @updatedAt
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
 }
-
-// Note: SQLite doesn't support enums, so we use string fields instead
-// Valid meeting types: PHYSICAL, ONLINE
-// Valid user roles: ADMIN, DIRECTOR, ASSISTANT_DIRECTOR, CCO, CECM, CREATOR
