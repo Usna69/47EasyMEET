@@ -16,8 +16,6 @@ model Meeting {
   creatorEmail     String?
   sector           String?
   creatorType      String?
-  organization     String?
-  password         String?
   meetingId        String?
   meetingType      String            @default("PHYSICAL")
   onlineMeetingUrl String?
@@ -26,6 +24,8 @@ model Meeting {
   updatedAt        DateTime          @updatedAt
   customLetterhead String?
   meetingCategory  String?
+  organization     String?
+  password         String?
   attendees        Attendee[]
   resources        MeetingResource[]
 }
