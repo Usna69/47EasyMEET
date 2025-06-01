@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { useRouter } from "next/navigation";
 import { useSessionAuth } from "../../../lib/session-auth";
 
 const { useState, useEffect } = React;
@@ -13,7 +12,6 @@ export default function LoginPage() {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [forgotPassword, setForgotPassword] = useState(false);
-  const router = useRouter();
   const auth = useSessionAuth();
 
   // Simple check for already logged in users
