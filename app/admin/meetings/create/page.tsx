@@ -27,7 +27,6 @@ export default function CreateMeetingPage() {
   const [meetingType, setMeetingType] = useState("PHYSICAL");
   const [meetingCategory, setMeetingCategory] = useState("INTERNAL");
   const [onlineMeetingUrl, setOnlineMeetingUrl] = useState("");
-  const [physicalLocation, setPhysicalLocation] = useState("");
   const [resources, setResources] = useState<File[]>([]);
   const [password, setPassword] = useState("");
   const [letterheadFile, setLetterheadFile] = useState<File | null>(null);
@@ -432,7 +431,7 @@ export default function CreateMeetingPage() {
               >
                 <option value="">Select a category</option>
                 <option value="INTERNAL">Internal</option>
-                <option value="EXTERNAL">External</option>
+                <option value="EXTERNAL">Departmental</option>
                 <option value="STAKEHOLDER">Stakeholder</option>
               </select>
             </div>

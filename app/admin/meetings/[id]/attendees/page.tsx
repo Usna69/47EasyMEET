@@ -10,8 +10,6 @@ import { getSectorName } from "../../../../../utils/sectorUtils";
 
 const { useState, useEffect } = React;
 
-// We'll use direct imports within the function for better reliability
-
 interface Attendee {
   id: string;
   name: string;
@@ -55,14 +53,13 @@ export default function AdminAttendeesList() {
     if (!meeting || !attendees.length) return;
 
     try {
-      // Show loading indicator
       setPdfGenerating(true);
 
-      // Dynamically import jsPDF only when the function is called
+      // Dynamically import jsPDF
       const jsPDFModule = await import("jspdf");
       const jsPDF = jsPDFModule.default;
 
-      // Import autoTable only when needed
+      // Import autoTable
       const autoTableModule = await import("jspdf-autotable");
       const autoTable = autoTableModule.default;
 
@@ -81,12 +78,6 @@ export default function AdminAttendeesList() {
         sectorLetterhead.headerImageData
       ) {
         try {
-          // Need to fetch the image first to convert to data URL
-          console.log(
-            "Fetching letterhead image from:",
-            sectorLetterhead.headerImageData
-          );
-
           // Fetch the image and convert to blob
           const response = await fetch(sectorLetterhead.headerImageData);
           if (!response.ok) {
@@ -106,31 +97,21 @@ export default function AdminAttendeesList() {
           });
 
           const imageData = await imageDataPromise;
-          console.log("Converted image to data URL successfully");
 
           // Add the letterhead as background for the entire page
-          doc.addImage(
-            imageData,
-            "JPEG", // format
-            0, // x position
-            0, // y position
-            pageWidth, // width - full page width
-            pageHeight // height - full page height
-          );
-          console.log("Added letterhead image successfully");
+          doc.addImage(imageData, "JPEG", 0, 0, pageWidth, pageHeight);
         } catch (imgError) {
           console.error("Error adding letterhead image:", imgError);
         }
       }
 
       // Create a white background for the content area positioned higher on the page
-      // This will ensure text is readable on top of the letterhead image
-      const contentStartY = pageHeight * 0.22; // Start content area at 22% from the top
-      const contentHeight = pageHeight * 0.58; // Content area takes up 58% of the page height
-      const contentMargin = pageWidth * 0.1; // 10% margin on both sides
+      const contentStartY = pageHeight * 0.22;
+      const contentHeight = pageHeight * 0.58;
+      const contentMargin = pageWidth * 0.1;
 
       // Add semi-transparent white rectangle for better text readability
-      doc.setFillColor(255, 255, 255); // Pure white
+      doc.setFillColor(255, 255, 255);
       doc.rect(
         contentMargin,
         contentStartY,
@@ -139,19 +120,16 @@ export default function AdminAttendeesList() {
         "F"
       );
 
-      // No border around content area
-
       // Add title centered and in all caps at the top of the content area
-      const titleY = contentStartY + 6; // 6mm from the top of content area
+      const titleY = contentStartY + 6;
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(14); // Slightly smaller title
-      doc.setTextColor(1, 74, 47); // Green text for title (#014a2f)
+      doc.setFontSize(14);
+      doc.setTextColor(1, 74, 47);
       doc.text("MEETING ATTENDANCE FORM", pageWidth / 2, titleY, {
         align: "center",
-      }); // Centered and all caps
+      });
 
-      // Meeting details in grid format
-      // First extract the data we need to display
+      // Meeting details
       const meetingTitle = meeting.title || "Untitled Meeting";
       const meetingDate = meeting.date
         ? format(new Date(meeting.date), "PPP p")
@@ -161,115 +139,119 @@ export default function AdminAttendeesList() {
       const meetingId = meeting.meetingId || "N/A";
       const sectorName = meeting.sector ? getSectorName(meeting.sector) : "N/A";
 
-      // Grid of information cards
-      const detailsY = titleY + 8; // Spacing after title
-      const detailsX = contentMargin + 2; // Small indent from left margin
+      const detailsY = titleY + 8;
+      const detailsX = contentMargin + 2;
 
-      // Meeting details as a simple table with clear formatting
       const meetingDetails = [
         ["Meeting:", meetingTitle],
         ["Date:", meetingDate],
         ["Location:", meetingLocation],
         ["Attendees:", attendeeCount],
         ["Meeting ID:", meetingId],
+        ["Meeting Category:", meeting.meetingCategory || "N/A"], // Fixed typo: "Cartegory" -> "Category"
       ];
 
       if (meeting.sector) {
         meetingDetails.push(["Sector:", `${sectorName} (${meeting.sector})`]);
       }
 
-      // Add meeting details table with compact styling
+      // Add meeting details table
       autoTable(doc, {
         startY: detailsY,
         head: [],
         body: meetingDetails,
         theme: "plain",
         styles: {
-          cellPadding: 1.5, // Minimal padding
-          fontSize: 9, // Smaller font size
+          cellPadding: 1.5,
+          fontSize: 9,
           overflow: "linebreak",
-          textColor: [89, 89, 89], // Dark gray text (#595959)
-          minCellHeight: 4, // Smaller row height
+          textColor: [89, 89, 89],
+          minCellHeight: 4,
         },
         columnStyles: {
           0: {
-            cellWidth: 24, // Narrower label column
+            cellWidth: 40,
             fontStyle: "bold",
-            textColor: [89, 89, 89], // Dark gray text
-            fontSize: 9, // Consistent size
+            textColor: [89, 89, 89],
+            fontSize: 9,
           },
           1: {
             cellWidth: "auto",
             fontStyle: "normal",
-            fontSize: 9, // Consistent size
-            textColor: [89, 89, 89], // Dark gray text
+            fontSize: 9,
+            textColor: [89, 89, 89],
           },
         },
         margin: { left: detailsX, right: detailsX },
       });
 
       // Get the Y position after the details table
-      const finalY = (doc as any).lastAutoTable.finalY + 1; // Minimal spacing
+      const finalY = (doc as any).lastAutoTable.finalY + 1;
 
-      // Add attendees table with signatures
+      // Prepare table headers - conditionally include Organization column
       const tableHeaders = [
-        ["Name", "Email", "Organization", "Designation", "Signature"],
+        "Name",
+        "Email",
+        ...(meeting.meetingCategory !== "INTERNAL" ? ["Organization"] : []),
+        "Designation",
+        "Signature",
       ];
 
-      const tableRows = attendees.map((attendee: Attendee) => [
-        attendee.name || "N/A",
-        attendee.email || "N/A",
-        attendee.organization || "N/A",
-        attendee.designation || "N/A",
-        // Add signature if available
-        attendee.signatureData
-          ? {
-              image: attendee.signatureData,
-              width: 25,
-              height: 10,
-            }
-          : "—",
-      ]);
+      // Prepare table rows with conditional organization column
+      const tableRows = attendees.map((attendee: Attendee) => {
+        const row = [
+          attendee.name || "N/A",
+          attendee.email || "N/A",
+          ...(meeting.meetingCategory !== "INTERNAL"
+            ? [attendee.organization || "N/A"]
+            : []),
+          attendee.designation || "N/A",
+          attendee.signatureData ? "Signed" : "—", // Placeholder for signature
+        ];
+        return row;
+      });
 
-      // Add attendees table with improved styling and minimal spacing
+      // Add attendees table
       autoTable(doc, {
-        startY: finalY + 1, // Almost no spacing
-        head: tableHeaders,
+        startY: finalY + 1,
+        head: [tableHeaders],
         body: tableRows,
         theme: "grid",
         headStyles: {
-          fillColor: [1, 74, 47], // #014a2f Green header background
-          textColor: 255, // White text for headers
-          fontSize: 8, // Smaller header text
+          fillColor: [1, 74, 47],
+          textColor: 255,
+          fontSize: 8,
           fontStyle: "bold",
           halign: "left",
           valign: "middle",
-          cellPadding: 2, // Less padding
+          cellPadding: 2,
         },
         styles: {
-          cellPadding: 1.5, // Minimal padding
-          fontSize: 8, // Smaller text
+          cellPadding: 1.5,
+          fontSize: 8,
           overflow: "linebreak",
-          lineWidth: 0.1, // Even thinner grid lines
-          lineColor: [220, 220, 220], // Light gray grid lines
-          textColor: [89, 89, 89], // Dark gray text for all cells (#595959)
+          lineWidth: 0.1,
+          lineColor: [220, 220, 220],
+          textColor: [89, 89, 89],
         },
         columnStyles: {
-          0: { fontStyle: "bold" }, // Bold names
-          4: { halign: "center" }, // Center signatures
+          0: { fontStyle: "bold" },
+          [meeting.meetingCategory !== "INTERNAL" ? 4 : 3]: {
+            halign: "center",
+          }, // Center signatures column
         },
         alternateRowStyles: {
-          fillColor: [248, 248, 248], // Light gray for alternate rows
+          fillColor: [248, 248, 248],
         },
         margin: { left: contentMargin, right: contentMargin },
       });
 
-      // Position certification near the bottom of the page but not too far down
-      const certY = pageHeight - 45; // 45mm from bottom of page
+      // Position certification near the bottom of the page
+      const certY = pageHeight - 45;
 
       // Add certification text
-      doc.setFontSize(9); // Smaller font
-      doc.setTextColor(89, 89, 89); // Dark gray text for certification (#595959)
+      doc.setFontSize(9);
+      doc.setTextColor(89, 89, 89);
       doc.text(
         "I certify that this is an accurate record of attendance for the above meeting.",
         pageWidth / 2,
@@ -278,13 +260,13 @@ export default function AdminAttendeesList() {
       );
 
       // Add signature lines
-      const signLineY = certY + 12; // Spacing after certification text
+      const signLineY = certY + 12;
       const signWidth = 70;
 
       // Secretary signature line
       doc.setLineWidth(0.5);
       doc.line(25, signLineY, 25 + signWidth, signLineY);
-      doc.setFontSize(8); // Smaller font
+      doc.setFontSize(8);
       doc.text("Meeting Secretary", 25 + signWidth / 2, signLineY + 5, {
         align: "center",
       });
@@ -300,30 +282,12 @@ export default function AdminAttendeesList() {
         align: "center",
       });
 
-      // Update the rows to include signature images if available
-      tableRows.forEach((row: any[], index: number) => {
-        const attendee = attendees[index];
-        try {
-          // Add signature if available
-          if (attendee.signatureData) {
-            row[4] = {
-              image: attendee.signatureData,
-              width: 25,
-              height: 10,
-            };
-          }
-        } catch (sigErr) {
-          console.error("Error processing signature:", sigErr);
-        }
-      });
-
       // Save the PDF with a meaningful filename
       const filename = `${meeting.title
         .replace(/[^a-z0-9]/gi, "-")
         .toLowerCase()}-attendance.pdf`;
       doc.save(filename);
 
-      // Hide loading indicator
       setPdfGenerating(false);
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -487,9 +451,11 @@ export default function AdminAttendeesList() {
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Phone
                   </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Organization
-                  </th>
+                  {meeting?.meetingCategory !== "INTERNAL" && (
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Organization
+                    </th>
+                  )}
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Designation
                   </th>
@@ -506,9 +472,11 @@ export default function AdminAttendeesList() {
                     <td className="px-4 py-3">
                       {attendee.phoneNumber || "N/A"}
                     </td>
-                    <td className="px-4 py-3">
-                      {attendee.organization || "N/A"}
-                    </td>
+                    {meeting?.meetingCategory !== "INTERNAL" && (
+                      <td className="px-4 py-3">
+                        {attendee.organization || "N/A"}
+                      </td>
+                    )}
                     <td className="px-4 py-3">
                       {attendee.designation || "N/A"}
                     </td>

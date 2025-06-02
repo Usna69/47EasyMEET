@@ -10,10 +10,46 @@ import { getSectorLetterhead } from "../../../lib/docx-to-pdf";
 import { getSectorName } from "../../../utils/sectorUtils";
 import ResourceDownload from "../../../components/ResourceDownload";
 
+// Define types for better type safety
+interface Attendee {
+  id: string;
+  name: string;
+  email: string;
+  designation?: string;
+  organization?: string;
+  signatureData?: string;
+}
+
+interface Resource {
+  id: string;
+  fileName: string;
+  name: string;
+}
+
+interface Meeting {
+  id: string;
+  title: string;
+  description?: string;
+  date: string;
+  location: string;
+  sector?: string;
+  onlineMeetingUrl?: string;
+  meetingId?: string;
+  meetingCategory?: string;
+  creatorEmail?: string;
+  customLetterhead?: string;
+  registrationEnd?: string;
+  attendees: Attendee[];
+  resources?: Resource[];
+  _count?: {
+    attendees: number;
+  };
+}
+
 export default function MeetingDetails() {
   const params = useParams();
   const id = params.id as string;
-  const [meeting, setMeeting] = React.useState<any>(null);
+  const [meeting, setMeeting] = React.useState<Meeting | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
   const [pdfGenerating, setPdfGenerating] = React.useState(false);
@@ -147,6 +183,7 @@ export default function MeetingDetails() {
         ["Location:", meetingLocation],
         ["Attendees:", attendeeCount],
         ["Meeting ID:", meetingId],
+        ["Meeting Category:", meeting.meetingCategory || "N/A"],
       ];
 
       // Elegant meeting details styling with green text
@@ -167,7 +204,7 @@ export default function MeetingDetails() {
         },
         columnStyles: {
           0: {
-            cellWidth: 24, // Narrower label column
+            cellWidth: 40, // Narrower label column
             fontStyle: "bold",
             textColor: [89, 89, 89], // Dark gray text for labels (#595959)
             fontSize: 9, // Consistent size
@@ -188,30 +225,29 @@ export default function MeetingDetails() {
 
       // Removed the 'Attendee List' heading as requested
 
-      // Add attendees table with signatures
+      // Add attendees table with signatures - FIXED: Correct column headers and data mapping
       const tableHeaders = [
-        ["Name", "Designation", "Contact", "Email", "Signature"],
+        [
+          "Name",
+          "Email",
+          ...(meeting.meetingCategory !== "INTERNAL" ? ["Organization"] : []),
+          "Designation",
+          "Signature",
+        ],
       ];
 
-      const tableRows =
-        meeting.attendees && meeting.attendees.length > 0
-          ? meeting.attendees.map((attendee: any) => [
-              attendee.name || "N/A",
-              attendee.designation || "N/A",
-              attendee.phoneNumber || "N/A",
-              attendee.email || "N/A",
-              // Add signature if available
-              attendee.signatureData
-                ? {
-                    image: attendee.signatureData,
-                    width: 25,
-                    height: 10,
-                  }
-                : "—",
-            ])
-          : Array(6)
-              .fill(0)
-              .map(() => ["", "", "", "", ""]);
+      const tableRows = meeting.attendees.map((attendee: Attendee) => {
+        const row = [
+          attendee.name || "N/A",
+          attendee.email || "N/A",
+          ...(meeting.meetingCategory !== "INTERNAL"
+            ? [attendee.organization || "N/A"]
+            : []),
+          attendee.designation || "N/A",
+          attendee.signatureData ? "Signed" : "—", // Placeholder for signature
+        ];
+        return row;
+      });
 
       // Add attendees table with improved styling and minimal spacing
       autoTable(doc, {
@@ -238,7 +274,9 @@ export default function MeetingDetails() {
         },
         columnStyles: {
           0: { fontStyle: "bold" }, // Bold names
-          4: { halign: "center" }, // Center signatures
+          [meeting.meetingCategory !== "INTERNAL" ? 4 : 3]: {
+            halign: "center",
+          }, // Center signatures column (adjust index based on whether organization column exists)
         },
         alternateRowStyles: {
           fillColor: [248, 248, 248], // Light gray for alternate rows
@@ -516,12 +554,17 @@ export default function MeetingDetails() {
                   Attendees
                 </h2>
                 <ul className="divide-y divide-gray-200">
-                  {meeting.attendees.map((attendee: any) => (
+                  {meeting.attendees.map((attendee: Attendee) => (
                     <li key={attendee.id} className="py-3">
                       <div className="flex justify-between">
                         <div>
                           <h3 className="font-medium">{attendee.name}</h3>
                           <p className="text-gray-600">{attendee.email}</p>
+                          {attendee.organization && (
+                            <p className="text-gray-500 text-sm">
+                              {attendee.organization}
+                            </p>
+                          )}
                         </div>
                         <div>
                           <span className="text-gray-500">
@@ -620,7 +663,7 @@ export default function MeetingDetails() {
                   Meeting Resources
                 </h2>
                 <ul className="divide-y divide-gray-200">
-                  {meeting.resources.map((resource: any) => (
+                  {meeting.resources.map((resource: Resource) => (
                     <li key={resource.id} className="py-3">
                       <div className="flex justify-between items-center">
                         <div>

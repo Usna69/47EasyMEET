@@ -103,7 +103,7 @@ export default async function RegistrationPage(props: RegistrationPageParams) {
             </div>
 
             {isRegistrationOpen ? (
-              <RegForm meetingId={meeting.id} />
+              <RegForm meetingprop={meeting} />
             ) : isMeetingEnded ? (
               <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md my-6">
                 <div className="flex">
