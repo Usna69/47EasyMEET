@@ -148,7 +148,6 @@ export default function AdminAttendeesList() {
         ["Location:", meetingLocation],
         ["Attendees:", attendeeCount],
         ["Meeting ID:", meetingId],
-        ["Meeting Category:", meeting.meetingCategory || "N/A"], // Fixed typo: "Cartegory" -> "Category"
       ];
 
       if (meeting.sector) {
@@ -192,6 +191,7 @@ export default function AdminAttendeesList() {
       const tableHeaders = [
         "Name",
         "Email",
+        "Contact",
         ...(meeting.meetingCategory !== "INTERNAL" ? ["Organization"] : []),
         "Designation",
         "Signature",
@@ -202,6 +202,7 @@ export default function AdminAttendeesList() {
         const row = [
           attendee.name || "N/A",
           attendee.email || "N/A",
+          attendee.phoneNumber || "N/A",
           ...(meeting.meetingCategory !== "INTERNAL"
             ? [attendee.organization || "N/A"]
             : []),

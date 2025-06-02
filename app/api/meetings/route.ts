@@ -287,7 +287,7 @@ export async function POST(request: Request) {
         meetingCategory === "INTERNAL"
           ? "INT"
           : meetingCategory === "EXTERNAL"
-          ? "EXT"
+          ? "DPT"
           : meetingCategory === "STAKEHOLDER"
           ? "STK"
           : "INT";

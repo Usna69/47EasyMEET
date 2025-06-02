@@ -18,6 +18,7 @@ interface Attendee {
   designation?: string;
   organization?: string;
   signatureData?: string;
+  phoneNumber?: string;
 }
 
 interface Resource {
@@ -183,7 +184,6 @@ export default function MeetingDetails() {
         ["Location:", meetingLocation],
         ["Attendees:", attendeeCount],
         ["Meeting ID:", meetingId],
-        ["Meeting Category:", meeting.meetingCategory || "N/A"],
       ];
 
       // Elegant meeting details styling with green text
@@ -230,6 +230,7 @@ export default function MeetingDetails() {
         [
           "Name",
           "Email",
+          "Contact",
           ...(meeting.meetingCategory !== "INTERNAL" ? ["Organization"] : []),
           "Designation",
           "Signature",
@@ -240,6 +241,7 @@ export default function MeetingDetails() {
         const row = [
           attendee.name || "N/A",
           attendee.email || "N/A",
+          attendee.phoneNumber || "N/A",
           ...(meeting.meetingCategory !== "INTERNAL"
             ? [attendee.organization || "N/A"]
             : []),
