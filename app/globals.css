@@ -16,7 +16,6 @@ body {
   font-weight: 300;
 }
 
-/* Custom styles to match Nairobi website */
 .container {
   @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
 }
