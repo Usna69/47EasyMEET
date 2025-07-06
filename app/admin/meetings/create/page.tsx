@@ -3,7 +3,6 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { useSessionAuth } from "../../../../lib/session-auth";
-import { getAllSectors } from "../../../../utils/sectorUtils";
 
 // Using React hooks directly from React import
 const { useState, useEffect } = React;
@@ -29,34 +28,14 @@ export default function CreateMeetingPage() {
   const [onlineMeetingUrl, setOnlineMeetingUrl] = useState("");
   const [resources, setResources] = useState<File[]>([]);
   const [password, setPassword] = useState("");
-  const [letterheadFile, setLetterheadFile] = useState<File | null>(null);
+  const [useCustomLetterhead, setUseCustomLetterhead] = useState(false);
 
-  // Get sectors data from the utility function
-  const [sectors, setSectors] = useState<Array<{ name: string; code: string }>>(
-    getAllSectors()
-  );
-
-  // Fetch sectors from API
-  const [apiSectors, setApiSectors] = useState<string[]>([]);
-
-  // Fetch sectors from API
+  // Set user's sector when component mounts
   useEffect(() => {
-    const fetchSectors = async () => {
-      try {
-        const response = await fetch("/api/sectors");
-        if (response.ok) {
-          const data = await response.json();
-          if (data.sectors && Array.isArray(data.sectors)) {
-            setApiSectors(data.sectors);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching sectors:", error);
-      }
-    };
-
-    fetchSectors();
-  }, []);
+    if (auth.user?.department) {
+      setSector(auth.user.department);
+    }
+  }, [auth.user]);
 
   // No automatic redirects - we'll handle authentication in the render logic
 
@@ -89,28 +68,6 @@ export default function CreateMeetingPage() {
     }
   };
 
-  // Handle letterhead file upload
-  const handleLetterheadUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-
-      // Validate file type (only JPG)
-      if (!file.type.includes("image/jpeg")) {
-        setError("Letterhead must be a JPG image");
-        return;
-      }
-
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setError("Letterhead image must be less than 5MB");
-        return;
-      }
-
-      setLetterheadFile(file);
-      setError("");
-    }
-  };
-
   // Remove a resource file
   const removeResource = (index: number) => {
     setResources((prev: File[]) => prev.filter((_, i: number) => i !== index));
@@ -137,21 +94,6 @@ export default function CreateMeetingPage() {
         setError("Please provide a physical location for the meeting");
         setLoading(false);
         return;
-      }
-
-      // Validate letterhead if provided
-      if (letterheadFile) {
-        if (!letterheadFile.type.includes("image/jpeg")) {
-          setError("Letterhead must be a JPG image");
-          setLoading(false);
-          return;
-        }
-
-        if (letterheadFile.size > 5 * 1024 * 1024) {
-          setError("Letterhead image must be less than 5MB");
-          setLoading(false);
-          return;
-        }
       }
 
       // Validate online meeting URL if meeting type is ONLINE or HYBRID
@@ -197,6 +139,7 @@ export default function CreateMeetingPage() {
       formData.append("meetingCategory", meetingCategory);
       formData.append("registrationEnd", registrationEnd || "");
       formData.append("password", password);
+      formData.append("useCustomLetterhead", useCustomLetterhead.toString());
 
       // Handle different meeting types
       if (meetingType === "PHYSICAL") {
@@ -206,11 +149,6 @@ export default function CreateMeetingPage() {
       } else if (meetingType === "HYBRID") {
         formData.append("location", location);
         formData.append("onlineMeetingUrl", onlineMeetingUrl);
-      }
-
-      // Append letterhead file if available
-      if (letterheadFile) {
-        formData.append("letterhead", letterheadFile);
       }
 
       // Add creator information
@@ -495,36 +433,15 @@ export default function CreateMeetingPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Sector *
               </label>
-              <select
+              <input
+                type="text"
                 value={sector}
-                onChange={(e) => setSector(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md"
-                required
-              >
-                <option value="">Select a sector</option>
-                {/* Show predefined sectors */}
-                {sectors.map((sectorOption: { name: string; code: string }) => (
-                  <option key={sectorOption.code} value={sectorOption.code}>
-                    {sectorOption.name}
-                  </option>
-                ))}
-
-                {/* Show sectors from API if available */}
-                {apiSectors.length > 0 &&
-                  apiSectors
-                    .filter(
-                      (apiSector: string) =>
-                        !sectors.some(
-                          (s: { name: string; code: string }) =>
-                            s.code === apiSector
-                        )
-                    )
-                    .map((apiSector: string) => (
-                      <option key={apiSector} value={apiSector}>
-                        {apiSector}
-                      </option>
-                    ))}
-              </select>
+                className="w-full p-2 border border-gray-300 rounded-md bg-gray-50"
+                readOnly
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                Your department/sector: {sector}
+              </p>
             </div>
 
             <div>
@@ -600,42 +517,53 @@ export default function CreateMeetingPage() {
 
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Custom Letterhead (Optional)
+                Letterhead Settings
               </label>
-              <div className="border border-dashed border-gray-300 rounded-md p-4">
-                <input
-                  type="file"
-                  onChange={handleLetterheadUpload}
-                  className="hidden"
-                  id="letterhead-upload"
-                  accept="image/jpeg"
-                />
-                <label
-                  htmlFor="letterhead-upload"
-                  className="cursor-pointer bg-gray-100 hover:bg-gray-200 p-2 rounded-md inline-block"
-                >
-                  Select Letterhead Image
-                </label>
-                <p className="text-sm text-gray-500 mt-1">
-                  Upload a JPG image to use as a custom letterhead (max 5MB)
-                </p>
+              <div className="border border-gray-300 rounded-md p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="font-medium text-gray-900">Use Admin Letterhead</p>
+                    <p className="text-sm text-gray-500">
+                      {useCustomLetterhead 
+                        ? "Use general admin letterhead (swg.jpg)" 
+                        : "Use your personal letterhead"
+                      }
+                    </p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={useCustomLetterhead}
+                      onChange={(e) => setUseCustomLetterhead(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#014a2f]"></div>
+                  </label>
+                </div>
 
-                {letterheadFile && (
-                  <div className="mt-4 flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Selected Letterhead:</p>
-                      <p>
-                        {letterheadFile.name} (
-                        {(letterheadFile.size / 1024).toFixed(1)} KB)
+                {useCustomLetterhead && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                    <div className="flex items-center">
+                      <svg className="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                      <p className="text-sm text-blue-700">
+                        Will use general admin letterhead: <strong>swg.jpg</strong>
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setLetterheadFile(null)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      Remove
-                    </button>
+                  </div>
+                )}
+
+                {!useCustomLetterhead && (
+                  <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                    <div className="flex items-center">
+                      <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                      <p className="text-sm text-green-700">
+                        Will use your personal letterhead assigned during account creation
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>

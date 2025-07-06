@@ -32,6 +32,7 @@ interface Meeting {
   meetingId?: string;
   meetingCategory?: string;
   creatorEmail?: string;
+  customLetterhead?: string;
   attendees?: Attendee[];
   _count?: {
     attendees: number;
@@ -68,18 +69,25 @@ export default function AdminAttendeesList() {
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
 
-      // Check if sector has a custom letterhead
-      const sectorLetterhead = await getSectorLetterhead(meeting.sector || "");
+      // Determine which letterhead to use
+      let letterheadPath = null;
+      
+      // First check if meeting has a custom letterhead
+      if (meeting.customLetterhead) {
+        letterheadPath = meeting.customLetterhead;
+      } else {
+        // Check if sector has a predefined letterhead
+        const sectorLetterhead = await getSectorLetterhead(meeting.sector || "");
+        if (sectorLetterhead.hasLetterhead && sectorLetterhead.headerImageData) {
+          letterheadPath = sectorLetterhead.headerImageData;
+        }
+      }
 
       // Get the letterhead image if available
-      if (
-        sectorLetterhead.hasLetterhead &&
-        (meeting.sector === "OG" || meeting.sector === "DMC") &&
-        sectorLetterhead.headerImageData
-      ) {
+      if (letterheadPath) {
         try {
           // Fetch the image and convert to blob
-          const response = await fetch(sectorLetterhead.headerImageData);
+          const response = await fetch(letterheadPath);
           if (!response.ok) {
             throw new Error(
               `Failed to fetch letterhead image: ${response.status}`

@@ -1,101 +1,65 @@
 import { NextRequest } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
-import { prisma } from '../../../lib/prisma';
-import crypto from 'crypto';
 
-// Maximum file size in bytes (5MB)
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
+// Import Response properly for Next.js App Router API
+const Response = globalThis.Response;
+const json = (data: any, init?: ResponseInit) => {
+  return new Response(JSON.stringify(data), {
+    ...init,
+    headers: {
+      ...init?.headers,
+      "Content-Type": "application/json",
+    },
+  });
+};
 
 export async function POST(request: NextRequest) {
   try {
-    // Handle FormData for file uploads
+    // Handle multipart form data for file uploads
     const formData = await request.formData();
-    
-    // Extract form fields
-    const meetingId = formData.get('meetingId') as string;
-    const file = formData.get('letterhead') as File;
-    
-    // Validate required fields
-    if (!meetingId) {
-      return Response.json(
-        { error: 'Meeting ID is required' },
-        { status: 400 }
-      );
-    }
-    
-    if (!file || !(file instanceof File)) {
-      return Response.json(
-        { error: 'Letterhead file is required' },
-        { status: 400 }
-      );
-    }
-    
-    // Validate file type
-    if (!file.type.startsWith('image/jpeg') && file.type !== 'image/jpg') {
-      return Response.json(
-        { error: 'Only JPG/JPEG image formats are allowed' },
-        { status: 400 }
-      );
-    }
-    
-    // Check file size
-    if (file.size > MAX_FILE_SIZE) {
-      return Response.json(
-        { error: 'File size exceeds the limit of 5MB' },
-        { status: 400 }
-      );
-    }
-    
-    // Check if meeting exists
-    const meeting = await prisma.meeting.findUnique({
-      where: { id: meetingId },
-    });
 
-    if (!meeting) {
-      return Response.json(
-        { error: 'Meeting not found' },
-        { status: 404 }
-      );
+    // Extract form fields
+    const letterheadFile = formData.get("letterhead") as File;
+    const type = formData.get("type") as string;
+
+    // Validate file exists
+    if (!letterheadFile) {
+      return json({ error: "No letterhead file provided" }, { status: 400 });
     }
-    
-    // Create unique filename
-    const timestamp = Date.now();
-    const filename = `letterhead-${meetingId}-${timestamp}.jpg`;
-    
-    // Ensure directory exists
-    const uploadDir = join(process.cwd(), 'public', 'uploads', 'letterheads');
-    await mkdir(uploadDir, { recursive: true });
-    
-    // Save file to disk
-    const filePath = join(uploadDir, filename);
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    await writeFile(filePath, buffer);
-    
-    // Update meeting with letterhead path
-    const letterheadPath = `/uploads/letterheads/${filename}`;
-    
-    // Update meeting with letterhead path
-    const updateData = { 
-      customLetterhead: letterheadPath
-    };
-    
-    await prisma.meeting.update({
-      where: { id: meetingId },
-      data: updateData
-    });
-    
-    return Response.json({
-      success: true,
-      letterheadPath
+
+    // Validate file type (only JPG)
+    if (!letterheadFile.type.includes("image/jpeg")) {
+      return json({ error: "Letterhead must be a JPG image" }, { status: 400 });
+    }
+
+    // Validate file size (max 5MB)
+    if (letterheadFile.size > 5 * 1024 * 1024) {
+      return json({ error: "Letterhead image must be less than 5MB" }, { status: 400 });
+    }
+
+    // Validate type
+    if (type !== "swg") {
+      return json({ error: "Invalid letterhead type" }, { status: 400 });
+    }
+
+    // Create public/letterheads directory if it doesn't exist
+    const letterheadsDir = join(process.cwd(), "public", "letterheads");
+    await mkdir(letterheadsDir, { recursive: true });
+
+    // Save file as swg.jpg in public folder
+    const fileBuffer = Buffer.from(await letterheadFile.arrayBuffer());
+    const filePath = join(letterheadsDir, "swg.jpg");
+    await writeFile(filePath, fileBuffer);
+
+    return json({ 
+      success: true, 
+      message: "SWG letterhead uploaded successfully",
+      path: "/letterheads/swg.jpg"
     }, { status: 200 });
-    
+
   } catch (error) {
-    console.error('Error uploading letterhead:', error);
-    return Response.json(
-      { error: 'Failed to upload letterhead' },
-      { status: 500 }
-    );
+    console.error("Error uploading letterhead:", error);
+    return json({ error: "Failed to upload letterhead" }, { status: 500 });
   }
 }

@@ -4,6 +4,7 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { useSessionAuth } from "../../../lib/session-auth";
 import Link from "next/link";
+import SWGLetterheadUploader from "../../../components/SWGLetterheadUploader";
 
 // Using React hooks directly from React import
 const { useState, useEffect } = React;
@@ -378,6 +379,13 @@ export default function MeetingsPage() {
         </div>
       ) : (
         <>
+          {/* SWG Letterhead Uploader for Admin Users */}
+          {auth.user?.role === "ADMIN" && (
+            <div className="mb-6">
+              <SWGLetterheadUploader />
+            </div>
+          )}
+
           {error && (
             <div className="bg-red-100 text-red-700 p-4 rounded-md mb-4">
               {error}

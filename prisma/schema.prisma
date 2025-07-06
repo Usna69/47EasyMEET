@@ -67,4 +67,5 @@ model User {
   passwordResetRequestedAt DateTime?
   createdAt                DateTime  @default(now())
   updatedAt                DateTime  @updatedAt
+  customLetterhead         String?   @default("defaultlh.jpg")
 }
