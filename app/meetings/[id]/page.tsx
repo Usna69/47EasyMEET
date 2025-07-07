@@ -6,7 +6,6 @@ import { notFound, useParams } from "next/navigation";
 import Link from "next/link";
 import QRCodeDisplay from "../../../components/QRCodeDisplay";
 import { format } from "date-fns";
-import { getSectorLetterhead } from "../../../lib/docx-to-pdf";
 import { getSectorName } from "../../../utils/sectorUtils";
 import ResourceDownload from "../../../components/ResourceDownload";
 
@@ -534,15 +533,6 @@ export default function MeetingDetails() {
 
             {meeting.attendees.length > 0 && (
               <div className="bg-white shadow-md rounded-lg p-4 sm:p-6 border border-gray-100">
-                {meeting.customLetterhead && (
-                  <div className="mb-6 flex justify-center">
-                    <img
-                      src={meeting.customLetterhead}
-                      alt="Meeting Letterhead"
-                      className="max-h-40 object-contain border border-gray-200 rounded shadow"
-                    />
-                  </div>
-                )}
                 <h2 className="text-xl font-semibold mb-4 text-[#014a2f]">
                   Attendees
                 </h2>
