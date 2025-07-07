@@ -13,7 +13,7 @@ export default function UserCreateForm({ onSubmit, onCancel, loading }) {
     department: "",
     designation: "",
   });
-  const [letterheadPath, setLetterheadPath] = useState<string>("");
+  const [letterheadPath, setLetterheadPath] = useState("");
 
   // Define role options
   const roleOptions = [
