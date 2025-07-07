@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate type
-    if (type !== "swg") {
+    if (type !== "swg" && type !== "user") {
       return json({ error: "Invalid letterhead type" }, { status: 400 });
     }
 
@@ -47,15 +47,32 @@ export async function POST(request: NextRequest) {
     const letterheadsDir = join(process.cwd(), "public", "letterheads");
     await mkdir(letterheadsDir, { recursive: true });
 
-    // Save file as swg.jpg in public folder
     const fileBuffer = Buffer.from(await letterheadFile.arrayBuffer());
-    const filePath = join(letterheadsDir, "swg.jpg");
+    let filePath, publicPath, message;
+    if (type === "swg") {
+      const timestamp = Date.now();
+      filePath = join(letterheadsDir, `swg-user-${timestamp}.jpg`);
+      publicPath = `/letterheads/swg-user-${timestamp}.jpg`;
+      message = "SWG letterhead uploaded successfully";
+    } else {
+      // Save user letterhead with original filename and a timestamp
+      const timestamp = Date.now();
+      let originalName = letterheadFile.name || "user-letterhead.jpg";
+      // Sanitize filename: remove path, replace spaces, remove special chars
+      originalName = originalName.split("/").pop().split("\\").pop().replace(/[^a-zA-Z0-9._-]/g, "_");
+      const ext = originalName.includes('.') ? originalName.substring(originalName.lastIndexOf('.')) : '.jpg';
+      const base = originalName.replace(ext, "");
+      const safeName = `${base}-${timestamp}${ext}`;
+      filePath = join(letterheadsDir, safeName);
+      publicPath = `/letterheads/${safeName}`;
+      message = "User letterhead uploaded successfully";
+    }
     await writeFile(filePath, fileBuffer);
 
     return json({ 
       success: true, 
-      message: "SWG letterhead uploaded successfully",
-      path: "/letterheads/swg.jpg"
+      message,
+      letterheadPath: publicPath
     }, { status: 200 });
 
   } catch (error) {

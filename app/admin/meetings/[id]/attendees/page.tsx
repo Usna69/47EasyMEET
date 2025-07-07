@@ -70,18 +70,7 @@ export default function AdminAttendeesList() {
       const pageHeight = doc.internal.pageSize.getHeight();
 
       // Determine which letterhead to use
-      let letterheadPath = null;
-      
-      // First check if meeting has a custom letterhead
-      if (meeting.customLetterhead) {
-        letterheadPath = meeting.customLetterhead;
-      } else {
-        // Check if sector has a predefined letterhead
-        const sectorLetterhead = await getSectorLetterhead(meeting.sector || "");
-        if (sectorLetterhead.hasLetterhead && sectorLetterhead.headerImageData) {
-          letterheadPath = sectorLetterhead.headerImageData;
-        }
-      }
+      const letterheadPath = meeting.customLetterhead;
 
       // Get the letterhead image if available
       if (letterheadPath) {
@@ -412,6 +401,15 @@ export default function AdminAttendeesList() {
       </div>
 
       <div className="bg-white shadow-md rounded-lg p-6 border border-gray-100">
+        {meeting?.customLetterhead && (
+          <div className="mb-6 flex justify-center">
+            <img
+              src={meeting.customLetterhead}
+              alt="Meeting Letterhead"
+              className="max-h-40 object-contain border border-gray-200 rounded shadow"
+            />
+          </div>
+        )}
         <div className="flex flex-wrap items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-semibold text-[#014a2f]">Attendees</h1>

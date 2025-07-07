@@ -77,27 +77,11 @@ export default function MeetingDetails() {
       const pageHeight = doc.internal.pageSize.getHeight();
 
       // Check if meeting has a custom letterhead or use sector letterhead
-      console.log("Meeting data for letterhead:", {
-        sector: meeting.sector || "",
-        customLetterhead: meeting.customLetterhead || "None",
-      });
-      const sectorLetterhead = await getSectorLetterhead(
-        meeting.sector || "",
-        meeting.customLetterhead
-      );
-      console.log("Letterhead check result:", sectorLetterhead);
-
-      // Get the letterhead image if available - allow any custom letterhead regardless of sector
-      if (sectorLetterhead.hasLetterhead && sectorLetterhead.headerImageData) {
+      const letterheadPath = meeting.customLetterhead;
+      if (letterheadPath) {
         try {
-          // Need to fetch the image first to convert to data URL
-          console.log(
-            "Fetching letterhead image from:",
-            sectorLetterhead.headerImageData
-          );
-
           // Fetch the image and convert to blob
-          const response = await fetch(sectorLetterhead.headerImageData);
+          const response = await fetch(letterheadPath);
           if (!response.ok) {
             throw new Error(
               `Failed to fetch letterhead image: ${response.status}`
@@ -115,7 +99,6 @@ export default function MeetingDetails() {
           });
 
           const imageData = await imageDataPromise;
-          console.log("Converted image to data URL successfully");
 
           // Add the letterhead as background for the entire page
           doc.addImage(
@@ -126,7 +109,6 @@ export default function MeetingDetails() {
             pageWidth, // width - full page width
             pageHeight // height - full page height
           );
-          console.log("Added letterhead image successfully");
         } catch (imgError) {
           console.error("Error adding letterhead image:", imgError);
         }
@@ -552,6 +534,15 @@ export default function MeetingDetails() {
 
             {meeting.attendees.length > 0 && (
               <div className="bg-white shadow-md rounded-lg p-4 sm:p-6 border border-gray-100">
+                {meeting.customLetterhead && (
+                  <div className="mb-6 flex justify-center">
+                    <img
+                      src={meeting.customLetterhead}
+                      alt="Meeting Letterhead"
+                      className="max-h-40 object-contain border border-gray-200 rounded shadow"
+                    />
+                  </div>
+                )}
                 <h2 className="text-xl font-semibold mb-4 text-[#014a2f]">
                   Attendees
                 </h2>

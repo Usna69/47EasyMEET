@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import UserLetterheadUploader from "./UserLetterheadUploader";
+import SWGLetterheadUploader from "./SWGLetterheadUploader";
 
 
 export default function UserCreateForm({ onSubmit, onCancel, loading }) {
@@ -13,7 +14,9 @@ export default function UserCreateForm({ onSubmit, onCancel, loading }) {
     department: "",
     designation: "",
   });
-  const [letterheadPath, setLetterheadPath] = useState("");
+  const [userLetterheadPath, setUserLetterheadPath] = useState("");
+  const [swgLetterheadPath, setSwgLetterheadPath] = useState("");
+  const [formError, setFormError] = useState("");
 
   // Define role options
   const roleOptions = [
@@ -52,11 +55,20 @@ export default function UserCreateForm({ onSubmit, onCancel, loading }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({ ...newUser, letterheadPath });
+    setFormError("");
+    if (!userLetterheadPath || !swgLetterheadPath) {
+      setFormError("Both User and SWG letterheads are required.");
+      return;
+    }
+    onSubmit({ ...newUser, userLetterheadPath, swgLetterheadPath });
   };
 
-  const handleLetterheadUploadSuccess = (path) => {
-    setLetterheadPath(path);
+  const handleUserLetterheadUploadSuccess = (path) => {
+    setUserLetterheadPath(path);
+  };
+
+  const handleSwgLetterheadUploadSuccess = (path) => {
+    setSwgLetterheadPath(path);
   };
 
   return (
@@ -191,10 +203,24 @@ export default function UserCreateForm({ onSubmit, onCancel, loading }) {
         {/* Custom Letterhead Upload Section */}
         <div className="mt-6">
           <h3 className="text-lg font-medium text-[#014a2f] mb-3">
-            Custom Letterhead (Optional)
+            Custom Letterhead (Required)
           </h3>
-          <UserLetterheadUploader onUploadSuccess={handleLetterheadUploadSuccess} />
+          <UserLetterheadUploader onUploadSuccess={handleUserLetterheadUploadSuccess} />
         </div>
+
+        {/* SWG Letterhead Upload Section */}
+        <div className="mt-6">
+          <h3 className="text-lg font-medium text-[#014a2f] mb-3">
+            SWG Letterhead (Required)
+          </h3>
+          <SWGLetterheadUploader onUploadSuccess={handleSwgLetterheadUploadSuccess} />
+        </div>
+
+        {formError && (
+          <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md">
+            {formError}
+          </div>
+        )}
 
         <div className="flex justify-end space-x-3">
           <button

@@ -10,6 +10,7 @@ const { useState, useEffect } = React;
 export default function CreateMeetingPage() {
   const router = useRouter();
   const auth = useSessionAuth();
+  console.log(auth)
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [errorPopup, setErrorPopup] = useState(false);
@@ -29,13 +30,80 @@ export default function CreateMeetingPage() {
   const [resources, setResources] = useState<File[]>([]);
   const [password, setPassword] = useState("");
   const [useCustomLetterhead, setUseCustomLetterhead] = useState(false);
+  const [selectedLetterheadPath, setSelectedLetterheadPath] = useState("");
+  const [userLetterhead, setUserLetterhead] = useState("");
+  const [swgLetterhead, setSwgLetterhead] = useState("");
 
   // Set user's sector when component mounts
   useEffect(() => {
     if (auth.user?.department) {
       setSector(auth.user.department);
     }
-  }, [auth.user]);
+    // Set initial letterhead path
+    if (auth.user) {
+      setSelectedLetterheadPath(
+        useCustomLetterhead
+          ? auth.user.swgLetterhead
+          : auth.user.userLetterhead
+      );
+    }
+    // Log cookies and authState on every render
+    console.log('document.cookie (on render):', document.cookie);
+    const match = document.cookie.match(/authState=([^;]+)/);
+    if (match) {
+      try {
+        const decoded = decodeURIComponent(match[1]);
+        console.log('authState cookie value (on render):', decoded);
+      } catch (e) {
+        console.log('Could not decode authState cookie:', e);
+      }
+    } else {
+      console.log('authState cookie not found (on render)');
+    }
+  }, [auth.user, useCustomLetterhead]);
+
+  useEffect(() => {
+    if (auth.user) {
+      setSelectedLetterheadPath(
+        useCustomLetterhead
+          ? auth.user.swgLetterhead
+          : auth.user.userLetterhead
+      );
+    }
+  }, [useCustomLetterhead, auth.user]);
+
+  // Fetch user profile with both letterheads on mount
+  useEffect(() => {
+    async function fetchProfile() {
+      if (!auth.user?.email) return;
+      try {
+        const res = await fetch(`/api/users?email=${encodeURIComponent(auth.user.email)}`);
+        if (res.ok) {
+          const users = await res.json();
+          // If API returns an array, find the matching user
+          const user = Array.isArray(users)
+            ? users.find(u => u.email === auth.user.email)
+            : users;
+          if (user) {
+            setUserLetterhead(user.userLetterhead || "");
+            setSwgLetterhead(user.swgLetterhead || "");
+          }
+        } else {
+          console.error("Failed to fetch user profile");
+        }
+      } catch (e) {
+        console.error("Error fetching user profile:", e);
+      }
+    }
+    fetchProfile();
+  }, [auth.user?.email]);
+
+  // Set selected letterhead path based on toggle and fetched profile
+  useEffect(() => {
+    setSelectedLetterheadPath(
+      useCustomLetterhead ? swgLetterhead : userLetterhead
+    );
+  }, [useCustomLetterhead, userLetterhead, swgLetterhead]);
 
   // No automatic redirects - we'll handle authentication in the render logic
 
@@ -140,6 +208,7 @@ export default function CreateMeetingPage() {
       formData.append("registrationEnd", registrationEnd || "");
       formData.append("password", password);
       formData.append("useCustomLetterhead", useCustomLetterhead.toString());
+      formData.append("selectedLetterheadPath", selectedLetterheadPath);
 
       // Handle different meeting types
       if (meetingType === "PHYSICAL") {
@@ -162,10 +231,20 @@ export default function CreateMeetingPage() {
         formData.append(`resource-${index}`, file);
       });
 
+      // Debug: log formData keys and values
+      formData.forEach((value, key) => {
+        console.log('FormData:', key, value);
+      });
+
+      // Debug: log cookies before submitting
+      console.log('document.cookie:', document.cookie);
+
       // Submit meeting data
+      console.log('Submitting meeting creation request with credentials: include');
       const response = await fetch("/api/meetings", {
         method: "POST",
         body: formData,
+        credentials: "include",
       });
 
       if (response.ok) {
@@ -522,11 +601,11 @@ export default function CreateMeetingPage() {
               <div className="border border-gray-300 rounded-md p-4">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <p className="font-medium text-gray-900">Use Admin Letterhead</p>
+                    <p className="font-medium text-gray-900">Letterhead Selection</p>
                     <p className="text-sm text-gray-500">
-                      {useCustomLetterhead 
-                        ? "Use general admin letterhead (swg.jpg)" 
-                        : "Use your personal letterhead"
+                      {useCustomLetterhead
+                        ? "Use SWG Letterhead uploaded during account creation"
+                        : "Use User Letterhead uploaded during account creation"
                       }
                     </p>
                   </div>
@@ -548,7 +627,7 @@ export default function CreateMeetingPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                       </svg>
                       <p className="text-sm text-blue-700">
-                        Will use general admin letterhead: <strong>swg.jpg</strong>
+                        Will use <strong>SWG Letterhead</strong> uploaded during account creation
                       </p>
                     </div>
                   </div>
@@ -561,7 +640,7 @@ export default function CreateMeetingPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                       </svg>
                       <p className="text-sm text-green-700">
-                        Will use your personal letterhead assigned during account creation
+                        Will use <strong>User Letterhead</strong> uploaded during account creation
                       </p>
                     </div>
                   </div>

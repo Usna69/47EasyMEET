@@ -5,7 +5,7 @@ import React from "react";
 const { useState } = React;
 
 interface SWGLetterheadUploaderProps {
-  onUploadSuccess?: () => void;
+  onUploadSuccess?: (path: string) => void;
 }
 
 export default function SWGLetterheadUploader({ onUploadSuccess }: SWGLetterheadUploaderProps) {
@@ -56,6 +56,7 @@ export default function SWGLetterheadUploader({ onUploadSuccess }: SWGLetterhead
       });
 
       if (response.ok) {
+        const data = await response.json();
         setSuccess("SWG letterhead uploaded successfully!");
         setSelectedFile(null);
         // Reset file input
@@ -63,7 +64,11 @@ export default function SWGLetterheadUploader({ onUploadSuccess }: SWGLetterhead
         if (fileInput) {
           fileInput.value = "";
         }
-        onUploadSuccess?.();
+        if (data.letterheadPath) {
+          onUploadSuccess?.(data.letterheadPath);
+        } else {
+          onUploadSuccess?.("");
+        }
       } else {
         const data = await response.json();
         setError(data.error || "Failed to upload letterhead");

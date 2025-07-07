@@ -68,4 +68,6 @@ model User {
   createdAt                DateTime  @default(now())
   updatedAt                DateTime  @updatedAt
   customLetterhead         String?   @default("defaultlh.jpg")
+  userLetterhead           String?   @default("defaultlh.jpg")
+  swgLetterhead            String?   @default("swg.jpg")
 }

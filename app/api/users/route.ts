@@ -40,7 +40,8 @@ export async function GET(request: NextRequest) {
           designation: user.designation,
           createdAt: user.createdAt,
           passwordResetRequested: user.passwordResetRequested,
-          customLetterhead: user.customLetterhead,
+          userLetterhead: user.userLetterhead,
+          swgLetterhead: user.swgLetterhead,
         }))
       : [];
 
@@ -54,12 +55,18 @@ export async function GET(request: NextRequest) {
 // POST /api/users - Create a new user (admin only)
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, password, role, department, designation, letterheadPath } =
+    const { name, email, password, role, department, designation, userLetterheadPath, swgLetterheadPath } =
       await request.json();
     // Validate required fields
     if (!name || !email || !password) {
       return json(
         { error: "Name, email and password are required" },
+        { status: 400 }
+      );
+    }
+    if (!userLetterheadPath || !swgLetterheadPath) {
+      return json(
+        { error: "Both User and SWG letterheads are required." },
         { status: 400 }
       );
     }
@@ -90,7 +97,9 @@ export async function POST(request: NextRequest) {
         updatedAt: now,
         department,
         designation,
-        customLetterhead: letterheadPath || "defaultlh.jpg", // Use provided letterhead or default
+        customLetterhead: userLetterheadPath || "defaultlh.jpg", // For backward compatibility
+        userLetterhead: userLetterheadPath || "defaultlh.jpg",
+        swgLetterhead: swgLetterheadPath || "swg.jpg",
       },
     });
 

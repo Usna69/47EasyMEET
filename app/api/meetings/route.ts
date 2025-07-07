@@ -187,7 +187,7 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/meetings - Create a new meeting
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     // Handle multipart form data for file uploads
     const formData = await request.formData();
@@ -200,7 +200,6 @@ export async function POST(request: Request) {
     const location = formData.get("location") as string;
     const sector = formData.get("sector") as string;
     const password = formData.get("password") as string;
-    const creatorEmail = formData.get("creatorEmail") as string;
     const creatorType = formData.get("creatorType") as string;
     const meetingType = (formData.get("meetingType") as string) || "PHYSICAL";
     const meetingCategory =
@@ -208,8 +207,20 @@ export async function POST(request: Request) {
     const onlineMeetingUrl = formData.get("onlineMeetingUrl") as string;
     const registrationEndStr = formData.get("registrationEnd") as string;
     const useCustomLetterhead = formData.get("useCustomLetterhead") === "true";
-    
-    console.log(formData);
+
+    // Use creatorEmail from form data
+    const creatorEmail = formData.get("creatorEmail") as string;
+    let selectedLetterheadPath = null;
+    if (creatorEmail) {
+      const user = await prisma.user.findUnique({
+        where: { email: creatorEmail },
+        select: { userLetterhead: true, swgLetterhead: true }
+      });
+      if (user) {
+        selectedLetterheadPath = useCustomLetterhead ? user.swgLetterhead : user.userLetterhead;
+      }
+    }
+
     // Validate required fields
     if (!title || !description || !dateStr || !location) {
       return json({ error: "Missing required fields" }, { status: 400 });
@@ -297,22 +308,6 @@ export async function POST(request: Request) {
       meetingId = `047/${sector}/${meetingTypeCode}/${datePart}-${timePart}`;
     }
 
-    // Get user's default letterhead if not using custom letterhead
-    let defaultLetterheadPath = null;
-    if (!useCustomLetterhead && creatorEmail) {
-      try {
-        const user = await prisma.user.findUnique({
-          where: { email: creatorEmail },
-          select: { customLetterhead: true }
-        });
-        if (user?.customLetterhead) {
-          defaultLetterheadPath = user.customLetterhead;
-        }
-      } catch (error) {
-        console.error("Error fetching user's default letterhead:", error);
-      }
-    }
-
     // Create the meeting with all necessary fields
     const meeting = await prisma.meeting.create({
       data: {
@@ -326,42 +321,16 @@ export async function POST(request: Request) {
         creatorType: creatorType || "ORG", // Default creator type if not provided
         meetingId,
         ...(organization ? { organization } : {}),
-        // Add these fields only if they are defined in the schema
         ...(meetingCategory ? { meetingCategory } : {}),
         ...(meetingType && { meetingType }),
         ...(meetingType === "ONLINE" ||
         (meetingType === "HYBRID" && onlineMeetingUrl)
           ? { onlineMeetingUrl }
           : {}),
-        ...(registrationEnd ? { registrationEnd } : {}),
-        // Set letterhead based on toggle state
-        ...(useCustomLetterhead ? {} : { customLetterhead: defaultLetterheadPath }),
+        ...(registrationEndStr ? { registrationEnd: new Date(registrationEndStr) } : {}),
+        customLetterhead: selectedLetterheadPath,
       },
     });
-
-    // Process letterhead based on toggle state
-    let letterheadPath = null;
-
-    if (useCustomLetterhead) {
-      // Use the general admin letterhead (swg.jpg)
-      letterheadPath = "/letterheads/swg.jpg";
-    } else {
-      // Use user's default letterhead (already set in meeting creation)
-      letterheadPath = defaultLetterheadPath;
-    }
-
-    // Update meeting with letterhead path
-    if (letterheadPath) {
-      try {
-        await prisma.meeting.update({
-          where: { id: meeting.id },
-          data: { customLetterhead: letterheadPath },
-        });
-      } catch (error) {
-        console.error("Error updating meeting with letterhead path:", error);
-        // Continue execution even if letterhead update fails
-      }
-    }
 
     // Process uploaded resource files
     const resourceFiles: {
