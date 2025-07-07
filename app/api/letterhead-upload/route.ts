@@ -59,7 +59,8 @@ export async function POST(request: NextRequest) {
       const timestamp = Date.now();
       let originalName = letterheadFile.name || "user-letterhead.jpg";
       // Sanitize filename: remove path, replace spaces, remove special chars
-      originalName = originalName.split("/").pop().split("\\").pop().replace(/[^a-zA-Z0-9._-]/g, "_");
+      if (!originalName) originalName = "user-letterhead.jpg";
+      originalName = originalName.split("/").pop()?.split("\\").pop()?.replace(/[^a-zA-Z0-9._-]/g, "_") || "user-letterhead.jpg";
       const ext = originalName.includes('.') ? originalName.substring(originalName.lastIndexOf('.')) : '.jpg';
       const base = originalName.replace(ext, "");
       const safeName = `${base}-${timestamp}${ext}`;

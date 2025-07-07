@@ -10,7 +10,6 @@ const { useState, useEffect } = React;
 export default function CreateMeetingPage() {
   const router = useRouter();
   const auth = useSessionAuth();
-  console.log(auth)
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [errorPopup, setErrorPopup] = useState(false);
