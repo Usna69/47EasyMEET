@@ -71,12 +71,15 @@ export default function AdminAttendeesList() {
 
       // Determine which letterhead to use
       const letterheadPath = meeting.customLetterhead;
+      console.log('PDF: meeting.customLetterhead:', letterheadPath);
 
       // Get the letterhead image if available
       if (letterheadPath) {
         try {
+          console.log('PDF: Fetching letterhead image from:', letterheadPath);
           // Fetch the image and convert to blob
           const response = await fetch(letterheadPath);
+          console.log('PDF: Fetch response status:', response.status);
           if (!response.ok) {
             throw new Error(
               `Failed to fetch letterhead image: ${response.status}`
@@ -401,15 +404,6 @@ export default function AdminAttendeesList() {
       </div>
 
       <div className="bg-white shadow-md rounded-lg p-6 border border-gray-100">
-        {meeting?.customLetterhead && (
-          <div className="mb-6 flex justify-center">
-            <img
-              src={meeting.customLetterhead}
-              alt="Meeting Letterhead"
-              className="max-h-40 object-contain border border-gray-200 rounded shadow"
-            />
-          </div>
-        )}
         <div className="flex flex-wrap items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-semibold text-[#014a2f]">Attendees</h1>

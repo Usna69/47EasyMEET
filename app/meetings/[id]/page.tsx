@@ -77,10 +77,13 @@ export default function MeetingDetails() {
 
       // Check if meeting has a custom letterhead or use sector letterhead
       const letterheadPath = meeting.customLetterhead;
+      console.log('PDF: meeting.customLetterhead:', letterheadPath);
       if (letterheadPath) {
         try {
+          console.log('PDF: Fetching letterhead image from:', letterheadPath);
           // Fetch the image and convert to blob
           const response = await fetch(letterheadPath);
+          console.log('PDF: Fetch response status:', response.status);
           if (!response.ok) {
             throw new Error(
               `Failed to fetch letterhead image: ${response.status}`

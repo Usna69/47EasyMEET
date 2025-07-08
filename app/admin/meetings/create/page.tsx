@@ -61,16 +61,6 @@ export default function CreateMeetingPage() {
     }
   }, [auth.user, useCustomLetterhead]);
 
-  useEffect(() => {
-    if (auth.user) {
-      setSelectedLetterheadPath(
-        useCustomLetterhead
-          ? auth.user.swgLetterhead
-          : auth.user.userLetterhead
-      );
-    }
-  }, [useCustomLetterhead, auth.user]);
-
   // Fetch user profile with both letterheads on mount
   useEffect(() => {
     async function fetchProfile() {
