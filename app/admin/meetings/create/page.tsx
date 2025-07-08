@@ -604,7 +604,7 @@ export default function CreateMeetingPage() {
                     <p className="text-sm text-gray-500">
                       {useCustomLetterhead
                         ? "Use SWG Letterhead uploaded during account creation"
-                        : "Use User Letterhead uploaded during account creation"
+                        : "Use Sector Letterhead uploaded during account creation"
                       }
                     </p>
                   </div>
