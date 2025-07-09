@@ -64,9 +64,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    if (!userLetterheadPath || !swgLetterheadPath) {
+    if (!userLetterheadPath) {
       return json(
-        { error: "Both User and SWG letterheads are required." },
+        { error: "Sector letterhead is required." },
         { status: 400 }
       );
     }

@@ -56,8 +56,8 @@ export default function UserCreateForm({ onSubmit, onCancel, loading }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     setFormError("");
-    if (!userLetterheadPath || !swgLetterheadPath) {
-      setFormError("Both User and SWG letterheads are required.");
+    if (!userLetterheadPath) {
+      setFormError("Sector letterhead is required.");
       return;
     }
     onSubmit({ ...newUser, userLetterheadPath, swgLetterheadPath });
@@ -203,7 +203,7 @@ export default function UserCreateForm({ onSubmit, onCancel, loading }) {
         {/* Custom Letterhead Upload Section */}
         <div className="mt-6">
           <h3 className="text-lg font-medium text-[#014a2f] mb-3">
-            Custom Letterhead (Required)
+            Sector Letterhead (Required)
           </h3>
           <UserLetterheadUploader onUploadSuccess={handleUserLetterheadUploadSuccess} />
         </div>
@@ -211,7 +211,7 @@ export default function UserCreateForm({ onSubmit, onCancel, loading }) {
         {/* SWG Letterhead Upload Section */}
         <div className="mt-6">
           <h3 className="text-lg font-medium text-[#014a2f] mb-3">
-            SWG Letterhead (Required)
+            SWG Letterhead (Optional)
           </h3>
           <SWGLetterheadUploader onUploadSuccess={handleSwgLetterheadUploadSuccess} />
         </div>

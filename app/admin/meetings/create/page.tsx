@@ -32,6 +32,7 @@ export default function CreateMeetingPage() {
   const [selectedLetterheadPath, setSelectedLetterheadPath] = useState("");
   const [userLetterhead, setUserLetterhead] = useState("");
   const [swgLetterhead, setSwgLetterhead] = useState("");
+  const [hasSWGLetterhead, setHasSWGLetterhead] = useState(false);
 
   // Set user's sector when component mounts
   useEffect(() => {
@@ -76,6 +77,9 @@ export default function CreateMeetingPage() {
           if (user) {
             setUserLetterhead(user.userLetterhead || "");
             setSwgLetterhead(user.swgLetterhead || "");
+            // Check if SWG letterhead exists and is not the default value
+            const hasSWG = user.swgLetterhead && user.swgLetterhead !== "swg.jpg" && user.swgLetterhead !== "";
+            setHasSWGLetterhead(hasSWG);
           }
         } else {
           console.error("Failed to fetch user profile");
@@ -89,10 +93,14 @@ export default function CreateMeetingPage() {
 
   // Set selected letterhead path based on toggle and fetched profile
   useEffect(() => {
-    setSelectedLetterheadPath(
-      useCustomLetterhead ? swgLetterhead : userLetterhead
-    );
-  }, [useCustomLetterhead, userLetterhead, swgLetterhead]);
+    if (hasSWGLetterhead) {
+      setSelectedLetterheadPath(useCustomLetterhead ? swgLetterhead : userLetterhead);
+    } else {
+      // When no SWG letterhead, force useCustomLetterhead to false and use sector letterhead
+      setUseCustomLetterhead(false);
+      setSelectedLetterheadPath(userLetterhead);
+    }
+  }, [useCustomLetterhead, userLetterhead, swgLetterhead, hasSWGLetterhead]);
 
   // No automatic redirects - we'll handle authentication in the render logic
 
@@ -583,59 +591,77 @@ export default function CreateMeetingPage() {
               </div>
             )}
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Letterhead Settings
-              </label>
-              <div className="border border-gray-300 rounded-md p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <p className="font-medium text-gray-900">Letterhead Selection</p>
-                    <p className="text-sm text-gray-500">
-                      {useCustomLetterhead
-                        ? "Use SWG Letterhead uploaded during account creation"
-                        : "Use Sector Letterhead uploaded during account creation"
-                      }
-                    </p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={useCustomLetterhead}
-                      onChange={(e) => setUseCustomLetterhead(e.target.checked)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#014a2f]"></div>
-                  </label>
-                </div>
-
-                {useCustomLetterhead && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-                    <div className="flex items-center">
-                      <svg className="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                      </svg>
-                      <p className="text-sm text-blue-700">
-                        Will use <strong>SWG Letterhead</strong> uploaded during account creation
+            {hasSWGLetterhead ? (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Letterhead Settings
+                </label>
+                <div className="border border-gray-300 rounded-md p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="font-medium text-gray-900">Letterhead Selection</p>
+                      <p className="text-sm text-gray-500">
+                        {useCustomLetterhead
+                          ? "Use SWG Letterhead uploaded during account creation"
+                          : "Use Sector Letterhead uploaded during account creation"
+                        }
                       </p>
                     </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={useCustomLetterhead}
+                        onChange={(e) => setUseCustomLetterhead(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#014a2f]"></div>
+                    </label>
                   </div>
-                )}
-
-                {!useCustomLetterhead && (
+                  {useCustomLetterhead && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                      <div className="flex items-center">
+                        <svg className="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p className="text-sm text-blue-700">
+                          Will use <strong>SWG Letterhead</strong> uploaded during account creation
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {!useCustomLetterhead && (
+                    <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                      <div className="flex items-center">
+                        <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p className="text-sm text-green-700">
+                          Will use <strong>Sector Letterhead</strong> uploaded during account creation
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Letterhead
+                </label>
+                <div className="border border-gray-300 rounded-md p-4">
                   <div className="bg-green-50 border border-green-200 rounded-md p-3">
                     <div className="flex items-center">
                       <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                       </svg>
                       <p className="text-sm text-green-700">
-                        Will use <strong>User Letterhead</strong> uploaded during account creation
+                        Will use <strong>Sector Letterhead</strong> uploaded during account creation
                       </p>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
-            </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
