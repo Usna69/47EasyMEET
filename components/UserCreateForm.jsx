@@ -9,7 +9,6 @@ export default function UserCreateForm({ onSubmit, onCancel, loading }) {
   const [newUser, setNewUser] = useState({
     name: "",
     email: "",
-    password: "",
     role: "CREATOR",
     department: "",
     designation: "",
@@ -60,7 +59,9 @@ export default function UserCreateForm({ onSubmit, onCancel, loading }) {
       setFormError("Sector letterhead is required.");
       return;
     }
-    onSubmit({ ...newUser, userLetterheadPath, swgLetterheadPath });
+    // Always send empty password to ensure temporary password generation
+    const userData = { ...newUser, password: "", userLetterheadPath, swgLetterheadPath };
+    onSubmit(userData);
   };
 
   const handleUserLetterheadUploadSuccess = (path) => {
@@ -125,15 +126,18 @@ export default function UserCreateForm({ onSubmit, onCancel, loading }) {
               Password
             </label>
             <input
-              type="password"
+              type="text"
               id="password"
               name="password"
-              value={newUser.password}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#014a2f] focus:border-transparent"
-              required
-              autoComplete="new-password"
+              value="Temporary password will be auto-generated"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-500 cursor-not-allowed"
+              disabled
+              readOnly
             />
+            <p className="text-xs text-gray-500 mt-1">
+              A secure temporary password will be automatically generated and sent via email. 
+              The user will be required to change it on first login.
+            </p>
           </div>
 
           <div>

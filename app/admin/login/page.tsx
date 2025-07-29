@@ -28,6 +28,10 @@ export default function LoginPage() {
     setSuccess("");
     setLoading(true);
 
+    console.log("Login attempt started");
+    console.log("Email:", email);
+    console.log("Password length:", password.length);
+
     if (!email || !password) {
       setError("Email and password are required");
       setLoading(false);
@@ -35,17 +39,34 @@ export default function LoginPage() {
     }
 
     try {
+      console.log("Calling auth.login...");
       // Use the async login function
-      const loginSuccess = await auth.login(email, password);
-      if (loginSuccess) {
-        // Simple redirect to admin dashboard
-        window.location.href = "/admin";
+      const loginResult = await auth.login(email, password);
+      console.log("auth.login result:", loginResult);
+      
+      if (loginResult.success) {
+        console.log("Login successful, redirecting...");
+        console.log("User data from login:", loginResult.user);
+        console.log("isFirstLogin value:", loginResult.user?.isFirstLogin);
+        console.log("isFirstLogin type:", typeof loginResult.user?.isFirstLogin);
+        console.log("isFirstLogin === true:", loginResult.user?.isFirstLogin === true);
+        
+        // Check if user is on first login
+        if (loginResult.user?.isFirstLogin === true) {
+          console.log("User is on first login, redirecting to /admin/first-login");
+          window.location.href = "/admin/first-login";
+        } else {
+          console.log("User is not on first login, redirecting to /admin");
+          // Simple redirect to admin dashboard
+          window.location.href = "/admin";
+        }
       } else {
+        console.log("Login failed");
         setError("Invalid credentials - please check your email and password");
       }
     } catch (err) {
-      setError("An error occurred during login. Please try again.");
       console.error("Login error:", err);
+      setError("An error occurred during login. Please try again.");
     } finally {
       setLoading(false);
     }

@@ -127,8 +127,8 @@ export const validateMeetingForm = (formData: any): ValidationResult => {
 export const validateUserForm = (formData: any): ValidationResult => {
   const errors: ValidationError[] = [];
 
-  // Required fields
-  const requiredFields = ['name', 'email', 'password'];
+  // Required fields (password is now optional)
+  const requiredFields = ['name', 'email'];
   requiredFields.forEach(field => {
     const error = validationSchemas.required(formData[field], field);
     if (error) errors.push(error);
@@ -138,9 +138,11 @@ export const validateUserForm = (formData: any): ValidationResult => {
   const emailError = validationSchemas.email(formData.email);
   if (emailError) errors.push(emailError);
 
-  // Password validation
-  const passwordError = validationSchemas.password(formData.password);
-  if (passwordError) errors.push(passwordError);
+  // Password validation (only if provided)
+  if (formData.password && formData.password.trim()) {
+    const passwordError = validationSchemas.password(formData.password);
+    if (passwordError) errors.push(passwordError);
+  }
 
   return {
     isValid: errors.length === 0,

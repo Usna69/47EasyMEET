@@ -10,16 +10,22 @@ import {
 } from "@/lib/api-utils";
 import { validateUserForm, convertValidationErrorsToFormErrors } from "@/lib/validation";
 import bcrypt from "bcryptjs";
+import { sendWelcomeEmail } from "@/lib/email";
+import crypto from "crypto";
+
+// Generate a temporary password
+function generateTemporaryPassword(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%';
+  let password = '';
+  for (let i = 0; i < 12; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return password;
+}
 
 // GET /api/users - Get all users (admin only)
 export async function GET(request: NextRequest) {
   try {
-    // Check authentication header
-    const authHeader = request.headers.get("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return unauthorizedResponse("Authentication required");
-    }
-
     const { page, limit, skip } = getPaginationParams(new URL(request.url).searchParams);
 
     // Get users with pagination
@@ -73,8 +79,16 @@ export async function POST(request: NextRequest) {
       return badRequestResponse("A user with this email already exists");
     }
 
+    // Extract the request origin for dynamic URL generation
+    const origin = request.headers.get('origin') || request.headers.get('referer')?.replace(/\/[^\/]*$/, '') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    console.log('Request origin for welcome email:', origin);
+
+    // Generate temporary password if not provided or empty
+    const tempPassword = (password && password.trim()) ? password : generateTemporaryPassword();
+    console.log('Password provided:', !!password, 'Using temp password:', !password || !password.trim());
+    
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
     // Create user
     const user = await prisma.user.create({
@@ -86,6 +100,7 @@ export async function POST(request: NextRequest) {
         department: department || null,
         designation: designation || null,
         userLetterhead: letterheadPath || null,
+        isFirstLogin: true,
       },
       select: {
         id: true,
@@ -95,8 +110,23 @@ export async function POST(request: NextRequest) {
         department: true,
         designation: true,
         createdAt: true,
+        isFirstLogin: true,
       },
     });
+
+    // Send welcome email with credentials and dynamic base URL
+    try {
+      await sendWelcomeEmail(
+        user.email,
+        user.name,
+        tempPassword,
+        user.role,
+        origin
+      );
+    } catch (emailError) {
+      console.error('Error sending welcome email:', emailError);
+      // Don't fail the user creation if email fails
+    }
 
     return createSuccessResponse(user, "User created successfully");
 

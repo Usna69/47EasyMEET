@@ -63,7 +63,7 @@ export default function MeetingForm({
             formDataToSend.append(key, value);
           }
         });
-        
+      
         // Add user context
         formDataToSend.append("creatorEmail", auth.user?.email || meeting?.creatorEmail || "");
       
@@ -75,7 +75,7 @@ export default function MeetingForm({
       if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || "Failed to save meeting");
-        }
+      }
 
         return response.json();
       },
@@ -219,8 +219,8 @@ export default function MeetingForm({
             errors.sector
                 ? "border-red-300 focus:ring-red-500"
                 : "border-gray-300 focus:ring-[#014a2f]"
-            }`}
-          >
+          }`}
+        >
             <option value="">Select a sector</option>
             <option value="BA&P">Boroughs Administration and Personnel</option>
             <option value="BE&UP">Built Environment and Urban Planning</option>
@@ -252,8 +252,8 @@ export default function MeetingForm({
             errors.meetingCategory
                 ? "border-red-300 focus:ring-red-500"
                 : "border-gray-300 focus:ring-[#014a2f]"
-            }`}
-          >
+          }`}
+        >
             <option value="">Select meeting category</option>
             <option value="INTERNAL">Internal</option>
             <option value="EXTERNAL">External</option>
@@ -337,7 +337,7 @@ export default function MeetingForm({
             className="flex-1 py-3 px-6 rounded-lg font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors"
           >
             Cancel
-          </button>
+        </button>
       </div>
       </form>
     </div>

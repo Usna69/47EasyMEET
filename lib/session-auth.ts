@@ -10,6 +10,7 @@ export interface AuthUser {
   email: string;
   name: string;
   department?: string;
+  isFirstLogin?: boolean;
 }
 
 export interface AuthState {
@@ -30,27 +31,34 @@ export const useSessionAuth = () => {
     if (storedAuthState) {
       try {
         const parsedAuthState = JSON.parse(storedAuthState);
+        console.log('Loaded auth state from session storage:', parsedAuthState);
         setAuthState(parsedAuthState);
       } catch (error) {
         console.error('Error parsing auth state:', error);
+        sessionStorage.removeItem('authState'); // Clear corrupted data
         setAuthState({ isLoggedIn: false });
       }
     } else {
+      console.log('No stored auth state found');
       setAuthState({ isLoggedIn: false });
     }
   }, []);
 
   // Logout function
   const logout = () => {
+    console.log('User logging out');
     sessionStorage.removeItem('authState');
     setAuthState({ isLoggedIn: false });
     router.replace('/admin/login');
   };
 
   // Login function that works with API authentication
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<{ success: boolean; user?: any }> => {
+    console.log('Attempting login for:', email);
+    console.log('Making API call to /api/auth/login...');
+    
     try {
-      // Call the authentication API
+      // Call the authentication API - use relative URL for production compatibility
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
@@ -59,14 +67,44 @@ export const useSessionAuth = () => {
         body: JSON.stringify({ email, password })
       });
       
+      console.log('Login API response status:', response.status);
+      console.log('Login API response headers:', Object.fromEntries(response.headers.entries()));
+      
       if (!response.ok) {
-        console.error('Login failed:', response.statusText);
-        return false;
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Login failed:', response.statusText, errorData);
+        return { success: false };
       }
       
       const data = await response.json();
+      console.log('Login API response data:', data);
       
-      if (data.success && data.user) {
+      if (data.success && data.data?.user) {
+        console.log('Found user in data.data.user');
+        console.log('User data from API:', data.data.user);
+        console.log('isFirstLogin from API:', data.data.user.isFirstLogin);
+        const newAuthState = {
+          isLoggedIn: true,
+          username: email,
+          user: {
+            role: data.data.user.role,
+            email: data.data.user.email,
+            name: data.data.user.name,
+            department: data.data.user.department || '',
+            isFirstLogin: data.data.user.isFirstLogin || false
+          }
+        };
+        
+        console.log('Login successful, setting auth state:', newAuthState);
+        console.log('isFirstLogin in auth state:', newAuthState.user.isFirstLogin);
+        sessionStorage.setItem('authState', JSON.stringify(newAuthState));
+        setAuthState(newAuthState);
+        return { success: true, user: data.data.user };
+      } else if (data.success && data.user) {
+        console.log('Found user in data.user');
+        console.log('User data from API:', data.user);
+        console.log('isFirstLogin from API:', data.user.isFirstLogin);
+        // Handle the case where user is directly in data
         const newAuthState = {
           isLoggedIn: true,
           username: email,
@@ -74,18 +112,24 @@ export const useSessionAuth = () => {
             role: data.user.role,
             email: data.user.email,
             name: data.user.name,
-            department: data.user.department || ''
+            department: data.user.department || '',
+            isFirstLogin: data.user.isFirstLogin || false
           }
         };
+        
+        console.log('Login successful, setting auth state:', newAuthState);
+        console.log('isFirstLogin in auth state:', newAuthState.user.isFirstLogin);
         sessionStorage.setItem('authState', JSON.stringify(newAuthState));
         setAuthState(newAuthState);
-        return true;
+        return { success: true, user: data.user };
+      } else {
+        console.error('Login response missing user data:', data);
+        return { success: false };
       }
       
-      return false;
     } catch (error) {
       console.error('Login error:', error);
-      return false;
+      return { success: false };
     }
   };
 

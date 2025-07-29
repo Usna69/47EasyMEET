@@ -1,7 +1,7 @@
 # Email Setup for Password Reset Functionality
 
 ## Overview
-The EasyMEET system now includes SMTP email functionality for password reset. Users can request a password reset and receive a secure link via email. **All users, including admin users, are now stored in the database and can use the password reset functionality.**
+The EasyMEET system now includes SMTP email functionality for password reset and welcome emails. Users can request a password reset and receive a secure link via email. **All users, including admin users, are now stored in the database and can use the password reset functionality.**
 
 ## Configuration
 
@@ -26,13 +26,30 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 DATABASE_URL="your_database_url_here"
 ```
 
-### 3. Security Notes
+### 3. Email Features
+- **Sender Name**: All emails are sent from "EASYMEETNCCG" 
+- **Reply Blocking**: All emails have reply-to set to "noreply@easymeetnccg.go.ke" to prevent replies
+- **Welcome Emails**: New users receive welcome emails with their login credentials
+- **Password Reset**: Users can request password reset via email
+- **First Login**: Users must change their password on first login
+
+### 4. Security Notes
 - Never commit the `.env` file to version control
 - The app password should be kept secure
-- The email sender is configured as "PASSWORD REST LINK" as requested
+- All emails are sent from "EASYMEETNCCG" as requested
 - **Admin credentials are now stored in the database instead of being hardcoded**
+- **Reply blocking is implemented on all emails**
 
 ## How It Works
+
+### Welcome Email Flow:
+1. Admin creates new user account
+2. System generates temporary password
+3. Welcome email sent with credentials
+4. User logs in with temporary password
+5. User redirected to password reset page
+6. User sets new password
+7. User gains access to system
 
 ### Password Reset Flow:
 1. User clicks "Forgot Password?" on login page
@@ -49,6 +66,7 @@ DATABASE_URL="your_database_url_here"
 - Passwords are hashed using bcrypt
 - Email links are single-use (token is cleared after use)
 - **All users, including admin, can reset their passwords**
+- **Reply blocking prevents users from replying to system emails**
 
 The admin user can now:
 - Login using the database credentials
@@ -62,14 +80,14 @@ You can test the email functionality using the test endpoint:
 ```bash
 curl -X POST http://localhost:3000/api/test-email \
   -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","name":"Test User"}'
+  -d '{"email": "test@example.com"}'
 ```
 
-Or test admin password reset:
+Or test password reset:
 ```bash
 curl -X POST http://localhost:3000/api/users/request-password-reset \
   -H "Content-Type: application/json" \
-  -d '{"email":"Adminmeets@nairobi.go.ke"}'
+  -d '{"email": "adminmeets@nairobi.go.ke"}'
 ```
 
 ## Troubleshooting

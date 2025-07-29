@@ -18,6 +18,10 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: 'Invalid email format' }, { status: 400 });
     }
 
+    // Extract the request origin for dynamic URL generation
+    const origin = request.headers.get('origin') || request.headers.get('referer')?.replace(/\/[^\/]*$/, '') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    console.log('Request origin for password reset:', origin);
+
     // Find the user by email
     const user = await prisma.user.findUnique({
       where: { email },
@@ -50,11 +54,12 @@ export async function POST(request: NextRequest) {
         },
       });
       
-      // Send password reset email
+      // Send password reset email with dynamic base URL
       const emailSent = await sendPasswordResetEmail(
         user.email,
         resetToken,
-        user.name
+        user.name,
+        origin
       );
       
       if (emailSent) {
