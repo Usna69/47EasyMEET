@@ -1,116 +1,106 @@
 import { NextRequest } from "next/server";
 import { prisma } from "../../../lib/prisma";
+import { 
+  createSuccessResponse, 
+  createPaginatedResponse,
+  handleDatabaseError,
+  getPaginationParams,
+  badRequestResponse,
+  unauthorizedResponse
+} from "@/lib/api-utils";
+import { validateUserForm, convertValidationErrorsToFormErrors } from "@/lib/validation";
 import bcrypt from "bcryptjs";
-
-// API response helper
-const json = (data: any, init?: ResponseInit) => {
-  return new Response(JSON.stringify(data), {
-    ...init,
-    headers: {
-      ...init?.headers,
-      "Content-Type": "application/json",
-    },
-  });
-};
 
 // GET /api/users - Get all users (admin only)
 export async function GET(request: NextRequest) {
   try {
-    // Get authorization header from request
-    const authHeader = request.headers.get("authorization");
+    // Check authentication header
+    const authHeader = request.headers.get("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return unauthorizedResponse("Authentication required");
+    }
 
-    // In a real app, we would verify the token here
-    // For this demo, we'll allow access without authentication for development purposes
+    const { page, limit, skip } = getPaginationParams(new URL(request.url).searchParams);
 
-    // Fetch all users using raw query
-    const users = await prisma.user.findMany({
-      orderBy: {
-        name: "asc",
-      },
-    });
+    // Get users with pagination
+    const [total, users] = await Promise.all([
+      prisma.user.count(),
+      prisma.user.findMany({
+        skip,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          department: true,
+          designation: true,
+          createdAt: true,
+          userLetterhead: true,
+          swgLetterhead: true,
+        },
+      })
+    ]);
 
-    // Map the result to match the User interface
-    const formattedUsers = Array.isArray(users)
-      ? users.map((user: any) => ({
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          department: user.department,
-          designation: user.designation,
-          createdAt: user.createdAt,
-          passwordResetRequested: user.passwordResetRequested,
-          userLetterhead: user.userLetterhead,
-          swgLetterhead: user.swgLetterhead,
-        }))
-      : [];
+    return createPaginatedResponse(users, page, limit, total);
 
-    return json(formattedUsers);
   } catch (error) {
-    console.error("Error fetching users:", error);
-    return json({ error: "Failed to fetch users" }, { status: 500 });
+    return handleDatabaseError(error, "fetch users");
   }
 }
 
-// POST /api/users - Create a new user (admin only)
+// POST /api/users - Create a new user
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, password, role, department, designation, userLetterheadPath, swgLetterheadPath } =
-      await request.json();
-    // Validate required fields
-    if (!name || !email || !password) {
-      return json(
-        { error: "Name, email and password are required" },
-        { status: 400 }
-      );
-    }
-    if (!userLetterheadPath) {
-      return json(
-        { error: "Sector letterhead is required." },
-        { status: 400 }
-      );
+    const body = await request.json();
+    const { name, email, password, role, department, designation, letterheadPath } = body;
+
+    // Validate user data
+    const validation = validateUserForm({ name, email, password, role });
+    
+    if (!validation.isValid) {
+      const formErrors = convertValidationErrorsToFormErrors(validation.errors);
+      return badRequestResponse(Object.values(formErrors).join(", "));
     }
 
-    // Check if user with email already exists
-    const existingUsers = await prisma.user.findUnique({
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
       where: { email },
     });
 
-    if (existingUsers) {
-      return json(
-        { error: "A user with this email already exists" },
-        { status: 400 }
-      );
+    if (existingUser) {
+      return badRequestResponse("A user with this email already exists");
     }
 
-    const now = new Date().toISOString();
-
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Create user
     const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
-        role,
-        createdAt: now,
-        updatedAt: now,
-        department,
-        designation,
-        customLetterhead: userLetterheadPath || "defaultlh.jpg", // For backward compatibility
-        userLetterhead: userLetterheadPath || "defaultlh.jpg",
-        swgLetterhead: swgLetterheadPath || "swg.jpg",
+        role: role || "USER",
+        department: department || null,
+        designation: designation || null,
+        userLetterhead: letterheadPath || null,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        department: true,
+        designation: true,
+        createdAt: true,
       },
     });
 
-    if (user) {
-      return json(
-        { success: true, message: "User created successfully" },
-        { status: 201 }
-      );
-    }
+    return createSuccessResponse(user, "User created successfully");
+
   } catch (error) {
-    console.error("Error creating user:", error);
-    return json({ error: "Failed to create user" }, { status: 500 });
+    return handleDatabaseError(error, "create user");
   }
 }

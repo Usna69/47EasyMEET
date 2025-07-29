@@ -79,7 +79,7 @@ export default function DocxToJpgConversion() {
             <h3 className="font-medium text-blue-800 mb-2">How it works</h3>
             <ol className="list-decimal pl-5 text-blue-700 space-y-2">
               <li>Upload your DOCX file using the selector below</li>
-              <li>Click "Convert to JPG" to start the conversion process</li>
+              <li>Click &quot;Convert to JPG&quot; to start the conversion process</li>
               <li>Download your converted JPG file when ready</li>
               <li>Optionally, add password protection to secure your document</li>
             </ol>
@@ -182,7 +182,7 @@ export default function DocxToJpgConversion() {
           <div className="mt-8 border-t pt-6">
             <h3 className="font-medium text-gray-800 mb-2">Need help with conversion?</h3>
             <p className="text-gray-600 mb-4">
-              If you're having trouble with the built-in converter, you can try these alternatives:
+              If you&apos;re having trouble with the built-in converter, you can try these alternatives:
             </p>
             <div className="flex flex-wrap gap-3">
               <a 

@@ -10,7 +10,6 @@ interface User {
   department?: string;
   designation?: string;
   createdAt: string;
-  passwordResetRequested?: boolean;
   customLetterhead?: string;
 }
 

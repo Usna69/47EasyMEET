@@ -74,7 +74,7 @@ export default function LoginPage() {
 
       if (response.ok) {
         setSuccess(
-          "Password reset request sent to admin. Please check with your administrator."
+          "Password reset link has been sent to your email address. Please check your inbox and follow the instructions."
         );
         setEmail("");
       } else {

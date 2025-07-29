@@ -1,12 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "../../../../lib/prisma";
+import { 
+  createSuccessResponse, 
+  notFoundResponse,
+  handleDatabaseError
+} from "@/lib/api-utils";
 
 // Add dynamic mode to ensure this route is properly rendered server-side
 export const dynamic = 'force-dynamic';
 
 // GET a single user by ID
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -14,30 +19,35 @@ export async function GET(
     const { id } = await params;
     const user = await prisma.user.findUnique({
       where: { id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        department: true,
+        designation: true,
+        createdAt: true,
+        userLetterhead: true,
+        swgLetterhead: true,
+      },
     });
 
     if (!user) {
-      return new Response(JSON.stringify({ error: "User not found" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
+      return notFoundResponse("User");
     }
 
-    return new Response(JSON.stringify(user), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return createSuccessResponse(user, "User fetched successfully");
+
   } catch (error) {
-    console.error("Error fetching user:", error);
-    return new Response(JSON.stringify({ error: "Failed to fetch user" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return handleDatabaseError(error, "fetch user");
   }
 }
 
 // DELETE a user by ID
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  request: NextRequest, 
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     // In Next.js 15, params is now a Promise, so we need to await it
     const { id } = await params;
@@ -48,21 +58,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     });
 
     if (!existingUser) {
-      return new Response(JSON.stringify({ error: "User not found" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // Prevent deletion of the admin super user
-    if (existingUser.email === "Adminmeets@nairobi.go.ke") {
-      return new Response(
-        JSON.stringify({ error: "Cannot delete the super admin user" }),
-        {
-          status: 403,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      return notFoundResponse("User");
     }
 
     // Delete user
@@ -70,18 +66,9 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       where: { id },
     });
 
-    return new Response(
-      JSON.stringify({ message: "User deleted successfully" }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return createSuccessResponse(null, "User deleted successfully");
+
   } catch (error) {
-    console.error("Error deleting user:", error);
-    return new Response(JSON.stringify({ error: "Failed to delete user" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return handleDatabaseError(error, "delete user");
   }
 }

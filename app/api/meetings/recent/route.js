@@ -1,43 +1,60 @@
-import { prisma } from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { PrismaClient } from '@prisma/client';
+import { NextResponse } from 'next/server';
+
+const prisma = new PrismaClient();
+
+// Add dynamic mode to ensure this route is properly rendered server-side
+export const dynamic = 'force-dynamic';
 
 export async function GET(request) {
-  const url = new URL(request.url);
-  const creatorEmail = url.searchParams.get("creatorEmail");
-
-  const isAdmin = creatorEmail === "Adminmeets@nairobi.go.ke";
-
   try {
+    const { searchParams } = new URL(request.url);
+    const creatorEmail = searchParams.get('creatorEmail');
+    
+    if (!creatorEmail) {
+      return NextResponse.json(
+        { error: "Creator email is required" },
+        { status: 400 }
+      );
+    }
+
+    // Single optimized query to get user role and meetings
+    const user = await prisma.user.findUnique({
+      where: { email: creatorEmail },
+      select: { role: true }
+    });
+    
+    const isAdmin = user?.role === 'ADMIN';
+
     // Build the query conditionally
     const whereClause = {
-      ...(creatorEmail && !isAdmin ? { creatorEmail } : {}), // Filter by creator if not admin
+      ...(creatorEmail && !isAdmin ? { creatorEmail } : {}),
     };
 
-    const totalMeetings = await prisma.meeting.count({
-      where: whereClause,
-    });
-
-    const recentMeetings = await prisma.meeting.findMany({
-      where: whereClause,
-      select: {
-        id: true,
-        title: true,
-        date: true,
-        location: true,
-        meetingType: true,
-        onlineMeetingUrl: true,
-        resources: true,
-        _count: {
-          select: {
-            attendees: true,
+    // Use Promise.all for concurrent queries
+    const [totalMeetings, recentMeetings] = await Promise.all([
+      prisma.meeting.count({ where: whereClause }),
+      prisma.meeting.findMany({
+        where: whereClause,
+        select: {
+          id: true,
+          title: true,
+          date: true,
+          location: true,
+          meetingType: true,
+          onlineMeetingUrl: true,
+          _count: {
+            select: {
+              attendees: true,
+            },
           },
         },
-      },
-      orderBy: {
-        date: "asc",
-      },
-      take: 5,
-    });
+        orderBy: {
+          date: "desc", // Changed to desc to get most recent first
+        },
+        take: 5,
+      })
+    ]);
 
     return NextResponse.json({
       meetings: recentMeetings,

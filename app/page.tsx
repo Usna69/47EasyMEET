@@ -9,8 +9,11 @@ import ClientMeetings from "@/components/ClientMeetings";
 import { Metadata } from "next";
 
 export default async function Home() {
-  // Get all meetings for initial render
-  const dbMeetings = await prisma.meeting.findMany({
+  let dbMeetings: any[] = [];
+  
+  try {
+    // Get all meetings for initial render with timeout handling
+    dbMeetings = await prisma.meeting.findMany({
     orderBy: {
       date: "desc",
     },
@@ -23,6 +26,11 @@ export default async function Home() {
       },
     },
   });
+  } catch (error) {
+    console.error("Error fetching meetings:", error);
+    // Return empty array if database connection fails
+    dbMeetings = [];
+  }
 
   // Transform database meetings to the expected format for MeetingCard
   const meetings = dbMeetings.map((meeting) => ({

@@ -89,7 +89,7 @@ export default function ResourceDownload({ resourceId, fileName }) {
               Password Required
             </h3>
             <p className="mb-4 text-gray-600">
-              This meeting's resources are password protected. Please enter the
+              This meeting&apos;s resources are password protected. Please enter the
               meeting password to download.
             </p>
 

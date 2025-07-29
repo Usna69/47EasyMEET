@@ -52,7 +52,7 @@ export default function DeleteMeetingButton({ id, title }: DeleteMeetingButtonPr
           <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
             <h3 className="text-lg font-semibold mb-4">Delete Meeting</h3>
             <p className="mb-6">
-              Are you sure you want to delete the meeting "{title}"? This action cannot be undone.
+              Are you sure you want to delete the meeting &quot;{title}&quot;? This action cannot be undone.
             </p>
             <div className="flex justify-end space-x-3">
               <button

@@ -1,5 +1,16 @@
 import { NextRequest } from "next/server";
 import { prisma } from "../../../lib/prisma";
+import { 
+  createSuccessResponse, 
+  createErrorResponse, 
+  badRequestResponse,
+  notFoundResponse,
+  handleDatabaseError,
+  validateRequiredFields,
+  validateEmail
+} from "@/lib/api-utils";
+import { validateRegistrationForm, convertValidationErrorsToFormErrors } from "@/lib/validation";
+import { isRegistrationOpen } from "@/lib/meeting-utils";
 
 // POST /api/attendees - Register a new attendee for a meeting
 export async function POST(request: NextRequest) {
@@ -11,175 +22,88 @@ export async function POST(request: NextRequest) {
     const meetingId = formData.get("meetingId") as string;
     const name = formData.get("name") as string;
     const email = formData.get("email") as string;
-    const phoneNumber = formData.get("contact") as string; // Use contact from form but map to phoneNumber in DB
+    const phoneNumber = formData.get("contact") as string;
     const organization = formData.get("organization") as string;
     const designation = formData.get("designation") as string;
     const signatureData = formData.get("signatureData") as string | null;
 
-    // Improved signature data debugging and handling
-    if (signatureData && signatureData.trim() !== "") {
-      // Only log if signature data exists and isn't empty
-      // Verify it's a valid image format
-      if (!signatureData.startsWith("data:image")) {
-        console.warn(
-          "Warning: Signature data received but not in expected image format"
-        );
-      }
-    } else {
-      console.log(
-        "No signature data received - this is normal for forms without signatures"
-      );
-      // Ensure signatureData is at least an empty string, not null
-      // This prevents database issues when saving
+    // Validate required fields
+    const requiredFields = ["meetingId", "name", "email", "contact", "designation"];
+    const validation = validateRequiredFields(
+      { meetingId, name, email, contact: phoneNumber, designation },
+      requiredFields
+    );
+
+    if (!validation.isValid) {
+      return badRequestResponse(`Missing required fields: ${validation.missingFields.join(", ")}`);
     }
 
-    // Check if meeting exists first
+    // Check if meeting exists and get meeting details
     const meeting = await prisma.meeting.findUnique({
       where: { id: meetingId },
     });
 
-    // Use any type for flexibility with schema fields
-    const meetingData = meeting as any;
-
     if (!meeting) {
-      return Response.json({ error: "Meeting not found" }, { status: 404 });
+      return notFoundResponse("Meeting");
     }
 
-    // Validate required fields
-    const isInternalMeeting = meetingData.meetingCategory === "INTERNAL";
-    if (
-      !meetingId ||
-      !name ||
-      !email ||
-      !phoneNumber ||
-      !designation ||
-      (!organization && !isInternalMeeting)
-    ) {
-      return Response.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+    // Check if registration is open
+    if (!isRegistrationOpen(meeting.date)) {
+      return badRequestResponse("Registration is not open for this meeting");
     }
 
-    // Signature data is already sent as a base64 string from the canvas
+    // Validate registration form data
+    const isInternalMeeting = meeting.meetingCategory === "INTERNAL";
+    const formDataForValidation = {
+      name,
+      email,
+      contact: phoneNumber,
+      designation,
+      organization: organization || ""
+    };
 
-    // Check if registration is open based on meeting start time
-    const now = new Date();
-    const meetingStartTime = new Date(meeting.date);
-
-    // Calculate registration end time (2 hours after meeting start)
-    const registrationEndTime = meeting.registrationEnd
-      ? new Date(meeting.registrationEnd)
-      : new Date(new Date(meeting.date).getTime() + 2 * 60 * 60 * 1000);
-
-    console.log("Current time:", now);
-    console.log("Meeting start time:", meetingStartTime);
-    console.log("Registration end time:", registrationEndTime);
-
-    // Check if meeting has started
-    if (now < meetingStartTime) {
-      return Response.json(
-        {
-          error:
-            "Registration is not yet open. Registration opens when the meeting starts.",
-        },
-        { status: 400 }
-      );
+    const formValidation = validateRegistrationForm(formDataForValidation, isInternalMeeting);
+    
+    if (!formValidation.isValid) {
+      const formErrors = convertValidationErrorsToFormErrors(formValidation.errors);
+      return badRequestResponse(Object.values(formErrors).join(", "));
     }
 
-    // Check if meeting date is in the past (more than a day ago)
-    // For meetings that happened on a previous day, we consider them ended
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    if (meetingStartTime < yesterday) {
-      return Response.json(
-        {
-          error: "This meeting has ended. Registration is no longer available.",
-        },
-        { status: 400 }
-      );
-    }
-
-    // Check if registration period is closed (2 hours after meeting start)
-    if (now > registrationEndTime) {
-      return Response.json(
-        {
-          error:
-            "Registration period has ended. Registration closes 2 hours after the meeting starts.",
-        },
-        { status: 400 }
-      );
-    }
-
-    console.log(
-      "Registration check passed: Meeting is ongoing and within registration window"
-    );
-
-    // Check if attendee already registered with this email for this meeting
+    // Check if attendee already exists for this meeting
     const existingAttendee = await prisma.attendee.findFirst({
       where: {
-        meetingId,
-        email,
+        meetingId: meetingId,
+        email: email,
       },
     });
 
     if (existingAttendee) {
-      return Response.json(
-        { error: "You have already registered for this meeting" },
-        { status: 400 }
-      );
+      return badRequestResponse("You have already registered for this meeting");
     }
 
-    // Create the attendee with required fields first
-    try {
-      // Try creating with all fields first
-      // Use type assertion to handle schema flexibility
-      const attendeeData: any = {
-        meetingId,
+    // Create the attendee
+    const attendee = await prisma.attendee.create({
+      data: {
         name,
         email,
-        phoneNumber, // Using phoneNumber field from Prisma schema
-        organization,
+        phoneNumber,
+        organization: organization || null,
         designation,
-        // Ensure signatureData is always a string, never null
-        signatureData: signatureData || "",
-      };
+        signatureData: signatureData || null,
+        meetingId: meetingId,
+      },
+    });
 
-      const attendee = await prisma.attendee.create({
-        data: attendeeData,
-      });
-      return Response.json(attendee, { status: 201 });
-    } catch (dbError) {
-      console.error("First attempt error:", dbError);
-      // If that fails, try with just the required fields
-      try {
-        // Use type assertion to handle schema flexibility
-        const fallbackData: any = {
-          meetingId,
-          name,
-          email,
-          phoneNumber, // Using phoneNumber field from Prisma schema
-          designation,
-        };
-
-        const attendee = await prisma.attendee.create({
-          data: fallbackData,
-        });
-        return Response.json(attendee, { status: 201 });
-      } catch (fallbackError) {
-        console.error("Fallback attempt error:", fallbackError);
-        throw fallbackError; // Rethrow to be caught by the outer catch
-      }
-    }
-
-    // Response is now handled in the nested try-catch
-  } catch (error) {
-    console.error("Error registering attendee:", error);
-    return Response.json(
-      { error: "Failed to register attendee" },
-      { status: 500 }
+    return createSuccessResponse(
+      { 
+        attendee,
+        message: "Registration successful! You will receive a confirmation email shortly."
+      },
+      "Registration successful"
     );
+
+  } catch (error) {
+    return handleDatabaseError(error, "register attendee");
   }
 }
 

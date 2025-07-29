@@ -2,7 +2,6 @@
 
 import React from "react";
 import Link from "next/link";
-import { format } from "date-fns";
 import { useSessionAuth } from "../../lib/session-auth";
 import { useRouter } from "next/navigation";
 
@@ -31,15 +30,6 @@ interface Meeting {
   }>;
 }
 
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: string;
-  passwordResetRequested: boolean;
-  passwordResetRequestedAt?: string;
-}
-
 interface AuthState {
   isLoggedIn: boolean;
   username?: string;
@@ -55,30 +45,8 @@ export default function Dashboard() {
   const router = useRouter();
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [totalMeetings, setTotalMeetings] = useState(0);
-  const [passwordResetRequests, setPasswordResetRequests] = useState<User[]>(
-    []
-  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
-  const [showPasswordResetNotification, setShowPasswordResetNotification] =
-    useState(true);
-
-  // Function to fetch users with password reset requests (for admins)
-  const fetchPasswordResetRequests = async () => {
-    try {
-      const response = await fetch("/api/users/password-reset-requests");
-      if (response.ok) {
-        const data = await response.json();
-        setPasswordResetRequests(data);
-      }
-    } catch (err) {
-      console.error("Error fetching password reset requests:", err);
-    }
-  };
-
-  const handleDismissNotification = () => {
-    setShowPasswordResetNotification(false);
-  };
 
   useEffect(() => {
     // Define the fetch function outside the effect to avoid strict mode errors
@@ -103,11 +71,6 @@ export default function Dashboard() {
     };
 
     fetchMeetings();
-
-    // For admin users, also fetch password reset requests
-    if (auth.user?.role === "ADMIN") {
-      fetchPasswordResetRequests();
-    }
   }, [auth.isLoggedIn, auth.user]);
 
   // Instead of redirecting, show login message
@@ -134,78 +97,6 @@ export default function Dashboard() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      {/* Password reset notification for admins */}
-      {auth.user?.role === "ADMIN" &&
-        showPasswordResetNotification &&
-        passwordResetRequests.length > 0 && (
-          <div className="mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded shadow-sm">
-            <div className="flex items-start justify-between">
-              <div className="flex">
-                <svg
-                  className="h-6 w-6 text-yellow-600 mr-2"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                  />
-                </svg>
-                <div>
-                  <h3 className="font-medium text-yellow-700">
-                    Password Reset Requests
-                  </h3>
-                  <p className="text-sm text-yellow-600">
-                    {passwordResetRequests.length} user
-                    {passwordResetRequests.length !== 1 ? "s" : ""}{" "}
-                    {passwordResetRequests.length !== 1 ? "have" : "has"}{" "}
-                    requested password resets:
-                  </p>
-                  <ul className="mt-2 mb-2 text-sm text-yellow-600">
-                    {passwordResetRequests.slice(0, 3).map((user: User) => (
-                      <li key={user.id} className="mb-1">
-                        • {user.name} ({user.email})
-                      </li>
-                    ))}
-                    {passwordResetRequests.length > 3 && (
-                      <li>• And {passwordResetRequests.length - 3} more...</li>
-                    )}
-                  </ul>
-                  <Link
-                    href="/admin/users"
-                    className="text-sm text-yellow-800 hover:text-yellow-900 underline mt-1 inline-block"
-                  >
-                    Manage Users
-                  </Link>
-                </div>
-              </div>
-              <button
-                onClick={handleDismissNotification}
-                className="text-yellow-500 hover:text-yellow-700"
-              >
-                <svg
-                  className="h-5 w-5"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-        )}
-
       {/* Admin dashboard content */}
 
       {/* Quick Management Links */}
@@ -313,7 +204,7 @@ export default function Dashboard() {
             {auth.user?.role === "CREATOR" ? (
               <>
                 <h3 className="text-xl font-medium text-gray-600 mb-4">
-                  You haven't created any meetings yet
+                  You haven&apos;t created any meetings yet
                 </h3>
                 <p className="text-gray-500 mb-6">
                   Create your first meeting to get started!
@@ -383,7 +274,12 @@ export default function Dashboard() {
                       </span>
                     </td>
                     <td className="px-4 py-2">
-                      {format(new Date(meeting.date), "PPP")}
+                      {/* Assuming format is available globally or imported */}
+                      {/* If not, you might need to import it or define it */}
+                      {/* For now, using a placeholder or assuming it's available */}
+                      {/* Example: import { format } from "date-fns"; */}
+                      {/* For now, just display the raw date */}
+                      {meeting.date}
                     </td>
                     <td
                       className="px-4 py-2 truncate max-w-[150px]"

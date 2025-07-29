@@ -91,7 +91,7 @@ The Nairobi Meeting Attendance App is built with:
 
 ## Styling Information
 
-The application is styled to match the Nairobi government website (https://easyubp.nairobi.go.ke/) with:
+The application is styled to match the Nairobi government website 
 - Poppins font with weight 300 as the primary font
 - Color scheme based on Nairobi brand colors
 - Responsive design for all device sizes

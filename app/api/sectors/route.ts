@@ -1,7 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { prisma } from '../../../lib/prisma';
+import { 
+  createSuccessResponse, 
+  handleDatabaseError
+} from '@/lib/api-utils';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     // Get all meetings with non-null sectors
     const meetings = await prisma.meeting.findMany({
@@ -21,17 +25,9 @@ export async function GET() {
       .map((meeting: { sector: string | null }) => meeting.sector)
       .filter((sector: string | null): sector is string => !!sector); // Filter out null/undefined values
     
-    // Use Response constructor instead of NextResponse directly
-    return new Response(JSON.stringify({ sectors }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return createSuccessResponse({ sectors }, "Sectors fetched successfully");
+
   } catch (error) {
-    console.error('Error fetching sectors:', error);
-    // Use Response constructor instead of NextResponse directly
-    return new Response(JSON.stringify({ error: 'Failed to fetch sectors' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return handleDatabaseError(error, "fetch sectors");
   }
 }

@@ -5,8 +5,8 @@ import React from 'react';
 
 const { useState, useEffect } = React;
 
-// Inactivity timeout in milliseconds (40 minutes)
-const INACTIVITY_TIMEOUT = 40 * 60 * 1000;
+// Inactivity timeout in milliseconds (30 minutes)
+const INACTIVITY_TIMEOUT = 30 * 60 * 1000;
 
 export interface AuthState {
   isLoggedIn: boolean;
@@ -18,13 +18,6 @@ export interface AuthState {
     department?: string;
   };
 }
-
-// In a real application, this would use a more secure approach
-// Updated credentials per client requirements
-const ADMIN_CREDENTIALS = {
-  email: 'Adminmeets@nairobi.go.ke', // Official admin email
-  password: 'MEETM@st@123' // Strong password with special characters
-};
 
 // Initialize auth state from session storage if available
 export const useAuth = () => {
@@ -124,31 +117,46 @@ export const useAuth = () => {
     }
   }, []);
 
-  // Login function
-  const login = (email: string, password: string): boolean => {
-    console.log('Login attempt:', { email, passwordLength: password.length });
-    console.log('Expected:', { expectedEmail: ADMIN_CREDENTIALS.email });
-    
-    if (email === ADMIN_CREDENTIALS.email && password === ADMIN_CREDENTIALS.password) {
-      // Create a proper auth state with user role information
-      const newAuthState: AuthState = { 
+  // Login function - now uses API authentication
+  const login = async (email: string, password: string): Promise<boolean> => {
+    try {
+      // Call the authentication API
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
+      });
+      
+      if (!response.ok) {
+        console.error('Login failed:', response.statusText);
+        return false;
+      }
+      
+      const data = await response.json();
+      
+      if (data.success && data.user) {
+        const newAuthState = {
         isLoggedIn: true, 
         username: email,
         user: {
-          email: email,
-          name: 'Admin User',
-          role: 'ADMIN' // Set role to ADMIN for admin dashboard functionality
+            role: data.user.role,
+            email: data.user.email,
+            name: data.user.name,
+            department: data.user.department || ''
         }
       };
-      
-      console.log('Login successful, setting auth state:', newAuthState);
       sessionStorage.setItem('authState', JSON.stringify(newAuthState));
       setAuthState(newAuthState);
       return true;
     }
     
-    console.log('Login failed: Invalid credentials');
+      return false;
+    } catch (error) {
+      console.error('Login error:', error);
     return false;
+    }
   };
 
   return { ...authState, login, logout };
