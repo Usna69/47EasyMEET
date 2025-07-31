@@ -30,7 +30,10 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "app/admin/meetings/create/page.jsx",
-    "components/ResourceDownload.jsx"
-, "components/PasswordResetForm.jsx", "components/UserCreateForm.jsx", "components/UserLetterheadUploader.jsx"  ],
+    "components/ResourceDownload.jsx",
+    "components/PasswordResetForm.jsx", 
+    "components/UserCreateForm.jsx", 
+    "components/UserLetterheadUploader.jsx"
+  ],
   "exclude": ["node_modules"]
 }
