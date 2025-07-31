@@ -238,11 +238,10 @@ export function getMeetingConfig(type: keyof typeof MEETING_PDF_CONFIG) {
 
 export function formatDateForPDF(date: Date | string): string {
   const dateObj = new Date(date);
-  return dateObj.toLocaleDateString(PDF_TEXT_FORMAT.date.locale, {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  });
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  return `${day}-${month}-${year}`;
 }
 
 export function formatTimeForPDF(date: Date | string): string {

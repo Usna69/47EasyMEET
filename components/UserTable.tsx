@@ -70,7 +70,13 @@ export default function UserTable({
                     <td className="px-4 py-2">{user.department ? getSectorName(user.department) : "-"}</td>
                     <td className="px-4 py-2">{user.designation || "-"}</td>
                     <td className="px-4 py-2">
-                      {new Date(user.createdAt).toLocaleDateString()}
+                      {(() => {
+                        const date = new Date(user.createdAt);
+                        const year = date.getFullYear();
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+                        return `${day}-${month}-${year}`;
+                      })()}
                     </td>
                     <td className="px-4 py-2">
                       <button
@@ -125,7 +131,13 @@ export default function UserTable({
                 <div className="text-sm text-gray-600 mb-3">
                   <p>Department: {user.department ? getSectorName(user.department) : "-"}</p>
                   <p>Designation: {user.designation || "-"}</p>
-                  <p>Created: {new Date(user.createdAt).toLocaleDateString()}</p>
+                  <p>Created: {(() => {
+                    const date = new Date(user.createdAt);
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    return `${day}-${month}-${year}`;
+                  })()}</p>
                 </div>
                 <div className="flex justify-end">
                   <button

@@ -23,7 +23,7 @@ const formatDateConsistent = (date: Date | string) => {
   const hours = String(d.getHours()).padStart(2, '0');
   const minutes = String(d.getMinutes()).padStart(2, '0');
   
-  return `${month}/${day}/${year} ${hours}:${minutes}`;
+  return `${day}-${month}-${year} ${hours}:${minutes}`;
 };
 
 export default async function RegistrationPage(props: RegistrationPageParams) {
@@ -210,7 +210,13 @@ export default async function RegistrationPage(props: RegistrationPageParams) {
                     <p className="text-sm text-red-600 mt-1">
                       Registration for this meeting closed at{" "}
                       {registrationEndTime.toLocaleTimeString()} on{" "}
-                      {registrationEndTime.toLocaleDateString()}.
+                      {(() => {
+                        const date = registrationEndTime;
+                        const year = date.getFullYear();
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+                        return `${day}-${month}-${year}`;
+                      })()}.
                     </p>
                     <p className="text-sm text-red-600 mt-3">
                       <Link
