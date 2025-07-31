@@ -43,8 +43,8 @@ export default function CreateMeetingPage() {
     if (auth.user) {
       setSelectedLetterheadPath(
         useCustomLetterhead
-          ? auth.user.swgLetterhead
-          : auth.user.userLetterhead
+          ? auth.user.swgLetterhead || ""
+          : auth.user.userLetterhead || ""
       );
     }
     // Log cookies and authState on every render
@@ -72,7 +72,7 @@ export default function CreateMeetingPage() {
           const users = await res.json();
           // If API returns an array, find the matching user
           const user = Array.isArray(users)
-            ? users.find(u => u.email === auth.user.email)
+            ? users.find(u => u.email === auth.user?.email)
             : users;
           if (user) {
             setUserLetterhead(user.userLetterhead || "");

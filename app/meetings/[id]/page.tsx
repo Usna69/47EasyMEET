@@ -71,7 +71,11 @@ export default function MeetingDetails() {
       const autoTable = autoTableModule.default;
 
       // Create a new document - A4 size in portrait
-      const doc = new jsPDF("portrait", "mm", "a4");
+      const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4"
+      });
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
 

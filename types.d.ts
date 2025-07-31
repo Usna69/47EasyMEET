@@ -1,50 +1,15 @@
-// Type definitions for the Nairobi Meeting Attendance App
+/// <reference types="react" />
+/// <reference types="react-dom" />
 
-// Meeting model
-interface Meeting {
-  id: string;
-  title: string;
-  description: string;
-  date: Date;
-  location: string;
-  attendees?: Attendee[];
-  createdAt?: Date;
-  updatedAt?: Date;
-  _count?: {
-    attendees: number;
-  };
-}
-
-// Attendee model
-interface Attendee {
-  id: string;
-  meetingId: string;
-  meeting?: Meeting;
-  name: string;
-  email: string;
-  designation: string;
-  createdAt?: Date;
-}
-
-// Extend Next.js request and response types
-declare module 'next/server' {
-  interface NextRequest extends Request {
-    json: () => Promise<any>;
-  }
-
-  interface NextResponse extends Response {
-    json: (body: any, init?: ResponseInit) => NextResponse;
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      [elemName: string]: any;
+    }
   }
 }
 
-// Fix React module declaration
-declare module 'react' {
-  interface JSX {
-    IntrinsicElements: any;
-  }
-}
-
-// Fix qrcode.react module declaration
+// Fix for qrcode.react
 declare module 'qrcode.react' {
   export interface QRCodeSVGProps {
     value: string;
@@ -54,16 +19,36 @@ declare module 'qrcode.react' {
     fgColor?: string;
     style?: React.CSSProperties;
     includeMargin?: boolean;
-    imageSettings?: {
-      src: string;
-      height: number;
-      width: number;
-      excavate: boolean;
-      x?: number;
-      y?: number;
-    };
   }
-
   export const QRCodeSVG: React.FC<QRCodeSVGProps>;
   export const QRCodeCanvas: React.FC<QRCodeSVGProps>;
+}
+
+// Fix for jspdf
+declare module 'jspdf' {
+  export default class jsPDF {
+    constructor(options?: any);
+    addPage(): jsPDF;
+    text(text: string, x: number, y: number, options?: any): jsPDF;
+    setFontSize(size: number): jsPDF;
+    setFont(fontName: string, style?: string): jsPDF;
+    setTextColor(r: number, g: number, b: number): jsPDF;
+    setFillColor(r: number, g: number, b: number): jsPDF;
+    setDrawColor(r: number, g: number, b: number): jsPDF;
+    setLineWidth(width: number): jsPDF;
+    line(x1: number, y1: number, x2: number, y2: number): jsPDF;
+    rect(x: number, y: number, w: number, h: number, style?: string): jsPDF;
+    addImage(imageData: string | HTMLImageElement, format: string, x: number, y: number, width: number, height: number): jsPDF;
+    getNumberOfPages(): number;
+    getTextWidth(text: string): number;
+    internal: {
+      pageSize: {
+        width: number;
+        height: number;
+        getWidth(): number;
+        getHeight(): number;
+      };
+    };
+    save(filename: string): void;
+  }
 }

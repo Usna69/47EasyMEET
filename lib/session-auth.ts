@@ -11,6 +11,8 @@ export interface AuthUser {
   name: string;
   department?: string;
   isFirstLogin?: boolean;
+  swgLetterhead?: string;
+  userLetterhead?: string;
 }
 
 export interface AuthState {
@@ -91,7 +93,9 @@ export const useSessionAuth = () => {
             email: data.data.user.email,
             name: data.data.user.name,
             department: data.data.user.department || '',
-            isFirstLogin: data.data.user.isFirstLogin || false
+            isFirstLogin: data.data.user.isFirstLogin || false,
+            swgLetterhead: data.data.user.swgLetterhead || '',
+            userLetterhead: data.data.user.userLetterhead || ''
           }
         };
         
@@ -113,7 +117,9 @@ export const useSessionAuth = () => {
             email: data.user.email,
             name: data.user.name,
             department: data.user.department || '',
-            isFirstLogin: data.user.isFirstLogin || false
+            isFirstLogin: data.user.isFirstLogin || false,
+            swgLetterhead: data.user.swgLetterhead || '',
+            userLetterhead: data.user.userLetterhead || ''
           }
         };
         

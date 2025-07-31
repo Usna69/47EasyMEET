@@ -54,7 +54,7 @@ export default function Dashboard() {
       try {
         setLoading(true);
         let url = `/api/meetings/recent?creatorEmail=${encodeURIComponent(
-          auth.user.email
+          auth.user?.email || ""
         )}`;
 
         const response = await fetch(url);
