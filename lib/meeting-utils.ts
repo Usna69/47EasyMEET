@@ -57,14 +57,18 @@ export const getMeetingDateRange = (filterType: 'upcoming' | 'ongoing' | 'past')
         gte: now.toISOString()
       };
     case 'ongoing':
+      // For ongoing meetings: meetings that have started (in the past) but are still within 2 hours of start time
+      // This means the meeting date is in the past, but not more than 2 hours ago
       const twoHoursAgo = new Date(now.getTime() - (2 * 60 * 60 * 1000));
       return {
         gte: twoHoursAgo.toISOString(),
-        lte: now.toISOString()
+        lt: now.toISOString()
       };
     case 'past':
+      // Past meetings: meetings that started more than 2 hours ago
+      const twoHoursAgoForPast = new Date(now.getTime() - (2 * 60 * 60 * 1000));
       return {
-        lt: now.toISOString()
+        lt: twoHoursAgoForPast.toISOString()
       };
     default:
       return {};

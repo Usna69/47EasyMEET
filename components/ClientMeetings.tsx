@@ -70,22 +70,31 @@ export default function ClientMeetings({ initialMeetings }: { initialMeetings: M
       const data = await response.json();
       console.log('Meetings API response:', data);
       
-      // API now returns the meetings array directly
-      if (Array.isArray(data)) {
-        console.log(`Found ${data.length} meetings in API response`);
-        setMeetings(data);
-      } else if (data && data.meetings) {
-        // Fallback for backward compatibility
+      // Handle the correct API response structure
+      let meetingsData: Meeting[] = [];
+      
+      if (data && data.success && data.data && Array.isArray(data.data)) {
+        // New paginated response structure
+        console.log(`Found ${data.data.length} meetings in API response (paginated structure)`);
+        meetingsData = data.data;
+      } else if (Array.isArray(data)) {
+        // Direct array response (fallback)
+        console.log(`Found ${data.length} meetings in API response (direct array)`);
+        meetingsData = data;
+      } else if (data && data.meetings && Array.isArray(data.meetings)) {
+        // Legacy response structure
         console.log(`Found ${data.meetings.length} meetings in API response (legacy format)`);
-        setMeetings(data.meetings);
+        meetingsData = data.meetings;
       } else {
-        console.warn('No meetings found in API response or invalid response structure');
-        setMeetings([]);
+        console.warn('No meetings found in API response or invalid response structure:', data);
+        meetingsData = [];
       }
+      
+      setMeetings(meetingsData);
       
       // Log current state after setting
       setTimeout(() => {
-        console.log('Current meetings state after update:', meetings);
+        console.log('Current meetings state after update:', meetingsData);
       }, 100);
     } catch (error) {
       console.error('Error fetching meetings:', error);

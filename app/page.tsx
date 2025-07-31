@@ -12,20 +12,26 @@ export default async function Home() {
   let dbMeetings: any[] = [];
   
   try {
-    // Get all meetings for initial render with timeout handling
+    // Get only upcoming meetings for initial render
+    const now = new Date();
     dbMeetings = await prisma.meeting.findMany({
-    orderBy: {
-      date: "desc",
-    },
-    include: {
-      _count: {
-        select: {
-          attendees: true,
-          resources: true,
+      where: {
+        date: {
+          gte: now.toISOString()
+        }
+      },
+      orderBy: {
+        date: "asc", // Show nearest upcoming meetings first
+      },
+      include: {
+        _count: {
+          select: {
+            attendees: true,
+            resources: true,
+          },
         },
       },
-    },
-  });
+    });
   } catch (error) {
     console.error("Error fetching meetings:", error);
     // Return empty array if database connection fails

@@ -21,6 +21,18 @@ interface Meeting {
   }>;
 }
 
+// Consistent date formatting function to prevent hydration errors
+const formatDateConsistent = (date: Date | string) => {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  
+  return `${month}/${day}/${year} ${hours}:${minutes}`;
+};
+
 export default function MeetingCard({ meeting }: { meeting: Meeting }) {
   // Calculate meeting status
   const getMeetingStatus = () => {
@@ -70,54 +82,28 @@ export default function MeetingCard({ meeting }: { meeting: Meeting }) {
 
   return (
     <article className="bg-white border border-gray-200 rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full relative">
-      <div className="p-5 flex-grow">
-        {/* Status badge and Resources */}
-        <div className="flex justify-between items-start mb-2">
-          <h2 className="text-xl font-semibold text-[#014a2f] pr-2">
+      <div className="p-6 flex-1">
+        <div className="flex justify-between items-start mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">
             {meeting.title}
-          </h2>
-          <div className="flex items-center space-x-2">
-            {/* Resources badge (if available) */}
-            {((meeting._count?.resources && meeting._count.resources > 0) ||
-              (meeting.resources && meeting.resources.length > 0)) && (
-              <span className="inline-flex items-center px-2 py-1 bg-yellow-400 text-[#014a2f] text-xs font-medium rounded-full">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-3 w-3 mr-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-                {meeting._count?.resources ||
-                  (meeting.resources && meeting.resources.length) ||
-                  0}
-              </span>
-            )}
+          </h3>
 
-            {/* Status badge */}
-            <span
-              className={`text-xs font-medium px-2 py-1 rounded-full ${
-                status === "upcoming"
-                  ? "bg-green-100 text-green-800"
-                  : status === "ongoing"
-                  ? "bg-blue-100 text-blue-800"
-                  : "bg-gray-100 text-gray-800"
-              }`}
-            >
-              {status === "upcoming"
-                ? "Upcoming"
+          {/* Status badge */}
+          <span
+            className={`text-xs font-medium px-2 py-1 rounded-full ${
+              status === "upcoming"
+                ? "bg-green-100 text-green-800"
                 : status === "ongoing"
-                ? "Ongoing"
-                : "Ended"}
-            </span>
-          </div>
+                ? "bg-blue-100 text-blue-800"
+                : "bg-gray-100 text-gray-800"
+            }`}
+          >
+            {status === "upcoming"
+              ? "Upcoming"
+              : status === "ongoing"
+              ? "Ongoing"
+              : "Ended"}
+          </span>
         </div>
 
         <p className="text-gray-600 mb-4 line-clamp-2">{meeting.description}</p>
@@ -140,12 +126,7 @@ export default function MeetingCard({ meeting }: { meeting: Meeting }) {
               />
             </svg>
             <span>
-              {new Date(meeting.date).toLocaleDateString() +
-                " " +
-                new Date(meeting.date).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+              {formatDateConsistent(meeting.date)}
             </span>
           </div>
 

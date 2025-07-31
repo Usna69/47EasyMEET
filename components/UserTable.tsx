@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { getSectorName } from "../utils/sectorUtils";
 
 interface User {
   id: string;
@@ -66,7 +67,7 @@ export default function UserTable({
                         {user.role}
                       </span>
                     </td>
-                    <td className="px-4 py-2">{user.department || "-"}</td>
+                    <td className="px-4 py-2">{user.department ? getSectorName(user.department) : "-"}</td>
                     <td className="px-4 py-2">{user.designation || "-"}</td>
                     <td className="px-4 py-2">
                       {new Date(user.createdAt).toLocaleDateString()}
@@ -122,7 +123,7 @@ export default function UserTable({
                   </span>
                 </div>
                 <div className="text-sm text-gray-600 mb-3">
-                  <p>Department: {user.department || "-"}</p>
+                  <p>Department: {user.department ? getSectorName(user.department) : "-"}</p>
                   <p>Designation: {user.designation || "-"}</p>
                   <p>Created: {new Date(user.createdAt).toLocaleDateString()}</p>
                 </div>

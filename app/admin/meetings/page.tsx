@@ -4,7 +4,6 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { useSessionAuth } from "../../../lib/session-auth";
 import Link from "next/link";
-import SWGLetterheadUploader from "../../../components/SWGLetterheadUploader";
 
 // Using React hooks directly from React import
 const { useState, useEffect } = React;
@@ -64,6 +63,8 @@ export default function MeetingsPage() {
   // Fetch meetings
   const fetchMeetings = async (pageNum = 0, append = false) => {
     try {
+      console.log('fetchMeetings called with:', { pageNum, append, showActive, authUser: auth.user });
+      
       // Don't fetch if already loading or no more results (except for initial load)
       if ((loading && pageNum !== 0) || (loadingMore && !hasMore)) return;
 
@@ -98,16 +99,35 @@ export default function MeetingsPage() {
         }
       }
 
-      const response = await fetch(`/api/meetings?${queryParams.toString()}`);
+      const url = `/api/meetings?${queryParams.toString()}`;
+      console.log('Fetching meetings from URL:', url);
+      
+      const response = await fetch(url);
+      console.log('Response status:', response.status);
+      
       if (!response.ok) {
         throw new Error(`Failed to fetch meetings: ${response.statusText}`);
       }
 
       const data = await response.json();
+      console.log('API response:', data);
 
-      // Filter meetings for non-admin users
-      // The API now returns an array directly instead of a wrapped object
-      let filteredMeetings = Array.isArray(data) ? data : [];
+      // Handle the paginated response structure
+      let filteredMeetings: Meeting[] = [];
+      
+      if (data.success && data.data && Array.isArray(data.data)) {
+        // New paginated response structure
+        filteredMeetings = data.data;
+      } else if (Array.isArray(data)) {
+        // Direct array response (fallback)
+        filteredMeetings = data;
+      } else if (data.meetings && Array.isArray(data.meetings)) {
+        // Legacy response structure
+        filteredMeetings = data.meetings;
+      } else {
+        console.warn('Unexpected API response structure:', data);
+        filteredMeetings = [];
+      }
 
       // Add any missing status fields based on date (for backward compatibility)
       filteredMeetings = filteredMeetings.map(meeting => {
@@ -116,7 +136,7 @@ export default function MeetingsPage() {
           const now = new Date();
           const twoHoursAfterStart = new Date(meetingDate.getTime() + (2 * 60 * 60 * 1000));
 
-          let status = 'UPCOMING';
+          let status: 'UPCOMING' | 'ONGOING' | 'CLOSED' = 'UPCOMING';
           if (meetingDate <= now) {
             if (now <= twoHoursAfterStart) {
               status = 'ONGOING';
@@ -132,6 +152,7 @@ export default function MeetingsPage() {
         }
         return meeting;
       });
+      
       if (!auth.isAuthorized(["ADMIN", "DIRECTOR", "ASSISTANT_DIRECTOR"])) {
         filteredMeetings = filteredMeetings.filter(
           (meeting: Meeting) => !hasEndedOverDay(meeting.date)
@@ -141,8 +162,22 @@ export default function MeetingsPage() {
       setMeetings((prev: Meeting[]) =>
         append ? [...prev, ...filteredMeetings] : filteredMeetings
       );
-      // Since the API no longer returns hasMore, we'll determine it based on the requested limit
-      setHasMore(filteredMeetings.length === 9); // If we got a full page of results, assume there are more
+      
+      console.log('Setting meetings state:', {
+        append,
+        prevCount: append ? 'previous meetings' : 0,
+        newMeetings: filteredMeetings.length,
+        totalMeetings: append ? 'previous + new' : filteredMeetings.length
+      });
+      
+      // Determine if there are more results based on the response
+      if (data.pagination) {
+        setHasMore(data.pagination.hasMore);
+      } else {
+        // Fallback: if we got a full page of results, assume there are more
+        setHasMore(filteredMeetings.length === 9);
+      }
+      
       setPage(pageNum);
       setError("");
     } catch (err) {
@@ -163,7 +198,17 @@ export default function MeetingsPage() {
 
   // Fetch meetings on component mount and when filters change
   useEffect(() => {
-    if (!auth.isLoggedIn) return;
+    console.log('Admin meetings page useEffect triggered:', {
+      isLoggedIn: auth.isLoggedIn,
+      userRole: auth.user?.role,
+      userEmail: auth.user?.email,
+      showActive
+    });
+    
+    if (!auth.isLoggedIn) {
+      console.log('User not logged in, skipping fetch');
+      return;
+    }
 
     // Reset pagination and fetch initial data
     setPage(0);
@@ -206,14 +251,13 @@ export default function MeetingsPage() {
   // Format date for display
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      weekday: "short",
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${month}/${day}/${year} ${hours}:${minutes}`;
   };
 
   // Determine meeting status (upcoming, ongoing, or ended)
@@ -379,13 +423,6 @@ export default function MeetingsPage() {
         </div>
       ) : (
         <>
-          {/* SWG Letterhead Uploader for Admin Users */}
-          {auth.user?.role === "ADMIN" && (
-            <div className="mb-6">
-              <SWGLetterheadUploader />
-            </div>
-          )}
-
           {error && (
             <div className="bg-red-100 text-red-700 p-4 rounded-md mb-4">
               {error}

@@ -1,10 +1,22 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useRegistrationForm, useApiSubmission } from "@/lib/form-hooks";
 import { validateRegistrationForm, convertValidationErrorsToFormErrors } from "@/lib/validation";
 import { isRegistrationOpen } from "@/lib/meeting-utils";
 import SignaturePad from "./SignaturePad";
+
+// Consistent date formatting function to prevent hydration errors
+const formatDateConsistent = (date) => {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  
+  return `${month}/${day}/${year} ${hours}:${minutes}`;
+};
 
 export default function RegForm({ meetingprop }) {
   const {
@@ -89,7 +101,7 @@ export default function RegForm({ meetingprop }) {
       </h2>
         <p className="text-gray-600">{meetingprop.title}</p>
         <p className="text-sm text-gray-500">
-          {new Date(meetingprop.date).toLocaleDateString()} at {new Date(meetingprop.date).toLocaleTimeString()}
+                      {formatDateConsistent(meetingprop.date)}
         </p>
           </div>
 

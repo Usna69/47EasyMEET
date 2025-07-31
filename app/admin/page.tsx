@@ -53,25 +53,55 @@ export default function Dashboard() {
     const fetchMeetings = async () => {
       try {
         setLoading(true);
+        setError("");
+        
+        if (!auth.user?.email) {
+          setError("User email not available");
+          return;
+        }
+
         let url = `/api/meetings/recent?creatorEmail=${encodeURIComponent(
-          auth.user?.email || ""
+          auth.user.email
         )}`;
 
+        console.log('Fetching recent meetings from:', url);
         const response = await fetch(url);
-        if (response.ok) {
-          const data = await response.json();
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Recent meetings API response:', data);
+        
+        // Handle the new API response structure
+        if (data.success && data.data) {
+          setMeetings(data.data.meetings || []);
+          setTotalMeetings(data.data.total || 0);
+        } else if (data.meetings) {
+          // Fallback for old response structure
           setMeetings(data.meetings);
-          setTotalMeetings(data.total);
+          setTotalMeetings(data.total || 0);
+        } else {
+          console.warn('Unexpected API response structure:', data);
+          setMeetings([]);
+          setTotalMeetings(0);
         }
       } catch (err) {
-        console.error(err);
+        console.error('Error fetching recent meetings:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch meetings');
+        setMeetings([]);
+        setTotalMeetings(0);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchMeetings();
-  }, [auth.isLoggedIn, auth.user]);
+    if (auth.isLoggedIn && auth.user?.email) {
+      fetchMeetings();
+    }
+  }, [auth.isLoggedIn, auth.user?.email]);
 
   // Instead of redirecting, show login message
   if (!auth?.isLoggedIn) {
@@ -274,12 +304,16 @@ export default function Dashboard() {
                       </span>
                     </td>
                     <td className="px-4 py-2">
-                      {/* Assuming format is available globally or imported */}
-                      {/* If not, you might need to import it or define it */}
-                      {/* For now, using a placeholder or assuming it's available */}
-                      {/* Example: import { format } from "date-fns"; */}
-                      {/* For now, just display the raw date */}
-                      {meeting.date}
+                      {/* Format the date for better readability */}
+                      {(() => {
+                        const date = new Date(meeting.date);
+                        const year = date.getFullYear();
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const hours = String(date.getHours()).padStart(2, '0');
+                        const minutes = String(date.getMinutes()).padStart(2, '0');
+                        return `${month}/${day}/${year} ${hours}:${minutes}`;
+                      })()}
                     </td>
                     <td
                       className="px-4 py-2 truncate max-w-[150px]"

@@ -3,6 +3,18 @@ import { prisma } from '../../../../../lib/prisma';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 
+// Consistent date formatting function to prevent hydration errors
+const formatDateConsistent = (date: Date | string) => {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  
+  return `${month}/${day}/${year} ${hours}:${minutes}`;
+};
+
 interface SuccessPageParams {
   params: Promise<{
     id: string;
@@ -39,7 +51,7 @@ export default async function SuccessPage(props: SuccessPageParams) {
           <h1 className="text-2xl font-bold text-[#014a2f] mb-4">Registration Successful!</h1>
           <p className="text-gray-600 mb-8">
             You have successfully registered for the meeting: <span className="font-medium">{meeting.title}</span>.
-            The meeting will take place on {new Date(meeting.date).toLocaleDateString()} at {new Date(meeting.date).toLocaleTimeString()} in {meeting.location}.
+            The meeting will take place on {formatDateConsistent(meeting.date)} in {meeting.location}.
           </p>
           
           <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4">

@@ -14,6 +14,18 @@ interface RegistrationPageParams {
   }>;
 }
 
+// Consistent date formatting function to prevent hydration errors
+const formatDateConsistent = (date: Date | string) => {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  
+  return `${month}/${day}/${year} ${hours}:${minutes}`;
+};
+
 export default async function RegistrationPage(props: RegistrationPageParams) {
   const params = await props.params;
   const meeting = await prisma.meeting.findUnique({
@@ -87,7 +99,7 @@ export default async function RegistrationPage(props: RegistrationPageParams) {
               <div className="bg-gray-50 p-4 rounded-md border border-gray-100">
                 <h3 className="text-sm font-medium text-[#014a2f]">Date</h3>
                 <p className="text-lg">
-                  {new Date(meeting.date).toLocaleDateString()}
+                  {formatDateConsistent(meeting.date)}
                 </p>
               </div>
               <div className="bg-gray-50 p-4 rounded-md border border-gray-100">
@@ -126,7 +138,7 @@ export default async function RegistrationPage(props: RegistrationPageParams) {
                     </p>
                     <p className="text-sm text-red-600 mt-1">
                       This meeting occurred on{" "}
-                      {new Date(meeting.date).toLocaleDateString()} and is no
+                      {formatDateConsistent(meeting.date)} and is no
                       longer available for registration.
                     </p>
                     <p className="text-sm text-red-600 mt-3">
@@ -162,8 +174,7 @@ export default async function RegistrationPage(props: RegistrationPageParams) {
                     </p>
                     <p className="text-sm text-yellow-600 mt-1">
                       You can register for this meeting once it starts at{" "}
-                      {new Date(meeting.date).toLocaleTimeString()} on{" "}
-                      {new Date(meeting.date).toLocaleDateString()}.
+                      {formatDateConsistent(meeting.date)}.
                     </p>
                     <p className="text-sm text-yellow-600 mt-3">
                       <Link
