@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useRegistrationForm, useApiSubmission } from "@/lib/form-hooks";
 import { validateRegistrationForm, convertValidationErrorsToFormErrors } from "@/lib/validation";
 import { isRegistrationOpen } from "@/lib/meeting-utils";
-import SignaturePad from "./SignaturePad";
+import SignaturePadJSX from "./SignaturePadJSX";
 
 // Consistent date formatting function to prevent hydration errors
 const formatDateConsistent = (date) => {
@@ -238,8 +238,8 @@ export default function RegForm({ meetingprop }) {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Digital Signature (Optional)
           </label>
-          <SignaturePad
-            onSave={(signatureData) => handleInputChange("signatureData", signatureData)}
+          <SignaturePadJSX
+            onEnd={(signatureData) => handleInputChange("signatureData", signatureData)}
           />
         </div>
 
@@ -264,17 +264,7 @@ export default function RegForm({ meetingprop }) {
               </button>
       </form>
 
-      {/* Meeting Information */}
-      <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-        <h3 className="font-semibold text-gray-800 mb-2">Meeting Details</h3>
-        <div className="space-y-1 text-sm text-gray-600">
-          <p><strong>Location:</strong> {meetingprop.location}</p>
-          <p><strong>Type:</strong> {meetingprop.meetingType}</p>
-          {meetingprop.onlineMeetingUrl && (
-            <p><strong>Online Link:</strong> {meetingprop.onlineMeetingUrl}</p>
-          )}
-        </div>
-      </div>
+
     </div>
   );
 }
