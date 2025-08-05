@@ -5,6 +5,7 @@ import { useRegistrationForm, useApiSubmission } from "@/lib/form-hooks";
 import { validateRegistrationForm, convertValidationErrorsToFormErrors } from "@/lib/validation";
 import { isRegistrationOpen } from "@/lib/meeting-utils";
 import SignaturePadJSX from "./SignaturePadJSX";
+import { useRouter } from "next/navigation";
 
 // Consistent date formatting function to prevent hydration errors
 const formatDateConsistent = (date) => {
@@ -19,6 +20,8 @@ const formatDateConsistent = (date) => {
 };
 
 export default function RegForm({ meetingprop }) {
+  const router = useRouter();
+  
   const {
     formData,
     errors,
@@ -29,6 +32,8 @@ export default function RegForm({ meetingprop }) {
     setSubmitting,
     validateForm
   } = useRegistrationForm(meetingprop);
+
+  const signatureRef = React.useRef(null);
 
   const { submitRequest, error, success, clearMessages } = useApiSubmission();
 
@@ -71,14 +76,23 @@ export default function RegForm({ meetingprop }) {
     );
 
     if (result) {
-      resetForm();
-      // Redirect to success page or show success message
+      handleResetForm();
+      // Redirect to success page
+      router.push(`/meetings/${meetingprop.id}/register/success`);
     }
   };
 
   const handleInputChange = (field, value) => {
     updateField(field, value);
     clearMessages();
+  };
+
+  const handleResetForm = () => {
+    resetForm();
+    // Clear the signature pad when form is reset
+    if (signatureRef.current) {
+      signatureRef.current.clear();
+    }
   };
 
   if (!meetingprop) {
@@ -92,18 +106,6 @@ export default function RegForm({ meetingprop }) {
 
   return (
     <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-[#014a2f] mb-2">
-          <span className="text-yellow-500">Easy</span>MEET
-        </h1>
-        <h2 className="text-xl font-semibold text-gray-800 mb-2">
-          Meeting Registration
-      </h2>
-        <p className="text-gray-600">{meetingprop.title}</p>
-        <p className="text-sm text-gray-500">
-                      {formatDateConsistent(meetingprop.date)}
-        </p>
-          </div>
 
       {!registrationOpen && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
@@ -239,8 +241,17 @@ export default function RegForm({ meetingprop }) {
             Digital Signature (Optional)
           </label>
           <SignaturePadJSX
-            onEnd={(signatureData) => handleInputChange("signatureData", signatureData)}
+            ref={signatureRef}
+            onEnd={(signatureData) => {
+              handleInputChange("signatureData", signatureData);
+            }}
+            onClear={() => {
+              handleInputChange("signatureData", null);
+            }}
           />
+          {errors.signatureData && (
+            <p className="mt-1 text-sm text-red-600">{errors.signatureData}</p>
+          )}
         </div>
 
         {/* Submit Button */}
