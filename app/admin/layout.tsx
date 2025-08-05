@@ -26,9 +26,8 @@ export default function AdminLayout({
             {/* Password reset notification removed as requested */}
           </div>
           <button
-            onClick={() => {
-              auth.logout();
-              router.push("/admin/login");
+            onClick={async () => {
+              await auth.logout();
             }}
             className="text-red-600 hover:text-red-800 font-medium"
           >

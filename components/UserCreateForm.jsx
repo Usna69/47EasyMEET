@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import UserLetterheadUploader from "./UserLetterheadUploader";
 import SWGLetterheadUploader from "./SWGLetterheadUploader";
 
-
 export default function UserCreateForm({ onSubmit, onCancel, loading }) {
   const [newUser, setNewUser] = useState({
     name: "",
@@ -12,6 +11,8 @@ export default function UserCreateForm({ onSubmit, onCancel, loading }) {
     role: "CREATOR",
     department: "",
     designation: "",
+    userLevel: "REGULAR",
+    customRole: "",
   });
   const [userLetterheadPath, setUserLetterheadPath] = useState("");
   const [swgLetterheadPath, setSwgLetterheadPath] = useState("");
@@ -21,6 +22,15 @@ export default function UserCreateForm({ onSubmit, onCancel, loading }) {
   const roleOptions = [
     { value: "ADMIN", label: "Administrator" },
     { value: "CREATOR", label: "Meeting Creator" },
+    { value: "VIEW_ONLY", label: "View Only" },
+  ];
+
+  // Define user level options for RBA
+  const userLevelOptions = [
+    { value: "REGULAR", label: "Regular User" },
+    { value: "BOARD_MEMBER", label: "Board Member" },
+    { value: "GOVERNOR_OFFICE", label: "Office of the Governor" },
+    { value: "CABINET", label: "Cabinet Member" },
   ];
 
   // Define sector options for department dropdown
@@ -45,22 +55,50 @@ export default function UserCreateForm({ onSubmit, onCancel, loading }) {
     { value: "TS&DC", label: "Talents, Skills Development and Care" },
   ];
 
-  const handleInputChange = (
-    e
-  ) => {
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNewUser((prev) => ({ ...prev, [name]: value }));
+    setNewUser((prev) => {
+      const updatedUser = { ...prev, [name]: value };
+      
+      // Auto-generate custom role description based on user level
+      if (name === 'userLevel') {
+        switch (value) {
+          case "BOARD_MEMBER":
+            updatedUser.customRole = "Board Member - High-level governance and decision-making role";
+            break;
+          case "GOVERNOR_OFFICE":
+            updatedUser.customRole = "Office of the Governor - Executive and gubernatorial functions";
+            break;
+          case "CABINET":
+            updatedUser.customRole = "Cabinet Member - Executive cabinet and ministerial responsibilities";
+            break;
+          default:
+            updatedUser.customRole = "";
+        }
+      }
+      
+      return updatedUser;
+    });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     setFormError("");
-    if (!userLetterheadPath) {
+    
+    // Only require letterhead for non-VIEW_ONLY users
+    if (newUser.role !== "VIEW_ONLY" && !userLetterheadPath) {
       setFormError("Sector letterhead is required.");
       return;
     }
-    // Always send empty password to ensure temporary password generation
-    const userData = { ...newUser, password: "", userLetterheadPath, swgLetterheadPath };
+    
+    // Set department to null for admin users
+    const userData = { 
+      ...newUser, 
+      password: "", 
+      userLetterheadPath, 
+      swgLetterheadPath,
+      department: newUser.role === "ADMIN" ? null : newUser.department
+    };
     onSubmit(userData);
   };
 
@@ -165,10 +203,33 @@ export default function UserCreateForm({ onSubmit, onCancel, loading }) {
 
           <div>
             <label
+              htmlFor="userLevel"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              User Level
+            </label>
+            <select
+              id="userLevel"
+              name="userLevel"
+              value={newUser.userLevel}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#014a2f] focus:border-transparent"
+              required
+            >
+              {userLevelOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label
               htmlFor="department"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Department/Sector
+              Department/Sector {newUser.role === "ADMIN" && "(Not required for Admin)"}
             </label>
             <select
               id="department"
@@ -176,7 +237,8 @@ export default function UserCreateForm({ onSubmit, onCancel, loading }) {
               value={newUser.department || ""}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#014a2f] focus:border-transparent"
-              required
+              required={newUser.role !== "ADMIN"}
+              disabled={newUser.role === "ADMIN"}
             >
               {sectorOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -184,6 +246,11 @@ export default function UserCreateForm({ onSubmit, onCancel, loading }) {
                 </option>
               ))}
             </select>
+            {newUser.role === "ADMIN" && (
+              <p className="text-xs text-gray-500 mt-1">
+                Administrators have access to all departments and sectors.
+              </p>
+            )}
           </div>
 
           <div>
@@ -202,23 +269,51 @@ export default function UserCreateForm({ onSubmit, onCancel, loading }) {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#014a2f] focus:border-transparent"
             />
           </div>
+
+          {/* Custom Role Field - Only show for non-regular users */}
+          {newUser.userLevel !== "REGULAR" && (
+            <div className="md:col-span-2">
+              <label
+                htmlFor="customRole"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Custom Role Description
+              </label>
+                             <textarea
+                 id="customRole"
+                 name="customRole"
+                 value={newUser.customRole}
+                 className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700 cursor-not-allowed"
+                 rows={3}
+                 readOnly
+                 disabled
+               />
+               <p className="text-xs text-gray-500 mt-1">
+                 Auto-generated description based on user level selection.
+               </p>
+            </div>
+          )}
         </div>
 
         {/* Custom Letterhead Upload Section */}
+        {newUser.role !== "VIEW_ONLY" && (
         <div className="mt-6">
           <h3 className="text-lg font-medium text-[#014a2f] mb-3">
             Sector Letterhead (Required)
           </h3>
           <UserLetterheadUploader onUploadSuccess={handleUserLetterheadUploadSuccess} />
         </div>
+        )}
 
         {/* SWG Letterhead Upload Section */}
+        {newUser.role !== "VIEW_ONLY" && (
         <div className="mt-6">
           <h3 className="text-lg font-medium text-[#014a2f] mb-3">
             SWG Letterhead (Optional)
           </h3>
           <SWGLetterheadUploader onUploadSuccess={handleSwgLetterheadUploadSuccess} />
         </div>
+        )}
 
         {formError && (
           <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md">

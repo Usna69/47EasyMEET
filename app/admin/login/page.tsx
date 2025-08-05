@@ -56,9 +56,24 @@ export default function LoginPage() {
           console.log("User is on first login, redirecting to /admin/first-login");
           window.location.href = "/admin/first-login";
         } else {
-          console.log("User is not on first login, redirecting to /admin");
-          // Simple redirect to admin dashboard
-          window.location.href = "/admin";
+          // Check user level for appropriate redirect
+          const userLevel = loginResult.user?.userLevel;
+          const userRole = loginResult.user?.role;
+          console.log("User level:", userLevel, "User role:", userRole);
+          
+          console.log("Checking user role for redirect:", userRole);
+          console.log("Checking user level for redirect:", userLevel);
+          
+          if (userRole === "VIEW_ONLY") {
+            console.log("VIEW_ONLY user, redirecting to /view-only");
+            window.location.href = "/view-only";
+          } else if (userLevel && userLevel !== "REGULAR") {
+            console.log("High-level user, redirecting to /high-level");
+            window.location.href = "/high-level";
+          } else {
+            console.log("Regular user, redirecting to /admin");
+            window.location.href = "/admin";
+          }
         }
       } else {
         console.log("Login failed");

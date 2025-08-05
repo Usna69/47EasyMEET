@@ -42,6 +42,8 @@ export async function GET(request: NextRequest) {
           role: true,
           department: true,
           designation: true,
+          userLevel: true,
+          customRole: true,
           createdAt: true,
           userLetterhead: true,
           swgLetterhead: true,
@@ -60,7 +62,18 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, password, role, department, designation, letterheadPath } = body;
+    const { 
+      name, 
+      email, 
+      password, 
+      role, 
+      department, 
+      designation, 
+      userLevel,
+      customRole,
+      userLetterheadPath,
+      swgLetterheadPath
+    } = body;
 
     // Validate user data
     const validation = validateUserForm({ name, email, password, role });
@@ -99,7 +112,10 @@ export async function POST(request: NextRequest) {
         role: role || "USER",
         department: department || null,
         designation: designation || null,
-        userLetterhead: letterheadPath || null,
+        userLevel: userLevel || "REGULAR",
+        customRole: customRole || null,
+        userLetterhead: role === "VIEW_ONLY" ? null : (userLetterheadPath || null),
+        swgLetterhead: role === "VIEW_ONLY" ? null : (swgLetterheadPath || null),
         isFirstLogin: true,
       },
       select: {
@@ -109,6 +125,8 @@ export async function POST(request: NextRequest) {
         role: true,
         department: true,
         designation: true,
+        userLevel: true,
+        customRole: true,
         createdAt: true,
         isFirstLogin: true,
       },

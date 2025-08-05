@@ -26,6 +26,8 @@ model Meeting {
   meetingCategory  String?
   organization     String?
   password         String?
+  meetingLevel     String            @default("REGULAR") // REGULAR, BOARD, GOVERNOR, CABINET
+  restrictedAccess Boolean           @default(false)
   attendees        Attendee[]
   resources        MeetingResource[]
 }
@@ -63,6 +65,8 @@ model User {
   role                     String    @default("ADMIN")
   department               String?
   designation              String?
+  userLevel                String    @default("REGULAR") // REGULAR, BOARD_MEMBER, GOVERNOR_OFFICE, CABINET
+  customRole               String?   // For descriptive role assignment
   passwordResetRequested   Boolean   @default(false)
   passwordResetRequestedAt DateTime?
   isFirstLogin             Boolean   @default(true)

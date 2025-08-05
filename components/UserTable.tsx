@@ -3,6 +3,27 @@
 import React from "react";
 import { getSectorName } from "../utils/sectorUtils";
 
+// Helper function to get user level display name
+const getUserLevelName = (userLevel: string, role: string) => {
+  // Admin users have all access regardless of user level
+  if (role === "ADMIN") {
+    return "All Access";
+  }
+  
+  switch (userLevel) {
+    case "REGULAR":
+      return "Regular User";
+    case "BOARD_MEMBER":
+      return "Board Member";
+    case "GOVERNOR_OFFICE":
+      return "Office of the Governor";
+    case "CABINET":
+      return "Cabinet Member";
+    default:
+      return userLevel;
+  }
+};
+
 interface User {
   id: string;
   name: string;
@@ -10,6 +31,8 @@ interface User {
   role: string;
   department?: string;
   designation?: string;
+  userLevel?: string;
+  customRole?: string;
   createdAt: string;
   customLetterhead?: string;
 }
@@ -45,6 +68,7 @@ export default function UserTable({
                   <th className="px-4 py-2 text-left">Name</th>
                   <th className="px-4 py-2 text-left">Email</th>
                   <th className="px-4 py-2 text-left">Role</th>
+                  <th className="px-4 py-2 text-left">User Level</th>
                   <th className="px-4 py-2 text-left">Department</th>
                   <th className="px-4 py-2 text-left">Designation</th>
                   <th className="px-4 py-2 text-left">Created</th>
@@ -61,13 +85,34 @@ export default function UserTable({
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           user.role === "ADMIN"
                             ? "bg-purple-100 text-purple-800"
+                            : user.role === "VIEW_ONLY"
+                            ? "bg-gray-100 text-gray-800"
                             : "bg-blue-100 text-blue-800"
                         }`}
                       >
                         {user.role}
                       </span>
                     </td>
-                    <td className="px-4 py-2">{user.department ? getSectorName(user.department) : "-"}</td>
+                    <td className="px-4 py-2">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          user.role === "ADMIN"
+                            ? "bg-purple-100 text-purple-800"
+                            : user.userLevel === "REGULAR"
+                            ? "bg-gray-100 text-gray-800"
+                            : user.userLevel === "BOARD_MEMBER"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : user.userLevel === "GOVERNOR_OFFICE"
+                            ? "bg-red-100 text-red-800"
+                            : user.userLevel === "CABINET"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-blue-100 text-blue-800"
+                        }`}
+                      >
+                        {user.userLevel ? getUserLevelName(user.userLevel, user.role) : "Regular User"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2">{user.role === "ADMIN" ? "N/A" : (user.department ? getSectorName(user.department) : "-")}</td>
                     <td className="px-4 py-2">{user.designation || "-"}</td>
                     <td className="px-4 py-2">
                       {(() => {
@@ -122,6 +167,8 @@ export default function UserTable({
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       user.role === "ADMIN"
                         ? "bg-purple-100 text-purple-800"
+                        : user.role === "VIEW_ONLY"
+                        ? "bg-gray-100 text-gray-800"
                         : "bg-blue-100 text-blue-800"
                     }`}
                   >
@@ -129,8 +176,10 @@ export default function UserTable({
                   </span>
                 </div>
                 <div className="text-sm text-gray-600 mb-3">
-                  <p>Department: {user.department ? getSectorName(user.department) : "-"}</p>
+                  <p>User Level: {user.userLevel ? getUserLevelName(user.userLevel, user.role) : "Regular User"}</p>
+                  <p>Department: {user.role === "ADMIN" ? "N/A" : (user.department ? getSectorName(user.department) : "-")}</p>
                   <p>Designation: {user.designation || "-"}</p>
+                  {user.customRole && <p>Custom Role: {user.customRole}</p>}
                   <p>Created: {(() => {
                     const date = new Date(user.createdAt);
                     const year = date.getFullYear();

@@ -5,7 +5,7 @@ import HeroSection from "../components/HeroSection";
 import StatsSection from "../components/StatsSection";
 import { getSectorName } from "../utils/sectorUtils";
 import HomeSectorFilter from "../components/HomeSectorFilter";
-import ClientMeetings from "@/components/ClientMeetings";
+import MeetingsWithAuth from "@/components/MeetingsWithAuth";
 import { Metadata } from "next";
 
 export default async function Home() {
@@ -66,7 +66,7 @@ export default async function Home() {
           <HomeSectorFilter />
 
           {/* Client-side meetings list with filtering */}
-          <ClientMeetings initialMeetings={meetings} />
+          <MeetingsWithAuth initialMeetings={meetings} />
         </div>
       </section>
     </main>

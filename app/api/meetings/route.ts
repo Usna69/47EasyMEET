@@ -23,6 +23,8 @@ export async function GET(request: NextRequest) {
     const showOngoing = searchParams.get("ongoing") === "true";
     const creatorEmail = searchParams.get("creatorEmail");
     const department = searchParams.get("department");
+    const userEmail = searchParams.get("userEmail");
+    const userLevel = searchParams.get("userLevel");
     const { page, limit, skip } = getPaginationParams(searchParams);
 
     // Build the where clause based on query parameters
@@ -46,6 +48,65 @@ export async function GET(request: NextRequest) {
 
     if (department) {
       where.sector = department;
+    }
+
+    // Apply access control based on user level
+    if (userEmail && userLevel) {
+      // Get user details to determine access level
+      const user = await prisma.user.findUnique({
+        where: { email: userEmail },
+        select: { userLevel: true, role: true }
+      });
+
+      if (user) {
+        // Filter meetings based on user access level
+        if (user.role === "ADMIN") {
+          // Admins can see all meetings
+          // No additional filtering needed
+        } else if (user.userLevel === "BOARD_MEMBER") {
+          // Board members can see BOARD and REGULAR meetings
+          where.OR = [
+            { meetingLevel: "BOARD" },
+            { meetingLevel: "REGULAR" },
+            { restrictedAccess: false }
+          ];
+        } else if (user.userLevel === "GOVERNOR_OFFICE") {
+          // Governor office can see GOVERNOR, BOARD, and REGULAR meetings
+          where.OR = [
+            { meetingLevel: "GOVERNOR" },
+            { meetingLevel: "BOARD" },
+            { meetingLevel: "REGULAR" },
+            { restrictedAccess: false }
+          ];
+        } else if (user.userLevel === "CABINET") {
+          // Cabinet members can see CABINET, GOVERNOR, BOARD, and REGULAR meetings
+          where.OR = [
+            { meetingLevel: "CABINET" },
+            { meetingLevel: "GOVERNOR" },
+            { meetingLevel: "BOARD" },
+            { meetingLevel: "REGULAR" },
+            { restrictedAccess: false }
+          ];
+        } else {
+          // Regular users can only see REGULAR meetings and non-restricted meetings
+          where.OR = [
+            { meetingLevel: "REGULAR" },
+            { restrictedAccess: false }
+          ];
+        }
+      } else {
+        // If user not found, only show regular meetings
+        where.OR = [
+          { meetingLevel: "REGULAR" },
+          { restrictedAccess: false }
+        ];
+      }
+    } else {
+      // If no user info provided, only show regular meetings
+      where.OR = [
+        { meetingLevel: "REGULAR" },
+        { restrictedAccess: false }
+      ];
     }
 
     // Get total count and meetings concurrently

@@ -8,6 +8,7 @@ import QRCodeDisplay from "../../../components/QRCodeDisplay";
 import { format } from "date-fns";
 import { getSectorName } from "../../../utils/sectorUtils";
 import ResourceDownload from "../../../components/ResourceDownload";
+import { useSessionAuth } from "@/lib/session-auth";
 
 // Define types for better type safety
 interface Attendee {
@@ -49,10 +50,26 @@ interface Meeting {
 export default function MeetingDetails() {
   const params = useParams();
   const id = params.id as string;
+  const auth = useSessionAuth();
   const [meeting, setMeeting] = React.useState<Meeting | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
   const [pdfGenerating, setPdfGenerating] = React.useState(false);
+
+  // Determine the appropriate back link based on user context
+  const getBackLink = () => {
+    if (!auth.user) return "/#meetings";
+    
+    if (auth.user.role === "VIEW_ONLY") {
+      return "/view-only#meetings";
+    } else if (auth.user.userLevel && auth.user.userLevel !== "REGULAR") {
+      return "/high-level#meetings";
+    } else if (auth.user.role === "ADMIN") {
+      return "/admin/meetings";
+    } else {
+      return "/#meetings";
+    }
+  };
 
   // Function to generate PDF with jsPDF
   const generatePDF = async () => {
@@ -408,7 +425,7 @@ export default function MeetingDetails() {
       <div className="container mx-auto px-4">
         <div className="mb-6">
           <Link
-            href="/#meetings"
+            href={getBackLink()}
             className="text-[#014a2f] hover:underline flex items-center"
           >
             <svg
@@ -423,7 +440,7 @@ export default function MeetingDetails() {
                 clipRule="evenodd"
               />
             </svg>
-            Back to Upcoming Meetings
+            Back to {auth.user?.role === "VIEW_ONLY" ? "Portal" : auth.user?.userLevel && auth.user.userLevel !== "REGULAR" ? "High-Level Portal" : "Upcoming Meetings"}
           </Link>
         </div>
 

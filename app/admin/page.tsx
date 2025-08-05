@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { useSessionAuth } from "../../lib/session-auth";
 import { useRouter } from "next/navigation";
+import DualColorSpinner from "@/components/DualColorSpinner";
 
 const { useState, useEffect } = React;
 
@@ -48,6 +49,23 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
 
+  // Redirect VIEW_ONLY users to their specialized page
+  useEffect(() => {
+    console.log("Admin page - User role:", auth.user?.role);
+    console.log("Admin page - User level:", auth.user?.userLevel);
+    console.log("Admin page - Full user object:", auth.user);
+    
+    if (auth.user?.role === "VIEW_ONLY") {
+      console.log("Redirecting VIEW_ONLY user to /view-only");
+      // Add a small delay to prevent race conditions
+      const timeoutId = setTimeout(() => {
+        router.push("/view-only");
+      }, 100);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [auth.user?.role, router]);
+
+  // Fetch meetings effect
   useEffect(() => {
     // Define the fetch function outside the effect to avoid strict mode errors
     const fetchMeetings = async () => {
@@ -102,6 +120,21 @@ export default function Dashboard() {
       fetchMeetings();
     }
   }, [auth.isLoggedIn, auth.user?.email]);
+
+  // Show loading while auth is being determined
+  if (auth.isLoggedIn === undefined) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <DualColorSpinner />
+      </div>
+    );
+  }
+
+  // Redirect if not logged in
+  if (!auth.isLoggedIn) {
+    router.push("/admin/login");
+    return null;
+  }
 
   // Instead of redirecting, show login message
   if (!auth?.isLoggedIn) {
@@ -225,7 +258,7 @@ export default function Dashboard() {
 
         {loading ? (
           <div className="flex justify-center items-center p-8">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#014a2f]"></div>
+            <DualColorSpinner />
           </div>
         ) : error ? (
           <div className="bg-red-50 text-red-700 p-4 rounded-md">{error}</div>

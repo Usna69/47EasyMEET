@@ -1,11 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRegistrationForm, useApiSubmission } from "@/lib/form-hooks";
 import { validateRegistrationForm, convertValidationErrorsToFormErrors } from "@/lib/validation";
 import { isRegistrationOpen } from "@/lib/meeting-utils";
 import SignaturePadJSX from "./SignaturePadJSX";
 import { useRouter } from "next/navigation";
+import DualColorSpinner from "@/components/DualColorSpinner";
+import { useSessionAuth } from "@/lib/session-auth";
+import { getSectorName } from "@/utils/sectorUtils";
 
 // Consistent date formatting function to prevent hydration errors
 const formatDateConsistent = (date) => {
@@ -21,6 +24,7 @@ const formatDateConsistent = (date) => {
 
 export default function RegForm({ meetingprop }) {
   const router = useRouter();
+  const auth = useSessionAuth();
   
   const {
     formData,
@@ -39,6 +43,29 @@ export default function RegForm({ meetingprop }) {
 
   // Check if registration is open
   const registrationOpen = isRegistrationOpen(meetingprop?.date);
+
+  // Auto-fill form for high-level users
+  useEffect(() => {
+    if (auth.user && auth.isLoggedIn) {
+      const isHighLevelUser = auth.user.userLevel && auth.user.userLevel !== "REGULAR";
+      const isViewOnlyUser = auth.user.role === "VIEW_ONLY";
+      
+      if (isHighLevelUser || isViewOnlyUser) {
+        // Auto-fill user details
+        updateField("name", auth.user.name || "");
+        updateField("email", auth.user.email || "");
+        updateField("designation", auth.user.customRole || auth.user.designation || "");
+        updateField("organization", auth.user.department ? getSectorName(auth.user.department) : "");
+        updateField("contact", ""); // Let them fill this if needed
+      }
+    }
+  }, [auth.user, auth.isLoggedIn, updateField]);
+
+  // Check if user is high-level
+  const isHighLevelUser = auth.user && auth.isLoggedIn && (
+    (auth.user.userLevel && auth.user.userLevel !== "REGULAR") || 
+    auth.user.role === "VIEW_ONLY"
+  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -98,7 +125,7 @@ export default function RegForm({ meetingprop }) {
   if (!meetingprop) {
     return (
       <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#014a2f] mx-auto"></div>
+        <DualColorSpinner />
         <p className="mt-4 text-gray-600">Loading meeting details...</p>
       </div>
     );
@@ -127,6 +154,8 @@ export default function RegForm({ meetingprop }) {
         </div>
       )}
 
+
+
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Name Field */}
         <div>
@@ -141,9 +170,13 @@ export default function RegForm({ meetingprop }) {
               errors.name
                 ? "border-red-300 focus:ring-red-500"
                 : "border-gray-300 focus:ring-[#014a2f]"
-            }`}
+            } ${isHighLevelUser ? 'bg-gray-50' : ''}`}
             placeholder="Enter your full name"
+            readOnly={isHighLevelUser}
           />
+          {isHighLevelUser && (
+            <p className="mt-1 text-sm text-gray-500">Auto-filled from your profile</p>
+          )}
           {errors.name && (
             <p className="mt-1 text-sm text-red-600">{errors.name}</p>
           )}
@@ -162,9 +195,13 @@ export default function RegForm({ meetingprop }) {
               errors.designation
                 ? "border-red-300 focus:ring-red-500"
                 : "border-gray-300 focus:ring-[#014a2f]"
-            }`}
+            } ${isHighLevelUser ? 'bg-gray-50' : ''}`}
             placeholder="Enter your designation"
+            readOnly={isHighLevelUser}
           />
+          {isHighLevelUser && (
+            <p className="mt-1 text-sm text-gray-500">Auto-filled from your profile</p>
+          )}
           {errors.designation && (
             <p className="mt-1 text-sm text-red-600">{errors.designation}</p>
           )}
@@ -184,9 +221,13 @@ export default function RegForm({ meetingprop }) {
                 errors.organization
                   ? "border-red-300 focus:ring-red-500"
                   : "border-gray-300 focus:ring-[#014a2f]"
-              }`}
+              } ${isHighLevelUser ? 'bg-gray-50' : ''}`}
               placeholder="Enter your organization"
+              readOnly={isHighLevelUser}
             />
+            {isHighLevelUser && (
+              <p className="mt-1 text-sm text-gray-500">Auto-filled from your profile</p>
+            )}
             {errors.organization && (
               <p className="mt-1 text-sm text-red-600">{errors.organization}</p>
             )}
@@ -227,9 +268,13 @@ export default function RegForm({ meetingprop }) {
               errors.email
                 ? "border-red-300 focus:ring-red-500"
                 : "border-gray-300 focus:ring-[#014a2f]"
-            }`}
+            } ${isHighLevelUser ? 'bg-gray-50' : ''}`}
             placeholder="Enter your email address"
+            readOnly={isHighLevelUser}
           />
+          {isHighLevelUser && (
+            <p className="mt-1 text-sm text-gray-500">Auto-filled from your profile</p>
+          )}
           {errors.email && (
             <p className="mt-1 text-sm text-red-600">{errors.email}</p>
           )}

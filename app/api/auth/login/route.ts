@@ -64,6 +64,8 @@ export async function POST(request: NextRequest) {
     const { password: _, ...userWithoutPassword } = user;
 
     console.log(`Login successful for user: ${email} (Role: ${user.role})`);
+    console.log(`User level: ${user.userLevel}`);
+    console.log(`Full user object:`, userWithoutPassword);
 
     return createSuccessResponse(
       { user: userWithoutPassword },

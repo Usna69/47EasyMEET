@@ -10,6 +10,8 @@ export interface AuthUser {
   email: string;
   name: string;
   department?: string;
+  userLevel?: string;
+  customRole?: string;
   isFirstLogin?: boolean;
   swgLetterhead?: string;
   userLetterhead?: string;
@@ -47,11 +49,30 @@ export const useSessionAuth = () => {
   }, []);
 
   // Logout function
-  const logout = () => {
+  const logout = async () => {
     console.log('User logging out');
+    
+    // Call logout API endpoint
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+    } catch (error) {
+      console.error('Logout API call failed:', error);
+    }
+    
+    // Clear all cached data
     sessionStorage.removeItem('authState');
+    localStorage.removeItem('authState');
+    // Clear any other cached data
+    sessionStorage.clear();
+    localStorage.clear();
     setAuthState({ isLoggedIn: false });
-    router.replace('/admin/login');
+    // Redirect to main page instead of login
+    router.replace('/');
   };
 
   // Login function that works with API authentication
@@ -93,6 +114,8 @@ export const useSessionAuth = () => {
             email: data.data.user.email,
             name: data.data.user.name,
             department: data.data.user.department || '',
+            userLevel: data.data.user.userLevel || 'REGULAR',
+            customRole: data.data.user.customRole || '',
             isFirstLogin: data.data.user.isFirstLogin || false,
             swgLetterhead: data.data.user.swgLetterhead || '',
             userLetterhead: data.data.user.userLetterhead || ''
@@ -117,6 +140,8 @@ export const useSessionAuth = () => {
             email: data.user.email,
             name: data.user.name,
             department: data.user.department || '',
+            userLevel: data.user.userLevel || 'REGULAR',
+            customRole: data.user.customRole || '',
             isFirstLogin: data.user.isFirstLogin || false,
             swgLetterhead: data.user.swgLetterhead || '',
             userLetterhead: data.user.userLetterhead || ''
@@ -146,7 +171,7 @@ export const useSessionAuth = () => {
   };
 
   return { 
-    isLoggedIn: authState?.isLoggedIn || false,
+    isLoggedIn: authState?.isLoggedIn ?? undefined,
     user: authState?.user || null,
     login, 
     logout,

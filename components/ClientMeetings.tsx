@@ -22,7 +22,15 @@ interface Meeting {
   };
 }
 
-export default function ClientMeetings({ initialMeetings }: { initialMeetings: Meeting[] }) {
+export default function ClientMeetings({ 
+  initialMeetings, 
+  userEmail, 
+  userLevel 
+}: { 
+  initialMeetings: Meeting[];
+  userEmail?: string;
+  userLevel?: string;
+}) {
   const [meetings, setMeetings] = useState<Meeting[]>(initialMeetings);
   const [sectorFilter, setSectorFilter] = useState<string | undefined>(
     typeof window !== 'undefined' 
@@ -54,6 +62,14 @@ export default function ClientMeetings({ initialMeetings }: { initialMeetings: M
       
       if (sector) {
         url += `&department=${encodeURIComponent(sector)}`;
+      }
+      
+      // Add user information for access control
+      if (userEmail) {
+        url += `&userEmail=${encodeURIComponent(userEmail)}`;
+      }
+      if (userLevel) {
+        url += `&userLevel=${encodeURIComponent(userLevel)}`;
       }
       
       // Add a cache-busting parameter to avoid stale data

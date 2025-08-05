@@ -3,6 +3,7 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { useSessionAuth } from "../../../../lib/session-auth";
+import { getSectorName } from "../../../../utils/sectorUtils";
 
 // Using React hooks directly from React import
 const { useState, useEffect } = React;
@@ -511,12 +512,12 @@ export default function CreateMeetingPage() {
               </label>
               <input
                 type="text"
-                value={sector}
+                value={getSectorName(sector)}
                 className="w-full p-2 border border-gray-300 rounded-md bg-gray-50"
                 readOnly
               />
               <p className="text-sm text-gray-500 mt-1">
-                Your department/sector: {sector}
+                Your department/sector: {getSectorName(sector)}
               </p>
             </div>
 

@@ -1,5 +1,5 @@
-import { NextRequest } from "next/server";
-import { prisma } from "../../../lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 import { 
   createSuccessResponse, 
   createErrorResponse, 
@@ -173,6 +173,57 @@ export async function DELETE(request: NextRequest) {
     console.error("Error deleting attendee:", error);
     return Response.json(
       { error: "Failed to delete attendee" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const userEmail = searchParams.get("userEmail");
+
+    if (!userEmail) {
+      return NextResponse.json(
+        { success: false, error: "User email is required" },
+        { status: 400 }
+      );
+    }
+
+    // Fetch attendees for the specific user
+    const attendees = await prisma.attendee.findMany({
+      where: {
+        email: userEmail
+      },
+      include: {
+        meeting: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            date: true,
+            location: true,
+            meetingType: true,
+            sector: true,
+            meetingLevel: true,
+            restrictedAccess: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: "desc"
+      }
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: attendees
+    });
+
+  } catch (error) {
+    console.error("Error fetching attendees:", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to fetch attendees" },
       { status: 500 }
     );
   }
