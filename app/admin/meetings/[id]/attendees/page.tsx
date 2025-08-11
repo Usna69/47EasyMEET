@@ -5,7 +5,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { useAuth } from "../../../../../lib/auth";
 import { useParams } from "next/navigation";
-import { getSectorLetterhead } from "../../../../../lib/docx-to-pdf";
+
 import { getSectorName } from "../../../../../utils/sectorUtils";
 
 const { useState, useEffect } = React;
@@ -78,11 +78,15 @@ export default function AdminAttendeesList() {
       console.log('PDF: meeting.customLetterhead:', letterheadPath);
 
       // Get the letterhead image if available
-      if (letterheadPath) {
+      if (letterheadPath && letterheadPath.trim() !== "") {
+        const letterheadUrl = letterheadPath.startsWith('http') 
+          ? letterheadPath 
+          : `/api/letterhead-image?path=${encodeURIComponent(letterheadPath)}`;
+        
         try {
-          console.log('PDF: Fetching letterhead image from:', letterheadPath);
+          console.log('PDF: Fetching letterhead image from:', letterheadUrl);
           // Fetch the image and convert to blob
-          const response = await fetch(letterheadPath);
+          const response = await fetch(letterheadUrl);
           console.log('PDF: Fetch response status:', response.status);
           if (!response.ok) {
             throw new Error(

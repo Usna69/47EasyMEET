@@ -96,14 +96,20 @@ export default function MeetingDetails() {
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
 
-      // Check if meeting has a custom letterhead or use sector letterhead
+      // Check if meeting has a custom letterhead
       const letterheadPath = meeting.customLetterhead;
       console.log('PDF: meeting.customLetterhead:', letterheadPath);
-      if (letterheadPath) {
+      
+      // Only use custom letterhead if available
+      if (letterheadPath && letterheadPath.trim() !== "") {
+        const letterheadUrl = letterheadPath.startsWith('http') 
+          ? letterheadPath 
+          : `/api/letterhead-image?path=${encodeURIComponent(letterheadPath)}`;
+        
         try {
-          console.log('PDF: Fetching letterhead image from:', letterheadPath);
+          console.log('PDF: Fetching letterhead image from:', letterheadUrl);
           // Fetch the image and convert to blob
-          const response = await fetch(letterheadPath);
+          const response = await fetch(letterheadUrl);
           console.log('PDF: Fetch response status:', response.status);
           if (!response.ok) {
             throw new Error(
