@@ -215,6 +215,7 @@ export function addFooterToPDF(
   doc.text(text, PDF_DOCUMENT_SETTINGS.default.margins.left, footerY);
 
   if (pageNumber) {
+    // @ts-ignore - getNumberOfPages is added by jspdf-autotable
     const pageCount = doc.getNumberOfPages();
     const pageText = `Page ${pageCount}`;
     const pageWidth = doc.internal.pageSize.width;
