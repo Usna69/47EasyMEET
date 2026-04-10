@@ -1,0 +1,50 @@
+name: deploy-easy-meet-app
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Next.js app
+        run: pnpm build
+
+      - name: Deploy application via PM2
+        run: |
+          echo "Deploying Easy Meet..."
+          cd ~/easy-meet/47EasyMEET
+
+          echo "Pulling latest master branch..."
+          git fetch origin master && git reset --hard origin/master
+
+          echo "Installing production dependencies..."
+          pnpm install --frozen-lockfile
+
+          echo "Building production..."
+          pnpm build
+
+          echo "Restarting PM2 process..."
+          pm2 restart easy-meet || pm2 start pnpm --name easy-meet -- start
+
+          pm2 save
+          echo "✅ Deployment completed successfully!"
