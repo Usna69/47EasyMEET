@@ -4,9 +4,9 @@ import React from "react";
 import { useSessionAuth } from "@/lib/session-auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import MeetingCard from "../../components/MeetingCard";
+
 import MeetingsWithAuth from "@/components/MeetingsWithAuth";
-import { getSectorName } from "../../utils/sectorUtils";
+
 import DualColorSpinner from "@/components/DualColorSpinner";
 
 export default function ViewOnlyDashboard() {
@@ -67,52 +67,47 @@ export default function ViewOnlyDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
-             {/* Hero Section */}
-       <div className="bg-[#014a2f] text-white py-16 relative">
-         
-         <div className="container mx-auto px-4">
-           <div className="max-w-4xl mx-auto text-center">
-             <h1 className="text-4xl md:text-5xl font-bold mb-6">
-               <span className="text-[#FFC107]">Easy</span>MEET
-             </h1>
-             <h2 className="text-2xl font-semibold mb-4">
-               {getUserLevelDisplay()} Portal
-             </h2>
-             <p className="text-xl mb-8 opacity-90">
-               {getWelcomeMessage()}
-             </p>
-             
-             <div className="flex flex-col sm:flex-row justify-center gap-4 mb-4">
-               <Link 
-                 href="#meetings"
-                 className="bg-[#FFC107] hover:bg-[#E0A800] text-[#014a2f] font-medium px-8 py-3 rounded-md transition-colors"
-               >
-                 Browse Meetings
-               </Link>
-               <Link 
-                 href="/view-only/registrations"
-                 className="bg-white/10 hover:bg-white/20 text-white font-medium px-8 py-3 rounded-md transition-colors"
-               >
-                 My Registrations
-               </Link>
-             </div>
-             
-             {/* Logout Button - Below Action Buttons */}
-             <div className="flex justify-center mt-4">
-               <button
-                 onClick={async () => {
-                   await auth.logout();
-                 }}
-                 className="bg-red-500/10 hover:bg-red-500/20 text-white font-medium px-8 py-3 rounded-md transition-colors border border-red-500/20"
-               >
-                 Logout
-               </button>
-             </div>
-           </div>
-         </div>
-       </div>
+      {/* Hero Section */}
+      <div className="bg-[#014a2f] text-white py-16 relative">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">
+              <span className="text-[#FFC107]">Easy</span>MEET
+            </h1>
+            <h2 className="text-2xl font-semibold mb-4">
+              {getUserLevelDisplay()} Portal
+            </h2>
+            <p className="text-xl mb-8 opacity-90">{getWelcomeMessage()}</p>
 
+            <div className="flex flex-col sm:flex-row justify-center gap-4 mb-4">
+              <Link
+                href="#meetings"
+                className="bg-[#FFC107] hover:bg-[#E0A800] text-[#014a2f] font-medium px-8 py-3 rounded-md transition-colors"
+              >
+                Browse Meetings
+              </Link>
+              <Link
+                href="/view-only/registrations"
+                className="bg-white/10 hover:bg-white/20 text-white font-medium px-8 py-3 rounded-md transition-colors"
+              >
+                My Registrations
+              </Link>
+            </div>
 
+            {/* Logout Button - Below Action Buttons */}
+            <div className="flex justify-center mt-4">
+              <button
+                onClick={async () => {
+                  await auth.logout();
+                }}
+                className="bg-red-500/10 hover:bg-red-500/20 text-white font-medium px-8 py-3 rounded-md transition-colors border border-red-500/20"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Meetings Section */}
       <section
@@ -131,18 +126,15 @@ export default function ViewOnlyDashboard() {
               Available Meetings
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Browse through available meetings and events. Click on any meeting to view details and register for attendance.
+              Browse through available meetings and events. Click on any meeting
+              to view details and register for attendance.
             </p>
           </div>
-          
+
           {/* Client-side meetings list */}
           <MeetingsWithAuth initialMeetings={[]} />
         </div>
       </section>
-
-      
-
-      
     </div>
   );
-} 
+}

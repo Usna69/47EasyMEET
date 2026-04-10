@@ -1,24 +1,18 @@
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 import {
-  PDF_COLORS,
   PDF_FONTS,
   PDF_TABLE_STYLES,
   PDF_DOCUMENT_SETTINGS,
   PDF_HEADER_FOOTER,
-  MEETING_PDF_CONFIG,
-  PDF_IMAGE_SETTINGS,
-  PDF_PAGE_BREAK,
-  PDF_TEXT_FORMAT,
   getTableConfig,
   getDocumentConfig,
   getMeetingConfig,
   formatDateForPDF,
   formatTimeForPDF,
   formatDateTimeForPDF,
-  calculateColumnWidths,
-  truncateTextForPDF
-} from './pdf-config';
+  truncateTextForPDF,
+} from "./pdf-config";
 
 // PDF Configuration Types
 export interface PDFTableConfig {
@@ -42,8 +36,8 @@ export interface PDFTableConfig {
 export interface PDFDocumentConfig {
   title: string;
   subtitle?: string;
-  orientation?: 'portrait' | 'landscape';
-  unit?: 'mm' | 'cm' | 'in' | 'pt';
+  orientation?: "portrait" | "landscape";
+  unit?: "mm" | "cm" | "in" | "pt";
   format?: string;
   margins?: {
     top: number;
@@ -58,17 +52,19 @@ export const defaultPDFStyles = PDF_TABLE_STYLES.default;
 
 // Default Document Configuration (now using config)
 export const defaultDocumentConfig: PDFDocumentConfig = {
-  title: 'EasyMEET Report',
-  ...PDF_DOCUMENT_SETTINGS.default
+  title: "EasyMEET Report",
+  ...PDF_DOCUMENT_SETTINGS.default,
 };
 
 // PDF Generation Functions
-export function createPDFDocument(config: PDFDocumentConfig = defaultDocumentConfig): jsPDF {
-  const docConfig = getDocumentConfig('default');
+export function createPDFDocument(
+  config: PDFDocumentConfig = defaultDocumentConfig,
+): jsPDF {
+  const docConfig = getDocumentConfig("default");
   const doc = new jsPDF({
     orientation: config.orientation || docConfig.orientation,
     unit: config.unit || docConfig.unit,
-    format: config.format || docConfig.format
+    format: config.format || docConfig.format,
   });
 
   const margins = config.margins || docConfig.margins;
@@ -91,9 +87,9 @@ export function createPDFDocument(config: PDFDocumentConfig = defaultDocumentCon
 export function addTableToPDF(
   doc: jsPDF,
   config: PDFTableConfig,
-  startY: number = 40
+  startY: number = 40,
 ): number {
-  const tableStyle = getTableConfig('default');
+  const tableStyle = getTableConfig("default");
   const tableConfig = {
     head: config.head,
     body: config.body,
@@ -102,16 +98,26 @@ export function addTableToPDF(
       fontSize: config.styles?.fontSize || tableStyle.fontSize,
       cellPadding: config.styles?.cellPadding || tableStyle.cellPadding,
       headStyles: {
-        fillColor: config.styles?.headStyles?.fillColor || tableStyle.headStyles.fillColor,
-        textColor: config.styles?.headStyles?.textColor || tableStyle.headStyles.textColor,
-        fontStyle: config.styles?.headStyles?.fontStyle || tableStyle.headStyles.fontStyle
+        fillColor:
+          config.styles?.headStyles?.fillColor ||
+          tableStyle.headStyles.fillColor,
+        textColor:
+          config.styles?.headStyles?.textColor ||
+          tableStyle.headStyles.textColor,
+        fontStyle:
+          config.styles?.headStyles?.fontStyle ||
+          tableStyle.headStyles.fontStyle,
       },
       bodyStyles: {
-        fillColor: config.styles?.bodyStyles?.fillColor || tableStyle.bodyStyles.fillColor,
-        textColor: config.styles?.bodyStyles?.textColor || tableStyle.bodyStyles.textColor
-      }
+        fillColor:
+          config.styles?.bodyStyles?.fillColor ||
+          tableStyle.bodyStyles.fillColor,
+        textColor:
+          config.styles?.bodyStyles?.textColor ||
+          tableStyle.bodyStyles.textColor,
+      },
     },
-    margin: { top: 10, right: 10, bottom: 10, left: 10 }
+    margin: { top: 10, right: 10, bottom: 10, left: 10 },
   };
 
   // @ts-ignore - jsPDF autotable types
@@ -128,25 +134,25 @@ export function addImageToPDF(
   x: number,
   y: number,
   width: number,
-  height: number
+  height: number,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
-    
+    img.crossOrigin = "anonymous";
+
     img.onload = () => {
       try {
-        doc.addImage(img, 'JPEG', x, y, width, height);
+        doc.addImage(img, "JPEG", x, y, width, height);
         resolve();
       } catch (error) {
         reject(error);
       }
     };
-    
+
     img.onerror = () => {
-      reject(new Error('Failed to load image'));
+      reject(new Error("Failed to load image"));
     };
-    
+
     img.src = imageUrl;
   });
 }
@@ -155,7 +161,7 @@ export function addHeaderToPDF(
   doc: jsPDF,
   title: string,
   subtitle?: string,
-  logoUrl?: string
+  logoUrl?: string,
 ): Promise<number> {
   return new Promise(async (resolve) => {
     let currentY = PDF_HEADER_FOOTER.header.height;
@@ -164,10 +170,17 @@ export function addHeaderToPDF(
     if (logoUrl) {
       try {
         const logoConfig = PDF_HEADER_FOOTER.header.logo;
-        await addImageToPDF(doc, logoUrl, logoConfig.margin, currentY - logoConfig.height, logoConfig.width, logoConfig.height);
+        await addImageToPDF(
+          doc,
+          logoUrl,
+          logoConfig.margin,
+          currentY - logoConfig.height,
+          logoConfig.width,
+          logoConfig.height,
+        );
         currentY += logoConfig.height + logoConfig.margin;
       } catch (error) {
-        console.warn('Failed to add logo to PDF:', error);
+        console.warn("Failed to add logo to PDF:", error);
       }
     }
 
@@ -192,7 +205,7 @@ export function addHeaderToPDF(
 export function addFooterToPDF(
   doc: jsPDF,
   text: string,
-  pageNumber?: boolean
+  pageNumber?: boolean,
 ): void {
   const pageHeight = doc.internal.pageSize.height;
   const footerY = pageHeight - PDF_HEADER_FOOTER.footer.height;
@@ -206,7 +219,11 @@ export function addFooterToPDF(
     const pageText = `Page ${pageCount}`;
     const pageWidth = doc.internal.pageSize.width;
     const pageTextWidth = doc.getTextWidth(pageText);
-    doc.text(pageText, pageWidth - pageTextWidth - PDF_HEADER_FOOTER.footer.pageNumber.margin, footerY);
+    doc.text(
+      pageText,
+      pageWidth - pageTextWidth - PDF_HEADER_FOOTER.footer.pageNumber.margin,
+      footerY,
+    );
   }
 }
 
@@ -214,13 +231,13 @@ export function addFooterToPDF(
 export function generateMeetingAttendancePDF(
   meeting: any,
   attendees: any[],
-  logoUrl?: string
+  logoUrl?: string,
 ): Promise<jsPDF> {
   return new Promise(async (resolve) => {
-    const meetingConfig = getMeetingConfig('attendance');
+    const meetingConfig = getMeetingConfig("attendance");
     const doc = createPDFDocument({
       title: meetingConfig.title,
-      subtitle: `${meeting.title} - ${formatDateForPDF(meeting.date)}`
+      subtitle: `${meeting.title} - ${formatDateForPDF(meeting.date)}`,
     });
 
     // Add header
@@ -228,21 +245,21 @@ export function generateMeetingAttendancePDF(
       doc,
       meetingConfig.subtitle,
       meeting.title,
-      logoUrl
+      logoUrl,
     );
 
     // Create attendance table
     const tableConfig: PDFTableConfig = {
-      head: [meetingConfig.columns.map(col => col.header)],
+      head: [meetingConfig.columns.map((col) => col.header)],
       body: attendees.map((attendee, index) => [
         (index + 1).toString(),
-        truncateTextForPDF(attendee.name || '', 30),
-        truncateTextForPDF(attendee.designation || '', 25),
-        truncateTextForPDF(attendee.organization || '', 30),
-        truncateTextForPDF(attendee.phoneNumber || '', 20),
-        truncateTextForPDF(attendee.email || '', 35)
+        truncateTextForPDF(attendee.name || "", 30),
+        truncateTextForPDF(attendee.designation || "", 25),
+        truncateTextForPDF(attendee.organization || "", 30),
+        truncateTextForPDF(attendee.phoneNumber || "", 20),
+        truncateTextForPDF(attendee.email || "", 35),
       ]),
-      styles: meetingConfig.style
+      styles: meetingConfig.style,
     };
 
     addTableToPDF(doc, tableConfig, headerY);
@@ -251,7 +268,7 @@ export function generateMeetingAttendancePDF(
     addFooterToPDF(
       doc,
       `Generated on ${formatDateTimeForPDF(new Date())}`,
-      true
+      true,
     );
 
     resolve(doc);
@@ -261,13 +278,13 @@ export function generateMeetingAttendancePDF(
 export function generateMeetingSummaryPDF(
   meeting: any,
   attendees: any[],
-  logoUrl?: string
+  logoUrl?: string,
 ): Promise<jsPDF> {
   return new Promise(async (resolve) => {
-    const meetingConfig = getMeetingConfig('summary');
+    const meetingConfig = getMeetingConfig("summary");
     const doc = createPDFDocument({
       title: meetingConfig.title,
-      subtitle: meeting.title
+      subtitle: meeting.title,
     });
 
     // Add header
@@ -275,43 +292,79 @@ export function generateMeetingSummaryPDF(
       doc,
       meetingConfig.subtitle,
       meeting.title,
-      logoUrl
+      logoUrl,
     );
 
     // Add meeting details
     doc.setFontSize(PDF_FONTS.heading.size);
     doc.setFont(PDF_FONTS.heading.family, PDF_FONTS.heading.style);
-    doc.text('Meeting Details:', PDF_DOCUMENT_SETTINGS.default.margins.left, headerY);
-    
+    doc.text(
+      "Meeting Details:",
+      PDF_DOCUMENT_SETTINGS.default.margins.left,
+      headerY,
+    );
+
     doc.setFontSize(PDF_FONTS.body.size);
     doc.setFont(PDF_FONTS.body.family, PDF_FONTS.body.style);
-    doc.text(`Date: ${formatDateForPDF(meeting.date)}`, PDF_DOCUMENT_SETTINGS.default.margins.left, headerY + 10);
-    doc.text(`Time: ${formatTimeForPDF(meeting.date)}`, PDF_DOCUMENT_SETTINGS.default.margins.left, headerY + 15);
-    doc.text(`Location: ${meeting.location}`, PDF_DOCUMENT_SETTINGS.default.margins.left, headerY + 20);
-    doc.text(`Sector: ${meeting.sector}`, PDF_DOCUMENT_SETTINGS.default.margins.left, headerY + 25);
-    doc.text(`Category: ${meeting.meetingCategory}`, PDF_DOCUMENT_SETTINGS.default.margins.left, headerY + 30);
-    doc.text(`Type: ${meeting.meetingType}`, PDF_DOCUMENT_SETTINGS.default.margins.left, headerY + 35);
+    doc.text(
+      `Date: ${formatDateForPDF(meeting.date)}`,
+      PDF_DOCUMENT_SETTINGS.default.margins.left,
+      headerY + 10,
+    );
+    doc.text(
+      `Time: ${formatTimeForPDF(meeting.date)}`,
+      PDF_DOCUMENT_SETTINGS.default.margins.left,
+      headerY + 15,
+    );
+    doc.text(
+      `Location: ${meeting.location}`,
+      PDF_DOCUMENT_SETTINGS.default.margins.left,
+      headerY + 20,
+    );
+    doc.text(
+      `Sector: ${meeting.sector}`,
+      PDF_DOCUMENT_SETTINGS.default.margins.left,
+      headerY + 25,
+    );
+    doc.text(
+      `Category: ${meeting.meetingCategory}`,
+      PDF_DOCUMENT_SETTINGS.default.margins.left,
+      headerY + 30,
+    );
+    doc.text(
+      `Type: ${meeting.meetingType}`,
+      PDF_DOCUMENT_SETTINGS.default.margins.left,
+      headerY + 35,
+    );
 
     // Add attendance summary
     const summaryY = headerY + 50;
     doc.setFontSize(PDF_FONTS.heading.size);
     doc.setFont(PDF_FONTS.heading.family, PDF_FONTS.heading.style);
-    doc.text('Attendance Summary:', PDF_DOCUMENT_SETTINGS.default.margins.left, summaryY);
-    
+    doc.text(
+      "Attendance Summary:",
+      PDF_DOCUMENT_SETTINGS.default.margins.left,
+      summaryY,
+    );
+
     doc.setFontSize(PDF_FONTS.body.size);
     doc.setFont(PDF_FONTS.body.family, PDF_FONTS.body.style);
-    doc.text(`Total Attendees: ${attendees.length}`, PDF_DOCUMENT_SETTINGS.default.margins.left, summaryY + 10);
+    doc.text(
+      `Total Attendees: ${attendees.length}`,
+      PDF_DOCUMENT_SETTINGS.default.margins.left,
+      summaryY + 10,
+    );
 
     // Add attendees table
     const tableConfig: PDFTableConfig = {
-      head: [meetingConfig.columns.map(col => col.header)],
+      head: [meetingConfig.columns.map((col) => col.header)],
       body: attendees.map((attendee, index) => [
         (index + 1).toString(),
-        truncateTextForPDF(attendee.name || '', 40),
-        truncateTextForPDF(attendee.designation || '', 30),
-        truncateTextForPDF(attendee.organization || '', 40)
+        truncateTextForPDF(attendee.name || "", 40),
+        truncateTextForPDF(attendee.designation || "", 30),
+        truncateTextForPDF(attendee.organization || "", 40),
       ]),
-      styles: meetingConfig.style
+      styles: meetingConfig.style,
     };
 
     addTableToPDF(doc, tableConfig, summaryY + 20);
@@ -320,7 +373,7 @@ export function generateMeetingSummaryPDF(
     addFooterToPDF(
       doc,
       `Generated on ${formatDateTimeForPDF(new Date())}`,
-      true
+      true,
     );
 
     resolve(doc);
@@ -338,4 +391,4 @@ export function formatTime(date: string | Date): string {
 
 export function truncateText(text: string, maxLength: number): string {
   return truncateTextForPDF(text, maxLength);
-} 
+}

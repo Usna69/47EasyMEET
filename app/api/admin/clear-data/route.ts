@@ -1,17 +1,16 @@
-import { NextResponse } from "next/server";
-import { prisma } from "../../../../lib/prisma";
+import { safeQuery, DatabaseError } from "../../../../lib/db";
 
 // POST endpoint to clear data from the database
 export async function POST(request: Request) {
   try {
     // First, delete attendees as they reference meetings
-    await prisma.attendee.deleteMany({});
+    await safeQuery(`DELETE FROM dbo.Attendee`, []);
 
     // Delete meeting resources
-    await prisma.meetingResource.deleteMany({});
+    await safeQuery(`DELETE FROM dbo.MeetingResource`, []);
 
     // Delete meetings
-    await prisma.meeting.deleteMany({});
+    await safeQuery(`DELETE FROM dbo.Meeting`, []);
 
     // Create a response with special headers to prevent caching
     return new Response(
@@ -34,10 +33,25 @@ export async function POST(request: Request) {
           Pragma: "no-cache",
           Expires: "0",
         },
-      }
+      },
     );
   } catch (error) {
     console.error("Error clearing database:", error);
+
+    // Check if it's our custom DatabaseError
+    if (error instanceof DatabaseError) {
+      return new Response(
+        JSON.stringify({
+          error: "Database connection error while clearing data",
+          message: error.message,
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+
     return new Response(
       JSON.stringify({
         error: "Failed to clear database data",
@@ -46,7 +60,7 @@ export async function POST(request: Request) {
       {
         status: 500,
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
   }
 }

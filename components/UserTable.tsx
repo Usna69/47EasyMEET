@@ -9,7 +9,7 @@ const getUserLevelName = (userLevel: string, role: string) => {
   if (role === "ADMIN") {
     return "All Access";
   }
-  
+
   switch (userLevel) {
     case "REGULAR":
       return "Regular User";
@@ -48,6 +48,7 @@ export default function UserTable({
   currentUserRole,
   onDeleteUser,
 }: UserTableProps) {
+  console.log(currentUserRole);
   return (
     <div className="bg-white shadow-md rounded-lg p-4 sm:p-6 border border-gray-200">
       <div className="flex justify-between items-center mb-4">
@@ -85,21 +86,30 @@ export default function UserTable({
                           user.role === "ADMIN"
                             ? "bg-purple-100 text-purple-800"
                             : user.role === "VIEW_ONLY"
-                            ? "bg-gray-100 text-gray-800"
-                            : "bg-blue-100 text-blue-800"
+                              ? "bg-gray-100 text-gray-800"
+                              : "bg-blue-100 text-blue-800"
                         }`}
                       >
                         {user.role}
                       </span>
                     </td>
-                    <td className="px-4 py-2">{user.role === "ADMIN" ? "N/A" : (user.department ? getSectorName(user.department) : "-")}</td>
+                    <td className="px-4 py-2">
+                      {user.role === "ADMIN"
+                        ? "N/A"
+                        : user.department
+                          ? getSectorName(user.department)
+                          : "-"}
+                    </td>
                     <td className="px-4 py-2">{user.designation || "-"}</td>
                     <td className="px-4 py-2">
                       {(() => {
                         const date = new Date(user.createdAt);
                         const year = date.getFullYear();
-                        const month = String(date.getMonth() + 1).padStart(2, '0');
-                        const day = String(date.getDate()).padStart(2, '0');
+                        const month = String(date.getMonth() + 1).padStart(
+                          2,
+                          "0",
+                        );
+                        const day = String(date.getDate()).padStart(2, "0");
                         return `${day}-${month}-${year}`;
                       })()}
                     </td>
@@ -148,24 +158,37 @@ export default function UserTable({
                       user.role === "ADMIN"
                         ? "bg-purple-100 text-purple-800"
                         : user.role === "VIEW_ONLY"
-                        ? "bg-gray-100 text-gray-800"
-                        : "bg-blue-100 text-blue-800"
+                          ? "bg-gray-100 text-gray-800"
+                          : "bg-blue-100 text-blue-800"
                     }`}
                   >
                     {user.role}
                   </span>
                 </div>
                 <div className="text-sm text-gray-600 mb-3">
-                  <p>Department: {user.role === "ADMIN" ? "N/A" : (user.department ? getSectorName(user.department) : "-")}</p>
+                  <p>
+                    Department:{" "}
+                    {user.role === "ADMIN"
+                      ? "N/A"
+                      : user.department
+                        ? getSectorName(user.department)
+                        : "-"}
+                  </p>
                   <p>Designation: {user.designation || "-"}</p>
                   {user.customRole && <p>Custom Role: {user.customRole}</p>}
-                  <p>Created: {(() => {
-                    const date = new Date(user.createdAt);
-                    const year = date.getFullYear();
-                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                    const day = String(date.getDate()).padStart(2, '0');
-                    return `${day}-${month}-${year}`;
-                  })()}</p>
+                  <p>
+                    Created:{" "}
+                    {(() => {
+                      const date = new Date(user.createdAt);
+                      const year = date.getFullYear();
+                      const month = String(date.getMonth() + 1).padStart(
+                        2,
+                        "0",
+                      );
+                      const day = String(date.getDate()).padStart(2, "0");
+                      return `${day}-${month}-${year}`;
+                    })()}
+                  </p>
                 </div>
                 <div className="flex justify-end">
                   <button
@@ -196,4 +219,4 @@ export default function UserTable({
       )}
     </div>
   );
-} 
+}

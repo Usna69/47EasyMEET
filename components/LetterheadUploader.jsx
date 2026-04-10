@@ -1,80 +1,85 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
+import { useState } from "react";
 
 export default function LetterheadUploader({ meetingId, onUploadSuccess }) {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState('');
+  const [uploadError, setUploadError] = useState("");
   const [showConversionTip, setShowConversionTip] = useState(false);
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState("");
   const [usePassword, setUsePassword] = useState(false);
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
-    
+
     if (!selectedFile) {
       setFile(null);
       return;
     }
-    
+
     // Check if file is a JPG/JPEG
-    if (!selectedFile.type.includes('jpeg') && !selectedFile.type.includes('jpg')) {
-      setUploadError('Only JPG files are supported. Convert DOCX to JPG first.');
+    if (
+      !selectedFile.type.includes("jpeg") &&
+      !selectedFile.type.includes("jpg")
+    ) {
+      setUploadError(
+        "Only JPG files are supported. Convert DOCX to JPG first.",
+      );
       setShowConversionTip(true);
       setFile(null);
       return;
     }
-    
+
     // Check file size (5MB max)
     if (selectedFile.size > 5 * 1024 * 1024) {
-      setUploadError('File size exceeds 5MB limit.');
+      setUploadError("File size exceeds 5MB limit.");
       setFile(null);
       return;
     }
-    
-    setUploadError('');
+
+    setUploadError("");
     setFile(selectedFile);
     setShowConversionTip(false);
   };
 
   const handleUpload = async () => {
     if (!file || !meetingId) return;
-    
+
     try {
       setUploading(true);
-      setUploadError('');
-      
+      setUploadError("");
+
       const formData = new FormData();
-      formData.append('meetingId', meetingId);
-      formData.append('letterhead', file);
-      
+      formData.append("meetingId", meetingId);
+      formData.append("letterhead", file);
+
       // Only include password if it's enabled and not empty
       if (usePassword && password.trim()) {
-        formData.append('password', password);
+        formData.append("password", password);
       }
-      
-      const response = await fetch('/api/letterhead-upload', {
-        method: 'POST',
+
+      const response = await fetch("/api/letterhead-upload", {
+        method: "POST",
         body: formData,
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to upload letterhead');
+        throw new Error(errorData.error || "Failed to upload letterhead");
       }
-      
+
       const data = await response.json();
-      
+
       if (onUploadSuccess) {
         onUploadSuccess(data.letterheadPath);
       }
-      
+
       setFile(null);
-      setUploadError('');
+      setUploadError("");
     } catch (error) {
-      console.error('Error uploading letterhead:', error);
-      setUploadError(error.message || 'Failed to upload letterhead');
+      console.error("Error uploading letterhead:", error);
+      setUploadError(error.message || "Failed to upload letterhead");
     } finally {
       setUploading(false);
     }
@@ -82,13 +87,13 @@ export default function LetterheadUploader({ meetingId, onUploadSuccess }) {
 
   const goToConversionSite = () => {
     // Use Convertio as specifically requested
-    window.open('https://convertio.co/docx-jpg/', '_blank');
+    window.open("https://convertio.co/docx-jpg/", "_blank");
   };
 
   return (
     <div className="bg-white p-4 rounded-md shadow-sm border border-gray-200">
       <h3 className="font-medium text-gray-800 mb-2">Custom Letterhead</h3>
-      
+
       {/* Always visible DOCX to JPG conversion button */}
       <div className="mb-4 bg-blue-50 p-3 rounded-md">
         <div className="flex items-center justify-between">
@@ -108,12 +113,13 @@ export default function LetterheadUploader({ meetingId, onUploadSuccess }) {
           </button>
         </div>
       </div>
-      
+
       <div className="mb-3">
         <p className="text-sm text-gray-600 mb-2">
-          Upload a custom letterhead for your meeting documents (JPG format only).
+          Upload a custom letterhead for your meeting documents (JPG format
+          only).
         </p>
-        
+
         <div className="flex flex-col space-y-2">
           <input
             type="file"
@@ -126,7 +132,7 @@ export default function LetterheadUploader({ meetingId, onUploadSuccess }) {
               file:bg-[#014a2f] file:text-white
               hover:file:bg-[#014a2f]/90"
           />
-          
+
           {showConversionTip && (
             <div className="bg-blue-50 p-3 rounded-md">
               <p className="text-sm text-blue-700 mb-2">
@@ -140,7 +146,7 @@ export default function LetterheadUploader({ meetingId, onUploadSuccess }) {
               </button>
             </div>
           )}
-          
+
           {file && (
             <div className="mt-2 space-y-3">
               <div className="flex items-center justify-between">
@@ -148,7 +154,7 @@ export default function LetterheadUploader({ meetingId, onUploadSuccess }) {
                   {file.name} ({(file.size / 1024).toFixed(1)} KB)
                 </span>
               </div>
-              
+
               {/* Password protection option */}
               <div className="bg-yellow-50 p-3 rounded-md border border-yellow-100">
                 <div className="flex items-center mb-2">
@@ -159,11 +165,14 @@ export default function LetterheadUploader({ meetingId, onUploadSuccess }) {
                     onChange={(e) => setUsePassword(e.target.checked)}
                     className="mr-2 h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
                   />
-                  <label htmlFor="usePassword" className="text-sm font-medium text-yellow-800">
+                  <label
+                    htmlFor="usePassword"
+                    className="text-sm font-medium text-yellow-800"
+                  >
                     Protect with password
                   </label>
                 </div>
-                
+
                 {usePassword && (
                   <div className="mt-2">
                     <input
@@ -174,24 +183,25 @@ export default function LetterheadUploader({ meetingId, onUploadSuccess }) {
                       className="w-full px-3 py-2 text-sm border border-yellow-200 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300"
                     />
                     <p className="text-xs text-yellow-600 mt-1">
-                      Users will need this password to view the letterhead and meeting documents
+                      Users will need this password to view the letterhead and
+                      meeting documents
                     </p>
                   </div>
                 )}
               </div>
-              
+
               <div className="flex justify-end">
                 <button
                   onClick={handleUpload}
                   disabled={uploading}
-                  className={`py-2 px-4 rounded-md text-sm font-medium ${uploading ? 'bg-gray-300 text-gray-500' : 'bg-[#014a2f] text-white hover:bg-[#014a2f]/90'}`}
+                  className={`py-2 px-4 rounded-md text-sm font-medium ${uploading ? "bg-gray-300 text-gray-500" : "bg-[#014a2f] text-white hover:bg-[#014a2f]/90"}`}
                 >
-                  {uploading ? 'Uploading...' : 'Upload Letterhead'}
+                  {uploading ? "Uploading..." : "Upload Letterhead"}
                 </button>
               </div>
             </div>
           )}
-          
+
           {uploadError && (
             <p className="text-sm text-red-600 mt-1">{uploadError}</p>
           )}

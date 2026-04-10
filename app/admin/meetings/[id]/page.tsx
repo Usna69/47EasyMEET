@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { format } from "date-fns";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useSessionAuth } from "../../../../lib/session-auth";
 import QRCodeDisplay from "../../../../components/QRCodeDisplay";
 import ResourceDownload from "@/components/ResourceDownload";
@@ -48,6 +48,9 @@ export default function AdminMeetingDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [meetingUrl, setMeetingUrl] = useState<string>("");
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3001";
+
+  console.log("baseUrl", baseUrl);
 
   useEffect(() => {
     if (auth.isLoggedIn && id) {
@@ -80,9 +83,7 @@ export default function AdminMeetingDetails() {
   // Second useEffect to set meeting URL safely on the client side
   useEffect(() => {
     if (meeting) {
-      setMeetingUrl(
-        `${window.location.origin}/meetings/${meeting.id}/register`
-      );
+      setMeetingUrl(`${baseUrl}/meetings/${meeting.id}/register`);
     }
   }, [meeting]);
 
@@ -414,7 +415,7 @@ export default function AdminMeetingDetails() {
                             resourceId={resource.id}
                           />
                         </li>
-                      )
+                      ),
                     )}
                   </ul>
                 </div>

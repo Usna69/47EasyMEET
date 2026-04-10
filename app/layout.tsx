@@ -6,7 +6,6 @@ import "../styles/createMeetingButton.css";
 import React from "react";
 import NavHeader from "../components/NavHeader";
 import Footer from "../components/Footer";
-import dynamic from "next/dynamic";
 
 import ScrollPreservation from "@/components/ScrollPreservation";
 
@@ -30,7 +29,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        />
       </head>
       <body className={poppins.className}>
         <React.Suspense fallback={<div>Loading...</div>}>

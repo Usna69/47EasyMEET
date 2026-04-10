@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useRegistrationForm, useApiSubmission } from "@/lib/form-hooks";
-import { validateRegistrationForm, convertValidationErrorsToFormErrors } from "@/lib/validation";
+
 import { isRegistrationOpen } from "@/lib/meeting-utils";
 import SignaturePadJSX from "./SignaturePadJSX";
 import { useRouter } from "next/navigation";
@@ -14,18 +14,18 @@ import { getSectorName } from "@/utils/sectorUtils";
 const formatDateConsistent = (date) => {
   const d = new Date(date);
   const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  const hours = String(d.getHours()).padStart(2, '0');
-  const minutes = String(d.getMinutes()).padStart(2, '0');
-  
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const hours = String(d.getHours()).padStart(2, "0");
+  const minutes = String(d.getMinutes()).padStart(2, "0");
+
   return `${day}-${month}-${year} ${hours}:${minutes}`;
 };
 
 export default function RegForm({ meetingprop }) {
   const router = useRouter();
   const auth = useSessionAuth();
-  
+
   const {
     formData,
     errors,
@@ -34,7 +34,7 @@ export default function RegForm({ meetingprop }) {
     updateErrors,
     resetForm,
     setSubmitting,
-    validateForm
+    validateForm,
   } = useRegistrationForm(meetingprop);
 
   const signatureRef = React.useRef(null);
@@ -47,29 +47,37 @@ export default function RegForm({ meetingprop }) {
   // Auto-fill form for high-level users
   useEffect(() => {
     if (auth.user && auth.isLoggedIn) {
-      const isHighLevelUser = auth.user.userLevel && auth.user.userLevel !== "REGULAR";
+      const isHighLevelUser =
+        auth.user.userLevel && auth.user.userLevel !== "REGULAR";
       const isViewOnlyUser = auth.user.role === "VIEW_ONLY";
-      
+
       if (isHighLevelUser || isViewOnlyUser) {
         // Auto-fill user details
         updateField("name", auth.user.name || "");
         updateField("email", auth.user.email || "");
-        updateField("designation", auth.user.customRole || auth.user.designation || "");
-        updateField("organization", auth.user.department ? getSectorName(auth.user.department) : "");
+        updateField(
+          "designation",
+          auth.user.customRole || auth.user.designation || "",
+        );
+        updateField(
+          "organization",
+          auth.user.department ? getSectorName(auth.user.department) : "",
+        );
         updateField("contact", ""); // Let them fill this if needed
       }
     }
   }, [auth.user, auth.isLoggedIn, updateField]);
 
   // Check if user is high-level
-  const isHighLevelUser = auth.user && auth.isLoggedIn && (
-    (auth.user.userLevel && auth.user.userLevel !== "REGULAR") || 
-    auth.user.role === "VIEW_ONLY"
-  );
+  const isHighLevelUser =
+    auth.user &&
+    auth.isLoggedIn &&
+    ((auth.user.userLevel && auth.user.userLevel !== "REGULAR") ||
+      auth.user.role === "VIEW_ONLY");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -79,28 +87,25 @@ export default function RegForm({ meetingprop }) {
       return;
     }
 
-    const result = await submitRequest(
-      async () => {
-        const formDataToSend = new FormData();
-        Object.entries(formData).forEach(([key, value]) => {
-          if (value) formDataToSend.append(key, value);
-        });
-        formDataToSend.append("meetingId", meetingprop.id);
+    const result = await submitRequest(async () => {
+      const formDataToSend = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value) formDataToSend.append(key, value);
+      });
+      formDataToSend.append("meetingId", meetingprop.id);
 
-        const response = await fetch("/api/attendees", {
+      const response = await fetch("/api/attendees", {
         method: "POST",
-          body: formDataToSend,
-        });
+        body: formDataToSend,
+      });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Registration failed");
-        }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Registration failed");
+      }
 
-        return response.json();
-      },
-      "Registration successful! You will receive a confirmation email shortly."
-    );
+      return response.json();
+    }, "Registration successful! You will receive a confirmation email shortly.");
 
     if (result) {
       handleResetForm();
@@ -133,7 +138,6 @@ export default function RegForm({ meetingprop }) {
 
   return (
     <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
-
       {!registrationOpen && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
           <p className="text-yellow-800">
@@ -154,8 +158,6 @@ export default function RegForm({ meetingprop }) {
         </div>
       )}
 
-
-
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Name Field */}
         <div>
@@ -170,12 +172,14 @@ export default function RegForm({ meetingprop }) {
               errors.name
                 ? "border-red-300 focus:ring-red-500"
                 : "border-gray-300 focus:ring-[#014a2f]"
-            } ${isHighLevelUser ? 'bg-gray-50' : ''}`}
+            } ${isHighLevelUser ? "bg-gray-50" : ""}`}
             placeholder="Enter your full name"
             readOnly={isHighLevelUser}
           />
           {isHighLevelUser && (
-            <p className="mt-1 text-sm text-gray-500">Auto-filled from your profile</p>
+            <p className="mt-1 text-sm text-gray-500">
+              Auto-filled from your profile
+            </p>
           )}
           {errors.name && (
             <p className="mt-1 text-sm text-red-600">{errors.name}</p>
@@ -195,12 +199,14 @@ export default function RegForm({ meetingprop }) {
               errors.designation
                 ? "border-red-300 focus:ring-red-500"
                 : "border-gray-300 focus:ring-[#014a2f]"
-            } ${isHighLevelUser ? 'bg-gray-50' : ''}`}
+            } ${isHighLevelUser ? "bg-gray-50" : ""}`}
             placeholder="Enter your designation"
             readOnly={isHighLevelUser}
           />
           {isHighLevelUser && (
-            <p className="mt-1 text-sm text-gray-500">Auto-filled from your profile</p>
+            <p className="mt-1 text-sm text-gray-500">
+              Auto-filled from your profile
+            </p>
           )}
           {errors.designation && (
             <p className="mt-1 text-sm text-red-600">{errors.designation}</p>
@@ -216,17 +222,21 @@ export default function RegForm({ meetingprop }) {
             <input
               type="text"
               value={formData.organization}
-              onChange={(e) => handleInputChange("organization", e.target.value)}
+              onChange={(e) =>
+                handleInputChange("organization", e.target.value)
+              }
               className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
                 errors.organization
                   ? "border-red-300 focus:ring-red-500"
                   : "border-gray-300 focus:ring-[#014a2f]"
-              } ${isHighLevelUser ? 'bg-gray-50' : ''}`}
+              } ${isHighLevelUser ? "bg-gray-50" : ""}`}
               placeholder="Enter your organization"
               readOnly={isHighLevelUser}
             />
             {isHighLevelUser && (
-              <p className="mt-1 text-sm text-gray-500">Auto-filled from your profile</p>
+              <p className="mt-1 text-sm text-gray-500">
+                Auto-filled from your profile
+              </p>
             )}
             {errors.organization && (
               <p className="mt-1 text-sm text-red-600">{errors.organization}</p>
@@ -268,12 +278,14 @@ export default function RegForm({ meetingprop }) {
               errors.email
                 ? "border-red-300 focus:ring-red-500"
                 : "border-gray-300 focus:ring-[#014a2f]"
-            } ${isHighLevelUser ? 'bg-gray-50' : ''}`}
+            } ${isHighLevelUser ? "bg-gray-50" : ""}`}
             placeholder="Enter your email address"
             readOnly={isHighLevelUser}
           />
           {isHighLevelUser && (
-            <p className="mt-1 text-sm text-gray-500">Auto-filled from your profile</p>
+            <p className="mt-1 text-sm text-gray-500">
+              Auto-filled from your profile
+            </p>
           )}
           {errors.email && (
             <p className="mt-1 text-sm text-red-600">{errors.email}</p>
@@ -317,10 +329,8 @@ export default function RegForm({ meetingprop }) {
           ) : (
             "Register for Meeting"
           )}
-              </button>
+        </button>
       </form>
-
-
     </div>
   );
 }

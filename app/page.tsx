@@ -1,49 +1,38 @@
-import MeetingCard from "../components/MeetingCard";
-import { prisma } from "../lib/prisma";
+// app/page.tsx  (Home page — server component)
+// Replaces the Prisma-based data fetch with the MSSQL action.
+
 import React from "react";
-import HeroSection from "../components/HeroSection";
-import StatsSection from "../components/StatsSection";
-import { getSectorName } from "../utils/sectorUtils";
-import HomeSectorFilter from "../components/HomeSectorFilter";
-import MeetingsWithAuth from "@/components/MeetingsWithAuth";
 import { Metadata } from "next";
 
+import HeroSection from "../components/HeroSection";
+import StatsSection from "../components/StatsSection";
+import HomeSectorFilter from "../components/HomeSectorFilter";
+import MeetingsWithAuth from "@/components/MeetingsWithAuth";
+
+import { getUpcomingMeetings } from "@/lib/actions/meetings";
+
+export const metadata: Metadata = {
+  title: "EasyMeet",
+  description: "Manage meetings and track attendee participation in NCCG",
+};
+
 export default async function Home() {
-  let dbMeetings: any[] = [];
-  
+  let meetings: Awaited<ReturnType<typeof getUpcomingMeetings>> = [];
+
   try {
-    // Get only upcoming meetings for initial render
-    const now = new Date();
-    dbMeetings = await prisma.meeting.findMany({
-      where: {
-        date: {
-          gte: now.toISOString()
-        }
-      },
-      orderBy: {
-        date: "asc", // Show nearest upcoming meetings first
-      },
-      include: {
-        _count: {
-          select: {
-            attendees: true,
-            resources: true,
-          },
-        },
-      },
-    });
+    meetings = await getUpcomingMeetings();
   } catch (error) {
-    console.error("Error fetching meetings:", error);
-    // Return empty array if database connection fails
-    dbMeetings = [];
+    // Surface a warning in server logs but let the page render with an empty list.
+    // The client-side ClientMeetings component will retry via the API route.
+    console.error("Home: failed to pre-fetch meetings:", error);
+    meetings = [];
   }
 
-  // Transform database meetings to the expected format for MeetingCard
-  const meetings = dbMeetings.map((meeting) => ({
-    ...meeting,
-    onlineMeetingUrl: meeting.onlineMeetingUrl || undefined,
-    meetingType: meeting.meetingType || undefined,
-    _count: meeting._count,
+  // Normalise to the shape MeetingCard / ClientMeetings expects
+  const initialMeetings = meetings.map((m) => ({
+    ...m,
+    onlineMeetingUrl: m.onlineMeetingUrl ?? undefined,
+    meetingType: m.meetingType ?? undefined,
   }));
 
   return (
@@ -60,13 +49,14 @@ export default async function Home() {
           position: "relative",
         }}
       >
-        <div className="absolute inset-0 bg-white bg-opacity-60 z-0"></div>
+        <div className="absolute inset-0 bg-white bg-opacity-60 z-0" />
+
         <div className="container relative z-10">
-          {/* Add sector filter component */}
+          {/* Sector dropdown — fires a custom DOM event picked up by ClientMeetings */}
           <HomeSectorFilter />
 
-          {/* Client-side meetings list with filtering */}
-          <MeetingsWithAuth initialMeetings={meetings} />
+          {/* Client shell: injects session auth then delegates to ClientMeetings */}
+          <MeetingsWithAuth initialMeetings={initialMeetings} />
         </div>
       </section>
     </main>

@@ -1,29 +1,32 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 const { useState, useEffect } = React;
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { getAllSectors } from '../utils/sectorUtils';
-import { fetchMeetings } from '../lib/api';
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { getAllSectors } from "../utils/sectorUtils";
 
 export default function HomeSectorFilter() {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [selectedSector, setSelectedSector] = useState(searchParams.get('sector') || '');
-  
+  const [selectedSector, setSelectedSector] = useState(
+    searchParams.get("sector") || "",
+  );
+
   // Get the list of sectors from our utility
   const sectors = getAllSectors();
-  
+
   // Initialize selected sector from session storage or URL on component mount
   useEffect(() => {
     // First check URL params
-    const sectorFromUrl = searchParams.get('sector');
+    const sectorFromUrl = searchParams.get("sector");
     // Then check session storage
-    const savedSector = typeof window !== 'undefined' ? sessionStorage.getItem('selectedSector') : null;
-    
+    const savedSector =
+      typeof window !== "undefined"
+        ? sessionStorage.getItem("selectedSector")
+        : null;
+
     // Use URL param first, then session storage
-    const initialSector = sectorFromUrl || savedSector || '';
+    const initialSector = sectorFromUrl || savedSector || "";
     if (initialSector !== selectedSector) {
       setSelectedSector(initialSector);
     }
@@ -33,33 +36,35 @@ export default function HomeSectorFilter() {
     e.preventDefault(); // Prevent default form submission behavior
     const sectorCode = e.target.value;
     setSelectedSector(sectorCode);
-    
+
     // Save to session storage for persistence across page loads
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       if (sectorCode) {
-        sessionStorage.setItem('selectedSector', sectorCode);
+        sessionStorage.setItem("selectedSector", sectorCode);
       } else {
-        sessionStorage.removeItem('selectedSector');
+        sessionStorage.removeItem("selectedSector");
       }
     }
-    
+
     // Update URL without navigation (prevents scroll jumping)
     const params = new URLSearchParams(searchParams.toString());
     if (sectorCode) {
-      params.set('sector', sectorCode);
+      params.set("sector", sectorCode);
     } else {
-      params.delete('sector');
+      params.delete("sector");
     }
-    
+
     // Use replaceState instead of pushState to avoid adding to browser history
     const url = `${pathname}?${params.toString()}`;
-    window.history.replaceState({ path: url }, '', url);
-    
+    window.history.replaceState({ path: url }, "", url);
+
     // Dispatch event for the ClientMeetings component to handle
-    const event = new CustomEvent('sectorfilterchange', { detail: { sector: sectorCode } });
+    const event = new CustomEvent("sectorfilterchange", {
+      detail: { sector: sectorCode },
+    });
     window.dispatchEvent(event);
   };
-  
+
   return (
     <div className="mb-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white shadow-sm rounded-md p-4 border border-gray-200">

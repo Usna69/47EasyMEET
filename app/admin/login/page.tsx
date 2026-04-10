@@ -28,10 +28,6 @@ export default function LoginPage() {
     setSuccess("");
     setLoading(true);
 
-    console.log("Login attempt started");
-    console.log("Email:", email);
-    console.log("Password length:", password.length);
-
     if (!email || !password) {
       setError("Email and password are required");
       setLoading(false);
@@ -39,48 +35,30 @@ export default function LoginPage() {
     }
 
     try {
-      console.log("Calling auth.login...");
       // Use the async login function
       const loginResult = await auth.login(email, password);
-      console.log("auth.login result:", loginResult);
-      
+
       if (loginResult.success) {
-        console.log("Login successful, redirecting...");
-        console.log("User data from login:", loginResult.user);
-        console.log("isFirstLogin value:", loginResult.user?.isFirstLogin);
-        console.log("isFirstLogin type:", typeof loginResult.user?.isFirstLogin);
-        console.log("isFirstLogin === true:", loginResult.user?.isFirstLogin === true);
-        
         // Check if user is on first login
         if (loginResult.user?.isFirstLogin === true) {
-          console.log("User is on first login, redirecting to /admin/first-login");
           window.location.href = "/admin/first-login";
         } else {
           // Check user level for appropriate redirect
           const userLevel = loginResult.user?.userLevel;
           const userRole = loginResult.user?.role;
-          console.log("User level:", userLevel, "User role:", userRole);
-          
-          console.log("Checking user role for redirect:", userRole);
-          console.log("Checking user level for redirect:", userLevel);
-          
+
           if (userRole === "VIEW_ONLY") {
-            console.log("VIEW_ONLY user, redirecting to /view-only");
             window.location.href = "/view-only";
           } else if (userLevel && userLevel !== "REGULAR") {
-            console.log("High-level user, redirecting to /high-level");
             window.location.href = "/high-level";
           } else {
-            console.log("Regular user, redirecting to /admin");
             window.location.href = "/admin";
           }
         }
       } else {
-        console.log("Login failed");
         setError("Invalid credentials - please check your email and password");
       }
     } catch (err) {
-      console.error("Login error:", err);
       setError("An error occurred during login. Please try again.");
     } finally {
       setLoading(false);
@@ -110,7 +88,7 @@ export default function LoginPage() {
 
       if (response.ok) {
         setSuccess(
-          "Password reset link has been sent to your email address. Please check your inbox and follow the instructions."
+          "Password reset link has been sent to your email address. Please check your inbox and follow the instructions.",
         );
         setEmail("");
       } else {
@@ -119,7 +97,6 @@ export default function LoginPage() {
       }
     } catch (err) {
       setError("An error occurred while requesting password reset");
-      console.error("Password reset request error:", err);
     } finally {
       setLoading(false);
     }

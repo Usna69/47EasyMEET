@@ -1,241 +1,189 @@
-import { NextRequest } from "next/server";
-import { prisma } from "../../../lib/prisma";
-import { 
-  createSuccessResponse, 
-  createPaginatedResponse,
-  handleDatabaseError,
-  getPaginationParams,
-  getDateRange
-} from "@/lib/api-utils";
-import { 
-  getMeetingDateRange, 
-  addStatusToMeetings,
-  validateMeetingData,
-  generateMeetingId
-} from "@/lib/meeting-utils";
+// app/api/meetings/route.ts
+// Thin HTTP handler — all DB logic lives in lib/actions/meetings.ts.
 
-// GET /api/meetings - Get all meetings
+import { NextRequest } from "next/server";
+import {
+  getMeetings,
+  createMeeting,
+  CreateMeetingInput,
+} from "@/lib/actions/meetings";
+import { validateMeetingData, generateMeetingId } from "@/lib/meeting-utils";
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function json(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+// ─── GET /api/meetings ────────────────────────────────────────────────────────
+
 export async function GET(request: NextRequest) {
   try {
-    const url = new URL(request.url);
-    const searchParams = url.searchParams;
+    const { searchParams } = new URL(request.url);
+
     const showActive = searchParams.get("active") === "true";
     const showOngoing = searchParams.get("ongoing") === "true";
-    const creatorEmail = searchParams.get("creatorEmail");
-    const department = searchParams.get("department");
-    const userEmail = searchParams.get("userEmail");
-    const userLevel = searchParams.get("userLevel");
-    const { page, limit, skip } = getPaginationParams(searchParams);
+    const isAdmin = searchParams.get("isAdmin") === "true";
+    const creatorEmail = searchParams.get("creatorEmail") ?? undefined;
+    const sector = searchParams.get("department") ?? undefined;
+    const userEmail = searchParams.get("userEmail") ?? undefined;
+    const userLevel = searchParams.get("userLevel") ?? undefined;
 
-    // Build the where clause based on query parameters
-    let where: any = {};
+    const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
+    const limit = Math.min(
+      100,
+      Math.max(1, parseInt(searchParams.get("limit") ?? "20", 10)),
+    );
 
-    // Filter by meeting date based on filter type
-    if (showActive) {
-      where.date = getMeetingDateRange('upcoming');
-    } else if (showOngoing) {
-      where.date = getMeetingDateRange('ongoing');
-    }
+    // Determine date filter
+    let dateFilter: "upcoming" | "ongoing" | "past" | "all" = "all";
+    if (showActive) dateFilter = "upcoming";
+    if (showOngoing) dateFilter = "ongoing";
 
-    // Handle different filtering scenarios
-    const isAdminRequest = searchParams.get("isAdmin") === "true";
-    const isCreatorRequest = searchParams.get("isCreator") === "true";
-
-    // Apply user-specific filters
-    if (creatorEmail && !isAdminRequest) {
-      where.creatorEmail = creatorEmail;
-    }
-
-    if (department) {
-      where.sector = department;
-    }
-
-    // Apply access control based on user level
-    if (userEmail && userLevel) {
-      // Get user details to determine access level
-      const user = await prisma.user.findUnique({
-        where: { email: userEmail },
-        select: { userLevel: true, role: true }
-      });
-
-      if (user) {
-        // Filter meetings based on user access level
-        if (user.role === "ADMIN") {
-          // Admins can see all meetings
-          // No additional filtering needed
-        } else if (user.userLevel === "BOARD_MEMBER") {
-          // Board members can see BOARD and REGULAR meetings
-          where.OR = [
-            { meetingLevel: "BOARD" },
-            { meetingLevel: "REGULAR" },
-            { restrictedAccess: false }
-          ];
-        } else if (user.userLevel === "GOVERNOR_OFFICE") {
-          // Governor office can see GOVERNOR, BOARD, and REGULAR meetings
-          where.OR = [
-            { meetingLevel: "GOVERNOR" },
-            { meetingLevel: "BOARD" },
-            { meetingLevel: "REGULAR" },
-            { restrictedAccess: false }
-          ];
-        } else if (user.userLevel === "CABINET") {
-          // Cabinet members can see CABINET, GOVERNOR, BOARD, and REGULAR meetings
-          where.OR = [
-            { meetingLevel: "CABINET" },
-            { meetingLevel: "GOVERNOR" },
-            { meetingLevel: "BOARD" },
-            { meetingLevel: "REGULAR" },
-            { restrictedAccess: false }
-          ];
-        } else {
-          // Regular users can only see REGULAR meetings and non-restricted meetings
-          where.OR = [
-            { meetingLevel: "REGULAR" },
-            { restrictedAccess: false }
-          ];
+    // Resolve user role from DB when userEmail is provided
+    // (kept lightweight — only the role column matters for access control here)
+    let userRole: string | undefined;
+    if (userEmail && !isAdmin) {
+      try {
+        const { safeQuery } = await import("@/lib/db");
+        const { rows } = await safeQuery<{ role: string; userLevel: string }>(
+          `SELECT TOP 1 role, userLevel FROM dbo.[User] WHERE email = $1`,
+          [userEmail],
+        );
+        if (rows[0]) {
+          userRole = rows[0].role;
+          // Let the caller-supplied userLevel take precedence; fall back to DB value
         }
-      } else {
-        // If user not found, only show regular meetings
-        where.OR = [
-          { meetingLevel: "REGULAR" },
-          { restrictedAccess: false }
-        ];
+      } catch {
+        // Non-fatal: fall through with no role — access control will default to REGULAR
       }
-    } else {
-      // If no user info provided, only show regular meetings
-      where.OR = [
-        { meetingLevel: "REGULAR" },
-        { restrictedAccess: false }
-      ];
     }
 
-    // Get total count and meetings concurrently
-    const [total, meetings] = await Promise.all([
-      prisma.meeting.count({ where }),
-      prisma.meeting.findMany({
-        where,
-        orderBy: [
-          { createdAt: "desc" },
-          { date: "asc" },
-        ],
-        include: {
-          _count: {
-            select: { attendees: true },
-          },
-          resources: true,
-        },
-        skip,
-        take: limit,
-      })
-    ]);
+    const { meetings, total } = await getMeetings({
+      sector,
+      creatorEmail,
+      userEmail,
+      userLevel,
+      userRole,
+      isAdmin,
+      page,
+      limit,
+      dateFilter,
+    });
 
-    // Add status to meetings
-    const meetingsWithStatus = addStatusToMeetings(meetings);
-
-    return createPaginatedResponse(meetingsWithStatus, page, limit, total);
-
+    // Return a paginated envelope consistent with the original createPaginatedResponse helper
+    return json({
+      success: true,
+      data: meetings,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
-    return handleDatabaseError(error, "fetch meetings");
+    console.error("GET /api/meetings error:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return json({ error: "Failed to fetch meetings", details: message }, 500);
   }
 }
 
-// POST /api/meetings - Create a new meeting
+// ─── POST /api/meetings ───────────────────────────────────────────────────────
+
 export async function POST(request: NextRequest) {
   try {
-    // Handle multipart form data for file uploads
     const formData = await request.formData();
 
-    // Extract form fields
     const title = formData.get("title") as string;
     const description = formData.get("description") as string;
     const dateStr = formData.get("date") as string;
-    const organization = formData.get("organization") as string;
     const location = formData.get("location") as string;
-    const creatorEmail = formData.get("creatorEmail") as string;
-    const password = formData.get("password") as string;
-    const sector = formData.get("sector") as string;
-    const creatorType = formData.get("creatorType") as string;
-    const meetingId = formData.get("meetingId") as string;
-    const meetingCategory = formData.get("meetingCategory") as string;
-    const meetingType = formData.get("meetingType") as string;
-    const onlineMeetingUrl = formData.get("onlineMeetingUrl") as string;
-    const registrationEndStr = formData.get("registrationEnd") as string;
-    const selectedLetterheadPath = formData.get("selectedLetterheadPath") as string;
+    const creatorEmail = formData.get("creatorEmail") as string | null;
+    const password = formData.get("password") as string | null;
+    const sector = formData.get("sector") as string | null;
+    const creatorType = formData.get("creatorType") as string | null;
+    const meetingIdField = formData.get("meetingId") as string | null;
+    const meetingCategory = formData.get("meetingCategory") as string | null;
+    const meetingType = formData.get("meetingType") as string | null;
+    const onlineMeetingUrl = formData.get("onlineMeetingUrl") as string | null;
+    const registrationEndStr = formData.get("registrationEnd") as string | null;
+    const customLetterhead = formData.get("selectedLetterheadPath") as
+      | string
+      | null;
+    const organization = formData.get("organization") as string | null;
 
-    // Validate meeting data
+    // Validate
     const validation = validateMeetingData({
       title,
       date: dateStr,
       location,
-      sector,
-      meetingCategory
+      sector: sector ?? undefined,
+      meetingCategory: meetingCategory ?? undefined,
     });
 
     if (!validation.isValid) {
-      return createSuccessResponse(
-        { error: validation.errors.join(", ") },
-        "Validation failed"
-      );
+      return json({ error: validation.errors.join(", ") }, 400);
     }
 
-    // Parse date
     const date = new Date(dateStr);
 
-    // Generate meeting ID if not provided
-    let finalMeetingId = meetingId;
+    // Generate meeting ID if not supplied
+    let finalMeetingId = meetingIdField ?? undefined;
     if (!finalMeetingId && sector && meetingCategory) {
       finalMeetingId = generateMeetingId(sector, meetingCategory, date);
     }
 
-    // Create the meeting
-    const meeting = await prisma.meeting.create({
-      data: {
-        title,
-        description,
-        date,
-        location,
-        creatorEmail,
-        ...(password ? { password } : {}),
-        sector: sector || "IDE",
-        creatorType: creatorType || "ORG",
-        meetingId: finalMeetingId,
-        ...(organization ? { organization } : {}),
-        ...(meetingCategory ? { meetingCategory } : {}),
-        ...(meetingType && { meetingType }),
-        ...(meetingType === "ONLINE" || (meetingType === "HYBRID" && onlineMeetingUrl)
-          ? { onlineMeetingUrl }
-          : {}),
-        ...(registrationEndStr ? { registrationEnd: new Date(registrationEndStr) } : {}),
-        customLetterhead: selectedLetterheadPath,
-      },
-    });
+    const input: CreateMeetingInput = {
+      title,
+      description,
+      date,
+      location,
+      creatorEmail: creatorEmail ?? undefined,
+      password: password ?? undefined,
+      sector: sector ?? undefined,
+      creatorType: creatorType ?? undefined,
+      meetingId: finalMeetingId,
+      organization: organization ?? undefined,
+      meetingCategory: meetingCategory ?? undefined,
+      meetingType: meetingType ?? undefined,
+      onlineMeetingUrl:
+        (meetingType === "ONLINE" || meetingType === "HYBRID") &&
+        onlineMeetingUrl
+          ? onlineMeetingUrl
+          : undefined,
+      registrationEnd: registrationEndStr
+        ? new Date(registrationEndStr)
+        : undefined,
+      customLetterhead: customLetterhead ?? undefined,
+    };
 
-    // Process uploaded resource files if any
+    const meeting = await createMeeting(input);
+
+    // Handle optional resource file uploads (delegates to existing /api/resources route)
     const resourceFiles = formData.getAll("resources") as File[];
     if (resourceFiles.length > 0) {
-      const resourcePromises = resourceFiles.map(async (file) => {
-        if (file.size > 0) {
-          const formDataForResource = new FormData();
-          formDataForResource.append("file", file);
-          formDataForResource.append("meetingId", meeting.id);
-
-          const response = await fetch("/api/resources", {
-            method: "POST",
-            body: formDataForResource,
-          });
-
-          if (response.ok) {
-            return response.json();
-          }
-        }
-      });
-
-      await Promise.all(resourcePromises);
+      await Promise.all(
+        resourceFiles.map(async (file) => {
+          if (file.size === 0) return;
+          const fd = new FormData();
+          fd.append("file", file);
+          fd.append("meetingId", meeting.id);
+          await fetch("/api/resources", { method: "POST", body: fd });
+        }),
+      );
     }
 
-    return createSuccessResponse(meeting, "Meeting created successfully");
-
+    return json(
+      { success: true, data: meeting, message: "Meeting created successfully" },
+      201,
+    );
   } catch (error) {
-    return handleDatabaseError(error, "create meeting");
+    console.error("POST /api/meetings error:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return json({ error: "Failed to create meeting", details: message }, 500);
   }
 }
