@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { safeQuery } from "@/lib/db";
 import RegForm from "../../../../components/RegForm";
+import { format } from "date-fns";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -143,7 +144,10 @@ export default async function RegistrationPage(props: RegistrationPageParams) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div className="bg-gray-50 p-4 rounded-md border border-gray-100">
                 <h3 className="text-sm font-medium text-[#014a2f]">Date</h3>
-                <p className="text-lg">{formatDateConsistent(meeting.date)}</p>
+                <p className="text-lg">
+                  {" "}
+                  {format(new Date(meeting.date), "PPP p")}
+                </p>
               </div>
               <div className="bg-gray-50 p-4 rounded-md border border-gray-100">
                 <h3 className="text-sm font-medium text-[#014a2f]">Time</h3>
