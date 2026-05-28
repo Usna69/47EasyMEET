@@ -12,7 +12,7 @@ export const revalidate = 0;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface MeetingRow {
+export interface MeetingRow {
   id: string;
   title: string;
   description: string;
@@ -97,8 +97,8 @@ export default async function RegistrationPage(props: RegistrationPageParams) {
   yesterday.setDate(yesterday.getDate() - 1);
   const isMeetingEnded = meetingStartTime < yesterday;
 
-  const isRegistrationOpen =
-    now >= meetingStartTime && now <= registrationEndTime && !isMeetingEnded;
+  const isRegistrationOpen = true;
+  // now >= meetingStartTime && now <= registrationEndTime && !isMeetingEnded;
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (

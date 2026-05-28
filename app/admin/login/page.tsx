@@ -1,226 +1,61 @@
-"use client";
+// app/login/page.tsx (Simplified)
+import { Suspense } from "react";
 
-import React from "react";
-import { useSessionAuth } from "../../../lib/session-auth";
+import { Shield } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
-const { useState, useEffect } = React;
+import Logo from "@/components/customUI/logo";
+import LoginForm from "@/components/login/login-form";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [forgotPassword, setForgotPassword] = useState(false);
-  const auth = useSessionAuth();
-
-  // Simple check for already logged in users
-  useEffect(() => {
-    // If already logged in, redirect to admin dashboard
-    if (auth?.isLoggedIn) {
-      window.location.href = "/admin";
-    }
-  }, [auth]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-    setLoading(true);
-
-    if (!email || !password) {
-      setError("Email and password are required");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      // Use the async login function
-      const loginResult = await auth.login(email, password);
-
-      if (loginResult.success) {
-        // Check if user is on first login
-        if (loginResult.user?.isFirstLogin === true) {
-          window.location.href = "/admin/first-login";
-        } else {
-          // Check user level for appropriate redirect
-          const userLevel = loginResult.user?.userLevel;
-          const userRole = loginResult.user?.role;
-
-          if (userRole === "VIEW_ONLY") {
-            window.location.href = "/view-only";
-          } else if (userLevel && userLevel !== "REGULAR") {
-            window.location.href = "/high-level";
-          } else {
-            window.location.href = "/admin";
-          }
-        }
-      } else {
-        setError("Invalid credentials - please check your email and password");
-      }
-    } catch (err) {
-      setError("An error occurred during login. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-    setLoading(true);
-
-    if (!email) {
-      setError("Email is required");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/users/request-password-reset", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      if (response.ok) {
-        setSuccess(
-          "Password reset link has been sent to your email address. Please check your inbox and follow the instructions.",
-        );
-        setEmail("");
-      } else {
-        const data = await response.json();
-        setError(data.error || "Failed to request password reset");
-      }
-    } catch (err) {
-      setError("An error occurred while requesting password reset");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
-      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg border border-gray-100">
-        <h1 className="text-3xl font-semibold mb-6 text-center">
-          <span className="text-yellow-500">Easy</span>
-          <span className="text-[#014a2f]">MEET</span>
-          <span className="block text-sm text-gray-600 mt-1">
-            NCCG Authorized User Access
-          </span>
-        </h1>
+    <div className="flex min-h-screen items-center justify-center bg-muted/20 p-4">
+      <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-8 duration-700">
+        {/* County Branding - Minimal */}
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center gap-2 bg-primary/5 rounded-full px-3 py-1 mb-3">
+            <Shield className="h-3 w-3 text-primary" />
+            <span className="text-xs text-muted-foreground">
+              Nairobi City County
+            </span>
+          </div>
+          <div className="flex justify-center mb-2">
+            <div className="h-32 w-32 rounded-full bg-primary/10 flex items-center justify-center">
+              <Logo />
+            </div>
+          </div>
+          <h1 className="text-2xl font-bold">Welcome Back</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Sign in to your account
+          </p>
+        </div>
 
-        <p className="text-center text-gray-600 mb-6">
-          {forgotPassword
-            ? "Enter your email to request a password reset"
-            : "Sign in to access the system. Your permissions will be determined by your assigned role."}
+        {/* Login Card */}
+        <Card className="border-border/50 shadow-lg">
+          <CardHeader className="space-y-1 text-center border-b border-border/50 pb-4">
+            <CardTitle className="text-xl">Sign In</CardTitle>
+            <CardDescription>
+              Enter your credentials to access your dashboard
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <Suspense
+              fallback={<div className="text-center py-4">Loading...</div>}
+            >
+              <LoginForm />
+            </Suspense>
+          </CardContent>
+        </Card>
+
+        <p className="text-center text-muted-foreground text-xs mt-6">
+          Secure login • Powered by Smart Nairobi
         </p>
-
-        {error && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
-            {error}
-          </div>
-        )}
-
-        {success && (
-          <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-md">
-            {success}
-          </div>
-        )}
-
-        {forgotPassword ? (
-          <form onSubmit={handleForgotPassword}>
-            <div className="mb-6">
-              <label className="block text-gray-700 mb-2" htmlFor="reset-email">
-                Email
-              </label>
-              <input
-                type="email"
-                id="reset-email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#014a2f]/30"
-                disabled={loading}
-                required
-                autoComplete="email"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full bg-[#014a2f] hover:bg-[#014a2f]/90 text-white font-medium py-2 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={loading}
-            >
-              {loading ? "Sending Request..." : "Request Password Reset"}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setForgotPassword(false)}
-              className="w-full mt-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md transition-colors"
-              disabled={loading}
-            >
-              Back to Login
-            </button>
-          </form>
-        ) : (
-          <>
-            <form onSubmit={handleSubmit}>
-              <div className="mb-4">
-                <label className="block text-gray-700 mb-2" htmlFor="email">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#014a2f]/30"
-                  disabled={loading}
-                  required
-                  autoComplete="username"
-                />
-              </div>
-
-              <div className="mb-6">
-                <label className="block text-gray-700 mb-2" htmlFor="password">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={loading}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#014a2f]/30"
-                  required
-                  autoComplete="current-password"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-[#014a2f] hover:bg-[#014a2f]/90 text-white font-medium py-2 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={loading}
-              >
-                {loading ? "Logging in..." : "Login"}
-              </button>
-            </form>
-
-            <div className="mt-4 text-center">
-              <button
-                type="button"
-                onClick={() => setForgotPassword(true)}
-                className="text-blue-600 hover:text-blue-800 hover:underline"
-              >
-                Forgot Password?
-              </button>
-            </div>
-          </>
-        )}
       </div>
     </div>
   );

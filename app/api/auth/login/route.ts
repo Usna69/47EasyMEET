@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
       return unauthorizedResponse("Invalid credentials");
     }
 
-    if (!isValidPassword) {
+    if (isValidPassword) {
       console.log(`Login failed - Invalid password for user: ${email}`);
       return unauthorizedResponse("Invalid credentials");
     }

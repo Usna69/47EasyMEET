@@ -12,9 +12,10 @@ import {
 } from "@react-pdf/renderer";
 import { format } from "date-fns";
 import { getSectorName } from "@/utils/sectorUtils";
+import { Attendee } from "@/app/admin/meetings/[id]/attendees/AttendeesClient";
 
 // =====================
-// Font Registration (same as customer service report)
+// Font Registration
 // =====================
 Font.register({
   family: "Inter",
@@ -33,11 +34,37 @@ Font.register({
   ],
 });
 
+Font.register({
+  family: "Poppins",
+  fonts: [
+    {
+      src: `${process.env.NEXT_PUBLIC_BASE_URL}/fonts/Poppins/Poppins-Regular.ttf`,
+      fontWeight: 400,
+    },
+    {
+      src: `${process.env.NEXT_PUBLIC_BASE_URL}/fonts/Poppins/Poppins-Medium.ttf`,
+      fontWeight: 500,
+    },
+    {
+      src: `${process.env.NEXT_PUBLIC_BASE_URL}/fonts/Poppins/Poppins-SemiBold.ttf`,
+      fontWeight: 600,
+    },
+    {
+      src: `${process.env.NEXT_PUBLIC_BASE_URL}/fonts/Poppins/Poppins-Bold.ttf`,
+      fontWeight: 700,
+    },
+    {
+      src: `${process.env.NEXT_PUBLIC_BASE_URL}/fonts/Poppins/Poppins-ExtraBold.ttf`,
+      fontWeight: 800,
+    },
+  ],
+});
+
 // =====================
-// Colors (Nairobi City County theme)
+// Colors
 // =====================
 const COLORS = {
-  primary: "#00431F", // Nairobi green
+  primary: "#00431F",
   secondary: "#000000",
   border: "#CCCCCC",
   headerBg: "#F0F0F0",
@@ -45,7 +72,7 @@ const COLORS = {
 };
 
 // =====================
-// Styles (based on customer service report)
+// Styles
 // =====================
 const styles = StyleSheet.create({
   page: {
@@ -74,26 +101,25 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   countyName: {
-    fontSize: 12,
-    fontWeight: 700,
+    fontFamily: "Poppins",
+    fontSize: 11,
+    fontWeight: 600,
     color: COLORS.primary,
     textTransform: "uppercase",
-    marginBottom: 2,
   },
-
   website: {
     fontSize: 9,
-    color: COLORS.textMuted,
+    color: COLORS.primary,
     marginBottom: 6,
   },
   departmentName: {
-    fontSize: 20, // bigger like the image
-    fontWeight: 700, // bold
-    color: COLORS.primary, // Nairobi green
+    fontFamily: "Poppins",
+    fontSize: 24,
+    fontWeight: 800,
+    color: COLORS.primary,
     textTransform: "uppercase",
-    marginTop: 12,
+    marginTop: 10,
     textAlign: "center",
-    letterSpacing: 1, // adds that clean spacing feel
   },
   reportTitle: {
     fontSize: 14,
@@ -110,8 +136,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   logo: {
-    width: 105,
-    height: 100,
+    width: 80,
+    height: 80,
     marginBottom: 10,
     alignSelf: "center",
   },
@@ -132,7 +158,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  // Meeting details card (similar to summaryContainer in customer report)
   meetingDetailsCard: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -157,7 +182,6 @@ const styles = StyleSheet.create({
     fontWeight: 700,
     color: COLORS.secondary,
   },
-  // Table styles
   table: {
     width: "100%",
     borderWidth: 1,
@@ -181,27 +205,28 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
+    minHeight: 25,
+    alignItems: "center",
   },
   rowEven: {
     backgroundColor: "#F8F8F8",
   },
   cell: {
-    padding: 6,
+    padding: 4,
     fontSize: 9,
     color: COLORS.textMuted,
   },
-  // Footer image (absolute, bottom)
-  footerImage: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    width: "100%",
-    height: 90,
+  cellNumber: {
+    textAlign: "center",
   },
-  // Signature section (placed above footer image)
+  signatureImage: {
+    width: 40,
+    height: 20,
+    objectFit: "contain",
+  },
   signatureSection: {
     position: "absolute",
-    bottom: 100, // above footer image (90px height + 10px margin)
+    bottom: 70,
     left: 30,
     right: 30,
     textAlign: "center",
@@ -214,6 +239,7 @@ const styles = StyleSheet.create({
   signatureLine: {
     flexDirection: "row",
     justifyContent: "space-between",
+    marginTop: 10,
   },
   signatureItem: {
     width: "45%",
@@ -229,67 +255,72 @@ const styles = StyleSheet.create({
     fontSize: 8,
     color: COLORS.textMuted,
   },
-  // Text footer and page number
-  textFooter: {
+  footerContainer: {
     position: "absolute",
-    bottom: 20,
-    left: 30,
-    right: 30,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    fontSize: 8,
-    color: COLORS.secondary,
-    fontWeight: 500,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.primary,
-    paddingTop: 8,
-  },
-  pageNumber: {
-    position: "absolute",
-    bottom: 20,
+    bottom: 0,
     left: 0,
     right: 0,
+  },
+  footerTagline: {
     textAlign: "center",
+    fontSize: 14,
+    marginBottom: 6,
+    flexDirection: "row",
+    justifyContent: "center",
+  },
+  footerText: {
+    fontFamily: "Poppins",
+    fontWeight: 400,
+    color: COLORS.primary,
+  },
+  footerTextBold: {
+    fontFamily: "Poppins",
+    fontWeight: 800,
+    color: COLORS.primary,
+  },
+  footerBar: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  },
+  footerBarText: {
+    color: "#FFFFFF",
     fontSize: 8,
-    color: COLORS.secondary,
+    textAlign: "center",
+    fontFamily: "Poppins",
+    fontWeight: 500,
   },
 });
 
 // =====================
-// Helper for column widths
+// Column widths (now with numbering)
 // =====================
 const getColumnWidths = (isInternal: boolean) => {
   if (isInternal) {
     return {
-      name: "22%",
-      email: "25%",
+      no: "5%",
+      name: "24%",
+      email: "27%",
       phone: "18%",
-      designation: "20%",
-      signature: "15%",
+      designation: "16%",
+      signature: "10%",
     };
   }
+  // External meetings
   return {
-    name: "18%",
-    email: "20%",
-    phone: "15%",
+    no: "5%",
+    name: "14%",
+    email: "17%",
+    phone: "14%",
     organization: "17%",
-    designation: "18%",
-    signature: "12%",
+    designation: "17%",
+    signature: "16%",
   };
 };
 
 // =====================
 // Types
 // =====================
-interface Attendee {
-  id: string;
-  name: string;
-  email: string;
-  phoneNumber: string;
-  designation: string;
-  organization: string;
-  signatureData?: string;
-}
 
 interface Meeting {
   id: string;
@@ -299,7 +330,7 @@ interface Meeting {
   sector?: string;
   meetingId?: string;
   meetingCategory?: string;
-  customLetterheadFooter?: string; // footer image
+  customLetterheadFooter?: string;
 }
 
 interface Props {
@@ -313,21 +344,38 @@ interface Props {
 export default function AttendancePDFDocument({ meeting, attendees }: Props) {
   const isInternal = meeting.meetingCategory === "INTERNAL";
 
+  // Headers with numbering
   const headers = isInternal
-    ? ["Name", "Email", "Contact", "Designation", "Signature"]
-    : ["Name", "Email", "Contact", "Organization", "Designation", "Signature"];
+    ? ["No.", "Name", "Email", "Contact", "Designation", "Signature"]
+    : [
+        "No.",
+        "Name",
+        "Email",
+        "Contact",
+        "Organization",
+        "Designation",
+        "Signature",
+      ];
 
   const colWidths = getColumnWidths(isInternal);
   const colOrder = isInternal
-    ? ["name", "email", "phone", "designation", "signature"]
-    : ["name", "email", "phone", "organization", "designation", "signature"];
+    ? ["no", "name", "email", "phone", "designation", "signature"]
+    : [
+        "no",
+        "name",
+        "email",
+        "phone",
+        "organization",
+        "designation",
+        "signature",
+      ];
 
   const getCellStyle = (colKey: string) => ({
     width: colWidths[colKey as keyof typeof colWidths] || "auto",
     ...styles.cell,
+    ...(colKey === "no" ? styles.cellNumber : {}),
   });
 
-  // Derive department name from sector (uppercase, replace spaces with underscores if needed)
   const departmentName = meeting.sector
     ? getSectorName(meeting.sector).toUpperCase()
     : "DEPARTMENT NOT SPECIFIED";
@@ -335,24 +383,23 @@ export default function AttendancePDFDocument({ meeting, attendees }: Props) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* ================= WATERMARK ================= */}
+        {/* Watermark */}
         <Text style={styles.watermark} fixed>
           LET&apos;S MAKE NAIROBI WORK
         </Text>
 
-        {/* ================= MOSAIC PLACEHOLDER ================= */}
-
+        {/* Mosaic */}
         <Image
           src={`${process.env.NEXT_PUBLIC_BASE_URL}/images/mosaic.png`}
           style={styles.mosaicPlaceholder}
         />
 
-        {/* ================= DATE HEADER ================= */}
+        {/* Date */}
         <View style={styles.dateHeader}>
           <Text>Date: {new Date().toLocaleDateString()}</Text>
         </View>
 
-        {/* ================= HEADER CONTENT ================= */}
+        {/* Header */}
         <View style={styles.header}>
           <Image
             src={`${process.env.NEXT_PUBLIC_BASE_URL}/images/county.png`}
@@ -368,7 +415,7 @@ export default function AttendancePDFDocument({ meeting, attendees }: Props) {
           </Text>
         </View>
 
-        {/* ================= MEETING DETAILS CARD ================= */}
+        {/* Meeting Details */}
         <View style={styles.meetingDetailsCard}>
           <View style={styles.detailItem}>
             <Text style={styles.detailLabel}>Meeting Title</Text>
@@ -406,7 +453,7 @@ export default function AttendancePDFDocument({ meeting, attendees }: Props) {
           </View>
         </View>
 
-        {/* ================= ATTENDEES TABLE ================= */}
+        {/* Attendees Table */}
         <View style={styles.table}>
           <View style={styles.tableHeader}>
             {headers.map((header, idx) => (
@@ -418,6 +465,7 @@ export default function AttendancePDFDocument({ meeting, attendees }: Props) {
                     width:
                       colWidths[colOrder[idx] as keyof typeof colWidths] ||
                       "auto",
+                    textAlign: colOrder[idx] === "no" ? "center" : "left",
                   },
                 ]}
               >
@@ -431,6 +479,7 @@ export default function AttendancePDFDocument({ meeting, attendees }: Props) {
               key={attendee.id}
               style={[styles.row, idx % 2 === 1 ? styles.rowEven : {}]}
             >
+              <Text style={getCellStyle("no")}>{idx + 1}</Text>
               <Text style={getCellStyle("name")}>{attendee.name || "N/A"}</Text>
               <Text style={getCellStyle("email")}>
                 {attendee.email || "N/A"}
@@ -446,21 +495,21 @@ export default function AttendancePDFDocument({ meeting, attendees }: Props) {
               <Text style={getCellStyle("designation")}>
                 {attendee.designation || "N/A"}
               </Text>
-              <Text style={getCellStyle("signature")}>
-                {attendee.signatureData ? "Signed" : "—"}
-              </Text>
+              <View style={getCellStyle("signature")}>
+                {attendee.signatureData ? (
+                  <Image
+                    src={attendee.signatureData}
+                    style={styles.signatureImage}
+                  />
+                ) : (
+                  <Text>—</Text>
+                )}
+              </View>
             </View>
           ))}
         </View>
 
-        {/* ================= FOOTER IMAGE (custom letterhead) ================= */}
-        <Image
-          src={meeting.customLetterheadFooter || "/letterheads/footer.jpg"}
-          style={styles.footerImage}
-          fixed
-        />
-
-        {/* ================= SIGNATURE SECTION ================= */}
+        {/* Signature Section (certification) */}
         <View style={styles.signatureSection} fixed>
           <Text style={styles.certification}>
             I certify that this is an accurate record of attendance for the
@@ -478,20 +527,21 @@ export default function AttendancePDFDocument({ meeting, attendees }: Props) {
           </View>
         </View>
 
-        {/* ================= TEXT FOOTER ================= */}
-        {/*<View style={styles.textFooter}>
-          <Text>Generated: {new Date().toLocaleString()}</Text>
-          <Text>EasyMEET Attendance System</Text>
-        </View>*/}
-
-        {/* ================= PAGE NUMBER ================= */}
-        {/*<Text
-          style={styles.pageNumber}
-          render={({ pageNumber, totalPages }) =>
-            `Page ${pageNumber} of ${totalPages}`
-          }
-          fixed
-        />*/}
+        {/* Footer */}
+        <View style={styles.footerContainer} fixed>
+          <View style={styles.footerTagline}>
+            <Text style={styles.footerText}>LET’S MAKE </Text>
+            <Text style={styles.footerTextBold}>NAIROBI</Text>
+            <Text style={styles.footerText}> WORK</Text>
+          </View>
+          <View style={styles.footerBar}>
+            <Text style={styles.footerBarText}>
+              TELEPHONE: +254 725 624 489; +254 738 041 292 | EMAIL:
+              INFO@NAIROBI.GO.KE | CITY HALL, CITY HALL WAY, P.O. BOX 30075
+              00100, NAIROBI, KENYA
+            </Text>
+          </View>
+        </View>
       </Page>
     </Document>
   );

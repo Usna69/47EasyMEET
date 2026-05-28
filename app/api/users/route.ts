@@ -110,8 +110,6 @@ export async function POST(request: NextRequest) {
       designation,
       userLevel,
       customRole,
-      userLetterheadPath,
-      swgLetterheadPath,
     } = body;
 
     // Validate
@@ -144,13 +142,9 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await bcrypt.hash(tempPassword, 10);
     const id = crypto.randomUUID();
 
-    const isViewOnly = role === "VIEW_ONLY";
-    const resolvedUserLetterhead = isViewOnly
-      ? null
-      : (userLetterheadPath ?? null);
-    const resolvedSwgLetterhead = isViewOnly
-      ? null
-      : (swgLetterheadPath ?? null);
+    // Letterheads are no longer required; always set to NULL
+    const resolvedUserLetterhead = null;
+    const resolvedSwgLetterhead = null;
 
     // Insert and return the new user in one round-trip
     const { rows: created } = await safeQuery<UserCreatedRow>(

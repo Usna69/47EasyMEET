@@ -8,11 +8,11 @@ import NavHeader from "../components/NavHeader";
 import Footer from "../components/Footer";
 
 import ScrollPreservation from "@/components/ScrollPreservation";
+import { cn } from "@/lib/utils";
 
 const poppins = Poppins({
-  weight: ["300"],
+  weight: ["300", "400", "500", "600", "700"],
   subsets: ["latin"],
-  fallback: ["Poppins Fallback"],
 });
 
 export const metadata: Metadata = {
@@ -27,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={cn("font-sans", poppins.className)}>
       <head>
         <meta
           name="viewport"

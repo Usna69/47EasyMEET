@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import UserLetterheadUploader from "./UserLetterheadUploader";
-import SWGLetterheadUploader from "./SWGLetterheadUploader";
 
 export default function UserCreateForm({ onSubmit, onCancel, loading }) {
   const [newUser, setNewUser] = useState({
@@ -14,8 +12,6 @@ export default function UserCreateForm({ onSubmit, onCancel, loading }) {
     userLevel: "REGULAR",
     customRole: "",
   });
-  const [userLetterheadPath, setUserLetterheadPath] = useState("");
-  const [swgLetterheadPath, setSwgLetterheadPath] = useState("");
   const [formError, setFormError] = useState("");
 
   // Define role options
@@ -59,24 +55,27 @@ export default function UserCreateForm({ onSubmit, onCancel, loading }) {
     const { name, value } = e.target;
     setNewUser((prev) => {
       const updatedUser = { ...prev, [name]: value };
-      
+
       // Auto-generate custom role description based on user level
-      if (name === 'userLevel') {
+      if (name === "userLevel") {
         switch (value) {
           case "BOARD_MEMBER":
-            updatedUser.customRole = "Board Member - High-level governance and decision-making role";
+            updatedUser.customRole =
+              "Board Member - High-level governance and decision-making role";
             break;
           case "GOVERNOR_OFFICE":
-            updatedUser.customRole = "Office of the Governor - Executive and gubernatorial functions";
+            updatedUser.customRole =
+              "Office of the Governor - Executive and gubernatorial functions";
             break;
           case "CABINET":
-            updatedUser.customRole = "Cabinet Member - Executive cabinet and ministerial responsibilities";
+            updatedUser.customRole =
+              "Cabinet Member - Executive cabinet and ministerial responsibilities";
             break;
           default:
             updatedUser.customRole = "";
         }
       }
-      
+
       return updatedUser;
     });
   };
@@ -84,30 +83,13 @@ export default function UserCreateForm({ onSubmit, onCancel, loading }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     setFormError("");
-    
-    // Only require letterhead for non-VIEW_ONLY users
-    if (newUser.role !== "VIEW_ONLY" && !userLetterheadPath) {
-      setFormError("Sector letterhead is required.");
-      return;
-    }
-    
+
     // Set department to null for admin users
-    const userData = { 
-      ...newUser, 
-      password: "", 
-      userLetterheadPath, 
-      swgLetterheadPath,
-      department: newUser.role === "ADMIN" ? null : newUser.department
+    const userData = {
+      ...newUser,
+      department: newUser.role === "ADMIN" ? null : newUser.department,
     };
     onSubmit(userData);
-  };
-
-  const handleUserLetterheadUploadSuccess = (path) => {
-    setUserLetterheadPath(path);
-  };
-
-  const handleSwgLetterheadUploadSuccess = (path) => {
-    setSwgLetterheadPath(path);
   };
 
   return (
@@ -173,8 +155,9 @@ export default function UserCreateForm({ onSubmit, onCancel, loading }) {
               readOnly
             />
             <p className="text-xs text-gray-500 mt-1">
-              A secure temporary password will be automatically generated and sent via email. 
-              The user will be required to change it on first login.
+              A secure temporary password will be automatically generated and
+              sent via email. The user will be required to change it on first
+              login.
             </p>
           </div>
 
@@ -229,7 +212,8 @@ export default function UserCreateForm({ onSubmit, onCancel, loading }) {
               htmlFor="department"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Department/Sector {newUser.role === "ADMIN" && "(Not required for Admin)"}
+              Department/Sector{" "}
+              {newUser.role === "ADMIN" && "(Not required for Admin)"}
             </label>
             <select
               id="department"
@@ -279,41 +263,21 @@ export default function UserCreateForm({ onSubmit, onCancel, loading }) {
               >
                 Custom Role Description
               </label>
-                             <textarea
-                 id="customRole"
-                 name="customRole"
-                 value={newUser.customRole}
-                 className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700 cursor-not-allowed"
-                 rows={3}
-                 readOnly
-                 disabled
-               />
-               <p className="text-xs text-gray-500 mt-1">
-                 Auto-generated description based on user level selection.
-               </p>
+              <textarea
+                id="customRole"
+                name="customRole"
+                value={newUser.customRole}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700 cursor-not-allowed"
+                rows={3}
+                readOnly
+                disabled
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Auto-generated description based on user level selection.
+              </p>
             </div>
           )}
         </div>
-
-        {/* Custom Letterhead Upload Section */}
-        {newUser.role !== "VIEW_ONLY" && (
-        <div className="mt-6">
-          <h3 className="text-lg font-medium text-[#014a2f] mb-3">
-            Sector Letterhead (Required)
-          </h3>
-          <UserLetterheadUploader onUploadSuccess={handleUserLetterheadUploadSuccess} />
-        </div>
-        )}
-
-        {/* SWG Letterhead Upload Section */}
-        {newUser.role !== "VIEW_ONLY" && (
-        <div className="mt-6">
-          <h3 className="text-lg font-medium text-[#014a2f] mb-3">
-            SWG Letterhead (Optional)
-          </h3>
-          <SWGLetterheadUploader onUploadSuccess={handleSwgLetterheadUploadSuccess} />
-        </div>
-        )}
 
         {formError && (
           <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md">
@@ -340,4 +304,4 @@ export default function UserCreateForm({ onSubmit, onCancel, loading }) {
       </form>
     </div>
   );
-} 
+}
