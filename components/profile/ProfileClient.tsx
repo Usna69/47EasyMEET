@@ -106,7 +106,7 @@ export default function ProfileClient({
     setVerifying(true);
     try {
       const result = await submitRequest(async () => {
-        const res = await fetch("/api/user/verify-password", {
+        const res = await fetch("/api/profile/verify-password", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ password: currentPassword }),
@@ -146,7 +146,7 @@ export default function ProfileClient({
     setChangingPassword(true);
     try {
       const result = await submitRequest(async () => {
-        const res = await fetch("/api/user/password", {
+        const res = await fetch("/api/profile/password", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
