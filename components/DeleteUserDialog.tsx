@@ -7,10 +7,10 @@ interface User {
   name: string;
   email: string;
   role: string;
-  department?: string;
-  designation?: string;
+  department?: string | null;
+  designation?: string | null;
   createdAt: string;
-  customLetterhead?: string;
+  customLetterhead?: string | null;
 }
 
 interface DeleteUserDialogProps {
@@ -20,7 +20,12 @@ interface DeleteUserDialogProps {
   loading?: boolean;
 }
 
-export default function DeleteUserDialog({ user, onConfirm, onCancel, loading }: DeleteUserDialogProps) {
+export default function DeleteUserDialog({
+  user,
+  onConfirm,
+  onCancel,
+  loading,
+}: DeleteUserDialogProps) {
   if (!user) return null;
 
   return (
@@ -30,10 +35,12 @@ export default function DeleteUserDialog({ user, onConfirm, onCancel, loading }:
           Delete User Confirmation
         </h2>
         <p className="text-gray-600 mb-6">
-          Are you sure you want to delete user <strong>{user.name}</strong> ({user.email})?
+          Are you sure you want to delete user <strong>{user.name}</strong> (
+          {user.email})?
         </p>
         <p className="text-sm text-red-600 mb-6">
-          This action cannot be undone. All user data will be permanently removed.
+          This action cannot be undone. All user data will be permanently
+          removed.
         </p>
         <div className="flex justify-end space-x-2">
           <button
@@ -54,4 +61,4 @@ export default function DeleteUserDialog({ user, onConfirm, onCancel, loading }:
       </div>
     </div>
   );
-} 
+}

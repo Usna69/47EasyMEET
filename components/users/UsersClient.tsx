@@ -12,10 +12,10 @@ interface User {
   name: string;
   email: string;
   role: string;
-  department?: string;
-  designation?: string;
+  department?: string | null;
+  designation?: string | null;
   createdAt: string;
-  userLetterhead?: string;
+  userLetterhead?: string | null;
 }
 
 interface Props {

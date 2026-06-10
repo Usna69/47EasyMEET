@@ -3,17 +3,17 @@ import { redirect } from "next/navigation";
 import { safeQuery } from "@/lib/db";
 import UsersClient from "@/components/users/UsersClient";
 
-interface UserRecord {
+export interface UserRecord {
   id: string;
   name: string;
   email: string;
   role: string;
-  department: string | null;
-  designation: string | null;
+  department: string | null | undefined;
+  designation: string | null | undefined;
   userLevel: string;
   customRole: string | null;
   createdAt: string;
-  userLetterhead: string | null;
+  userLetterhead: string | null | undefined;
 }
 
 async function getUserByEmail(email: string) {

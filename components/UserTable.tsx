@@ -29,12 +29,12 @@ interface User {
   name: string;
   email: string;
   role: string;
-  department?: string;
-  designation?: string;
-  userLevel?: string;
+  department?: string | null;
+  designation?: string | null;
+  userLevel?: string | null;
   customRole?: string;
   createdAt: string;
-  customLetterhead?: string;
+  customLetterhead?: string | null;
 }
 
 interface UserTableProps {
