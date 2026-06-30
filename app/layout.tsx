@@ -4,11 +4,11 @@ import "./globals.css";
 import "../styles/mobileOptimizations.css";
 import "../styles/createMeetingButton.css";
 import React from "react";
-import NavHeader from "../components/NavHeader";
 import Footer from "../components/Footer";
 
 import ScrollPreservation from "@/components/ScrollPreservation";
 import { cn } from "@/lib/utils";
+import HeaderWrapper from "@/components/login/HeaderWrapper";
 
 const poppins = Poppins({
   weight: ["300", "400", "500", "600", "700"],
@@ -38,7 +38,7 @@ export default function RootLayout({
         <React.Suspense fallback={<div>Loading...</div>}>
           <ScrollPreservation />
         </React.Suspense>
-        <NavHeader />
+        <HeaderWrapper />
         <main className="min-h-screen bg-white pb-6">{children}</main>
         <Footer className="py-4" />
       </body>

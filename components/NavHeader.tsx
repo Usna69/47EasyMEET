@@ -5,42 +5,64 @@ const { useState, useEffect } = React;
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSessionAuth } from "@/lib/session-auth";
-import "./navheader.css";
 
-export default function NavHeader() {
+import { LogOut } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import "./navheader.css";
+import { signOutAction } from "./login/SignOut";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
+
+interface NavHeaderProps {
+  isLoggedIn: boolean;
+  // optional: userEmail, userRole, etc.
+}
+
+export default function NavHeader({ isLoggedIn }: NavHeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const auth = useSessionAuth();
   const [meetClickCount, setMeetClickCount] = React.useState(0);
   const [meetAnimation, setMeetAnimation] = React.useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false); // new state
+
   const isAdmin = pathname?.startsWith("/admin");
 
-  // Determine if the user is a meeting creator or admin
   const isCreatorOrAdmin =
     auth?.user?.role === "ADMIN" || auth?.user?.role === "CREATOR";
 
-  // Handle MEET click animation
   const handleMeetClick = () => {
-    // Increment click counter
     const newClickCount = meetClickCount + 1;
     setMeetClickCount(newClickCount);
 
-    // On 5th click, trigger the animation sequence
     if (newClickCount === 5) {
-      // First zoom away to the right
       setMeetAnimation("zoom-right");
-
-      // After zoom completes, drop from above and bounce
       setTimeout(() => {
         setMeetAnimation("drop-bounce");
-        // Reset click counter after animation completes
         setTimeout(() => {
           setMeetClickCount(0);
           setMeetAnimation("");
-        }, 1500); // Animation duration
-      }, 500); // Zoom duration
+        }, 1500);
+      }, 500);
     }
+  };
+
+  // Logout handlers (same pattern as SidebarClient)
+  const handleLogout = () => {
+    setLogoutDialogOpen(true);
+  };
+
+  const confirmLogout = () => {
+    setLogoutDialogOpen(false);
+    signOutAction();
   };
 
   return (
@@ -120,6 +142,22 @@ export default function NavHeader() {
             >
               Profile
             </Link>
+            {isLoggedIn ? (
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-white/80 transition-colors hover:bg-[#013d28] hover:text-red-300"
+              >
+                <LogOut className="h-4 w-4 shrink-0" />
+                Sign out
+              </button>
+            ) : (
+              <Link
+                href="/admin/login"
+                className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-white/80 transition-colors hover:bg-[#013d28] hover:text-[#FFC107]"
+              >
+                Login
+              </Link>
+            )}
           </nav>
         </div>
 
@@ -134,7 +172,6 @@ export default function NavHeader() {
               >
                 Home
               </Link>
-
               <Link
                 href="/profile"
                 className={`hover:bg-[#013d28] py-2 px-3 rounded ${pathname === "/convert" ? "text-[#FFC107]" : "text-white"}`}
@@ -142,10 +179,51 @@ export default function NavHeader() {
               >
                 Profile
               </Link>
+
+              {/* Conditionally render Sign out or Login */}
+              {isLoggedIn ? (
+                <button
+                  onClick={handleLogout}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-white/80 transition-colors hover:bg-[#013d28] hover:text-red-300"
+                >
+                  <LogOut className="h-4 w-4 shrink-0" />
+                  Sign out
+                </button>
+              ) : (
+                <Link
+                  href="/admin/login"
+                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-white/80 transition-colors hover:bg-[#013d28] hover:text-[#FFC107]"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Login
+                </Link>
+              )}
             </nav>
           </div>
         )}
       </div>
+      {/* Logout confirmation dialog */}
+      <Dialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Sign Out</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to sign out of your account?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setLogoutDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmLogout}>
+              Sign Out
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </header>
   );
 }
