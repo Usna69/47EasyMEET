@@ -45,3 +45,24 @@ export const poppins = localFont({
   ],
   variable: "--font-poppins",
 });
+
+export const franklin = localFont({
+  src: [
+    {
+      path: "./Franklin/FranklinGothicCondensed.ttf",
+      weight: "900",
+      style: "normal",
+    },
+    {
+      path: "./Franklin/FranklinGothic.ttf",
+      weight: "800",
+      style: "normal",
+    },
+    {
+      path: "./Franklin/FRANKGO.ttf",
+      weight: "700",
+      style: "normal",
+    },
+  ],
+  variable: "--font-franklin",
+});

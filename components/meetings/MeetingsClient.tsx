@@ -116,13 +116,17 @@ export default function MeetingsClient({ user }: { user: UserRecord }) {
         active: showActive.toString(),
       });
 
+      // Inside the fetchMeetings function of MeetingsClient
       if (user.role === "ADMIN") {
         params.set("isAdmin", "true");
       } else if (user.role === "CREATOR") {
+        // Always identify the user
+        params.set("userEmail", user.email);
+
         if (showDepartmentMeetings && user.department) {
-          params.set("sameDepartment", "true");
           params.set("department", user.department);
         } else {
+          // Optionally keep creatorEmail as a secondary filter
           params.set("creatorEmail", user.email);
         }
       }
@@ -155,7 +159,7 @@ export default function MeetingsClient({ user }: { user: UserRecord }) {
 
       // Filter out very old meetings for non‑admin roles (if desired)
       if (user.role !== "ADMIN") {
-        newMeetings = newMeetings.filter((m) => !hasEndedOverDay(m.date));
+        // newMeetings = newMeetings.filter((m) => !hasEndedOverDay(m.date));
       }
 
       setMeetings((prev) => (append ? [...prev, ...newMeetings] : newMeetings));

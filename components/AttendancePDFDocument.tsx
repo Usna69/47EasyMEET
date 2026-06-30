@@ -60,6 +60,20 @@ Font.register({
   ],
 });
 
+Font.register({
+  family: "Franklin",
+  fonts: [
+    {
+      src: `${process.env.NEXT_PUBLIC_BASE_URL}/fonts/Franklin/FranklinGothic.ttf`,
+      fontWeight: 800,
+    },
+    {
+      src: `${process.env.NEXT_PUBLIC_BASE_URL}/fonts/Franklin/FranklinGothicCondensed.ttf`,
+      fontWeight: 500,
+    },
+  ],
+});
+
 // =====================
 // Colors
 // =====================
@@ -113,7 +127,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   departmentName: {
-    fontFamily: "Poppins",
+    fontFamily: "Franklin",
     fontSize: 24,
     fontWeight: 800,
     color: COLORS.primary,
