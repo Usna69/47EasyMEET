@@ -418,3 +418,77 @@ export async function createMeeting(
     throw error;
   }
 }
+
+interface RecentMeeting {
+  id: string;
+  title: string;
+  description: string;
+  date: Date;
+  location: string;
+  meetingType: string;
+  onlineMeetingUrl: string | null;
+  creatorEmail: string | null;
+  // … any other fields
+  _count: {
+    attendees: number;
+    resources: number;
+  };
+}
+
+export async function getRecentMeetings(creatorEmail: string) {
+  // Resolve user role
+  const { rows: userRows } = await safeQuery<{ role: string }>(
+    `SELECT TOP 1 role FROM dbo.[User] WHERE email = $1`,
+    [creatorEmail],
+  );
+
+  if (userRows.length === 0) {
+    throw new Error("User not found");
+  }
+
+  const isAdmin = userRows[0].role === "ADMIN";
+  const whereClause = isAdmin ? `1=1` : `m.creatorEmail = $1`;
+  const params = isAdmin ? [] : [creatorEmail];
+
+  const [{ rows: countRows }, { rows: meetingRows }] = await Promise.all([
+    safeQuery<{ total: number }>(
+      `SELECT COUNT(*) AS total FROM dbo.Meeting m WHERE ${whereClause}`,
+      params,
+    ),
+    safeQuery<any>(
+      `SELECT TOP 5
+         m.id,
+         m.title,
+         m.description,
+         m.date,
+         m.location,
+         m.meetingType,
+         m.onlineMeetingUrl,
+         m.creatorEmail,
+         m.sector,
+         m.meetingCategory,
+         m.organization,
+         m.createdAt,
+         m.updatedAt,
+         (SELECT COUNT(*) FROM dbo.Attendee a WHERE a.meetingId = m.id) AS attendeeCount,
+         (SELECT COUNT(*) FROM dbo.MeetingResource r WHERE r.meetingId = m.id) AS resourceCount
+       FROM dbo.Meeting m
+       WHERE ${whereClause}
+       ORDER BY m.date DESC`,
+      params,
+    ),
+  ]);
+
+  const meetings: RecentMeeting[] = meetingRows.map((row: any) => {
+    const { attendeeCount, resourceCount, ...rest } = row;
+    return {
+      ...rest,
+      _count: {
+        attendees: attendeeCount ?? 0,
+        resources: resourceCount ?? 0,
+      },
+    };
+  });
+
+  return { meetings, total: countRows[0]?.total ?? 0 };
+}
