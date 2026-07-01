@@ -90,7 +90,10 @@ const COLORS = {
 // =====================
 const styles = StyleSheet.create({
   page: {
-    padding: 30,
+    paddingTop: 30,
+    paddingBottom: 100, // leaves room for the footer
+    paddingLeft: 30,
+    paddingRight: 30,
     fontFamily: "Inter",
     fontSize: 10,
     backgroundColor: "#FFFFFF",
@@ -108,7 +111,7 @@ const styles = StyleSheet.create({
     width: "70%",
   },
   header: {
-    marginBottom: 20,
+    marginBottom: 12,
     textAlign: "center",
     borderBottomWidth: 1,
     borderBottomColor: COLORS.primary,
@@ -128,7 +131,7 @@ const styles = StyleSheet.create({
   },
   departmentName: {
     fontFamily: "Franklin",
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 800,
     color: COLORS.primary,
     textTransform: "uppercase",
@@ -136,17 +139,17 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   reportTitle: {
-    fontSize: 14,
+    fontSize: 10,
     fontWeight: 700,
     color: COLORS.secondary,
-    marginTop: 15,
-    marginBottom: 8,
+    marginTop: 8, // was 15
+    marginBottom: 2, // was 4
     textAlign: "center",
   },
   note: {
-    fontSize: 9,
+    fontSize: 8, // was 9
     color: COLORS.secondary,
-    marginTop: 15,
+    marginTop: 8, // was 15
     textAlign: "center",
   },
   logo: {
@@ -176,23 +179,23 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    marginBottom: 15,
-    paddingVertical: 8,
+    marginBottom: 6, // was 8
+    paddingVertical: 2, // was 4
     borderTopWidth: 2,
     borderBottomWidth: 2,
     borderColor: COLORS.primary,
   },
   detailItem: {
     width: "33%",
-    marginBottom: 8,
+    marginBottom: 2, // was 4
   },
   detailLabel: {
-    fontSize: 9,
+    fontSize: 8, // was 9
     color: COLORS.primary,
     fontWeight: 500,
   },
   detailValue: {
-    fontSize: 10,
+    fontSize: 9, // was 10
     fontWeight: 700,
     color: COLORS.secondary,
   },
@@ -209,8 +212,8 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.border,
   },
   headerCell: {
-    padding: 6,
-    fontSize: 9,
+    padding: "2 4", // was 4 (padding 4)
+    fontSize: 8, // already 8, keep it
     fontWeight: 700,
     color: "#FFFFFF",
     textAlign: "left",
@@ -219,31 +222,31 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
-    minHeight: 25,
+    minHeight: 20, // was: minHeight: 25
     alignItems: "center",
   },
   rowEven: {
     backgroundColor: "#F8F8F8",
   },
   cell: {
-    padding: 4,
-    fontSize: 9,
+    padding: "2 4", // was: padding: 4
+    fontSize: 8, // was: fontSize: 9
     color: COLORS.textMuted,
   },
   cellNumber: {
     textAlign: "center",
   },
   signatureImage: {
-    width: 40,
-    height: 20,
+    width: 28, // was 40
+    height: 14, // was 20
     objectFit: "contain",
   },
   signatureSection: {
-    position: "absolute",
-    bottom: 70,
-    left: 30,
-    right: 30,
+    marginTop: 30,
+    marginLeft: 30,
+    marginRight: 30,
     textAlign: "center",
+    paddingBottom: 10,
   },
   certification: {
     fontSize: 9,
@@ -312,23 +315,22 @@ const styles = StyleSheet.create({
 const getColumnWidths = (isInternal: boolean) => {
   if (isInternal) {
     return {
-      no: "5%",
-      name: "24%",
-      email: "27%",
+      no: "4%",
+      name: "25%",
+      email: "28%",
       phone: "18%",
-      designation: "16%",
-      signature: "10%",
+      designation: "19%",
+      signature: "8%", // was 10%
     };
   }
-  // External meetings
   return {
-    no: "5%",
-    name: "14%",
-    email: "17%",
+    no: "4%",
+    name: "15%",
+    email: "18%",
     phone: "14%",
     organization: "17%",
-    designation: "17%",
-    signature: "16%",
+    designation: "18%",
+    signature: "14%", // was 16% – still a bit larger for external
   };
 };
 
@@ -524,7 +526,7 @@ export default function AttendancePDFDocument({ meeting, attendees }: Props) {
         </View>
 
         {/* Signature Section (certification) */}
-        <View style={styles.signatureSection} fixed>
+        <View style={styles.signatureSection} wrap={false}>
           <Text style={styles.certification}>
             I certify that this is an accurate record of attendance for the
             above meeting.
