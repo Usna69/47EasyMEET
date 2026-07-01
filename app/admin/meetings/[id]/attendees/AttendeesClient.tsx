@@ -106,14 +106,18 @@ export default function AttendeesClient({
                 }
                 fileName={`${meeting.title.replace(/[^a-z0-9]/gi, "-").toLowerCase()}-attendance.pdf`}
               >
-                {({ loading }) => (
-                  <button
-                    className="bg-[#014a2f] hover:bg-[#014a2f]/90 text-white px-4 py-2 rounded-md font-medium transition-colors disabled:opacity-50"
-                    disabled={loading}
-                  >
-                    {loading ? "Generating PDF..." : "Generate PDF"}
-                  </button>
-                )}
+                {({ loading, error }) => {
+                  console.log(error);
+
+                  return (
+                    <button
+                      className="bg-[#014a2f] hover:bg-[#014a2f]/90 text-white px-4 py-2 rounded-md font-medium transition-colors disabled:opacity-50"
+                      disabled={loading}
+                    >
+                      {loading ? "Generating PDF..." : "Generate PDF"}
+                    </button>
+                  );
+                }}
               </PDFDownloadLink>
             )}
           </div>

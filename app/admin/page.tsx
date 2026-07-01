@@ -19,7 +19,7 @@ export default async function AdminDashboardPage() {
   }
 
   // Use the base URL defined in environment variables
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3004";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
   let initialMeetings: any[] = [];
   let totalMeetings = 0;

@@ -85,7 +85,7 @@ export default async function MeetingDetailsPage({
       <MeetingDetailsClient
         meeting={null}
         user={user}
-        baseUrl={process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3004"}
+        baseUrl={process.env.NEXT_PUBLIC_BASE_URL ?? ""}
       />
     );
   }
@@ -94,7 +94,7 @@ export default async function MeetingDetailsPage({
     <MeetingDetailsClient
       meeting={meeting}
       user={user}
-      baseUrl={process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3004"}
+      baseUrl={process.env.NEXT_PUBLIC_BASE_URL ?? ""}
     />
   );
 }
