@@ -7,40 +7,9 @@ import { format } from "date-fns";
 import QRCodeDisplay from "@/components/QRCodeDisplay";
 import ResourceDownload from "@/components/ResourceDownload";
 import { cancelMeetingAction } from "@/lib/actions/cancelMeeting";
+import { Meeting } from "./page";
 
 // ─── Updated interface with cancellation fields ───
-interface Meeting {
-  id: string;
-  title: string;
-  description: string;
-  date: string;
-  location: string;
-  creatorEmail: string;
-  sector: string;
-  creatorType: string;
-  meetingId: string;
-  organization?: string;
-  meetingCategory?: string;
-  meetingType: string;
-  onlineMeetingUrl?: string;
-  registrationEnd?: string;
-  createdAt: string;
-  updatedAt: string;
-  isCancelled: boolean;
-  cancelledAt?: string | null;
-  cancellationReason?: string | null;
-  _count?: {
-    attendees: number;
-    resources?: number;
-  };
-  resources?: Array<{
-    id: string;
-    fileName: string;
-    fileType: string;
-    fileUrl: string;
-    fileSize: number;
-  }>;
-}
 
 interface UserRecord {
   id: string;

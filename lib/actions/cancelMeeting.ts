@@ -21,9 +21,9 @@ export async function cancelMeetingAction(meetingId: string, reason?: string) {
   }
 
   // Only admin or the meeting creator can cancel
-  const isAdmin = session.user.role === "ADMIN";
+
   const isCreator = meeting.creatorEmail === session.user.email;
-  if (!isAdmin && !isCreator) {
+  if (!isCreator) {
     throw new Error("You are not authorized to cancel this meeting");
   }
 

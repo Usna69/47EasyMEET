@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import MeetingDetailsClient from "./MeetingDetailsClient";
 
 // ─── Types ──────────────────────────────────────────────────────
-interface Meeting {
+export interface Meeting {
   id: string;
   title: string;
   description: string;
@@ -21,6 +21,9 @@ interface Meeting {
   registrationEnd?: string;
   createdAt: string;
   updatedAt: string;
+  isCancelled: boolean; // BIT → boolean
+  cancelledAt: Date | null;
+  cancellationReason: string | null;
   _count?: {
     attendees: number;
     resources?: number;
