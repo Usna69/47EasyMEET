@@ -2,10 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import QRCodeDisplay from "@/components/QRCodeDisplay";
 import ResourceDownload from "@/components/ResourceDownload";
+import { cancelMeetingAction } from "@/lib/actions/cancelMeeting";
 
+// ─── Updated interface with cancellation fields ───
 interface Meeting {
   id: string;
   title: string;
@@ -23,6 +26,9 @@ interface Meeting {
   registrationEnd?: string;
   createdAt: string;
   updatedAt: string;
+  isCancelled: boolean;
+  cancelledAt?: string | null;
+  cancellationReason?: string | null;
   _count?: {
     attendees: number;
     resources?: number;
@@ -54,16 +60,37 @@ export default function MeetingDetailsClient({
   user,
   baseUrl,
 }: MeetingDetailsClientProps) {
+  const router = useRouter();
   const [meetingUrl, setMeetingUrl] = useState<string>("");
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Build the registration URL once meeting data is available (client‑side)
   useEffect(() => {
     if (meeting) {
       setMeetingUrl(`${baseUrl}/meetings/${meeting.id}/register`);
     }
   }, [meeting, baseUrl]);
 
-  // ── Not Found State ──────────────────────────────────────────
+  const handleCancel = async () => {
+    setIsCancelling(true);
+    setError(null);
+    try {
+      await cancelMeetingAction(meeting!.id, cancelReason);
+      // Refresh server data without full page reload
+      router.refresh();
+      // Close modal and reset state
+      setShowCancelModal(false);
+      setCancelReason("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to cancel meeting");
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  // ── Not Found State ──
   if (!meeting) {
     return (
       <div className="container mx-auto py-6 sm:py-8 px-4 text-center">
@@ -85,7 +112,7 @@ export default function MeetingDetailsClient({
     );
   }
 
-  // ── Main Content ──────────────────────────────────────────────
+  // ── Main Content ──
   return (
     <div className="container mx-auto py-6 sm:py-8 px-4">
       {/* Back link */}
@@ -106,14 +133,21 @@ export default function MeetingDetailsClient({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
-        {/* Main Meeting Details (2/3 width on large screens) */}
+        {/* Main Details */}
         <div className="lg:col-span-2">
           <div className="bg-white shadow-md rounded-lg p-4 sm:p-6 border border-gray-100 mb-6">
-            {/* Title & Meeting ID */}
+            {/* Title & Cancellation Badge */}
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-6">
-              <h1 className="text-2xl sm:text-3xl font-bold text-[#014a2f]">
-                {meeting.title}
-              </h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl sm:text-3xl font-bold text-[#014a2f]">
+                  {meeting.title}
+                </h1>
+                {meeting.isCancelled && (
+                  <span className="bg-red-100 text-red-800 text-sm font-medium px-3 py-1 rounded-full">
+                    Cancelled
+                  </span>
+                )}
+              </div>
               <span className="bg-yellow-100 text-[#014a2f] text-xs font-semibold px-2.5 py-0.5 rounded">
                 {meeting.meetingId || "No ID"}
               </span>
@@ -126,7 +160,7 @@ export default function MeetingDetailsClient({
               </p>
             </div>
 
-            {/* Info Grid */}
+            {/* Info Grid (unchanged) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
               <div className="bg-gray-50 p-4 rounded-md">
                 <h3 className="text-sm font-medium text-gray-500 mb-1">
@@ -147,7 +181,7 @@ export default function MeetingDetailsClient({
                         ? "bg-blue-500"
                         : "bg-green-500"
                     }`}
-                  ></span>
+                  />
                   {meeting.meetingType === "ONLINE"
                     ? "Online Meeting"
                     : "Physical Meeting"}
@@ -232,7 +266,7 @@ export default function MeetingDetailsClient({
               </div>
             </div>
 
-            {/* Resources */}
+            {/* Resources (unchanged) */}
             {meeting.resources && meeting.resources.length > 0 && (
               <div className="mt-6 mb-6">
                 <h3 className="text-lg font-medium text-gray-800 mb-3">
@@ -361,10 +395,11 @@ export default function MeetingDetailsClient({
               </div>
             )}
 
-            {/* Action Buttons */}
+            {/* Action Buttons – now with !meeting.isCancelled checks */}
             <div className="flex flex-wrap gap-3">
               {(user.role === "ADMIN" || user.role === "CREATOR") &&
-                new Date(meeting.date) > new Date() && (
+                new Date(meeting.date) > new Date() &&
+                !meeting.isCancelled && (
                   <Link
                     href={`/admin/meetings/${meeting.id}/edit`}
                     className="bg-[#014a2f] hover:bg-[#014a2f]/90 text-white px-4 py-2 rounded-md font-medium transition-colors"
@@ -372,7 +407,7 @@ export default function MeetingDetailsClient({
                     Edit Meeting
                   </Link>
                 )}
-              {user.role === "CREATOR" && (
+              {user.role === "CREATOR" && !meeting.isCancelled && (
                 <Link
                   href={`/admin/meetings/${meeting.id}/resources`}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
@@ -392,8 +427,36 @@ export default function MeetingDetailsClient({
               >
                 All Meetings
               </Link>
+              {/* Cancel button – only if upcoming and not cancelled */}
+              {(user.role === "ADMIN" || user.role === "CREATOR") &&
+                !meeting.isCancelled &&
+                new Date(meeting.date) > new Date() && (
+                  <button
+                    onClick={() => setShowCancelModal(true)}
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
+                  >
+                    Cancel Meeting
+                  </button>
+                )}
             </div>
           </div>
+
+          {/* Cancellation details box */}
+          {meeting.isCancelled && meeting.cancelledAt && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-red-700 font-medium">
+                This meeting has been cancelled.
+              </p>
+              {meeting.cancellationReason && (
+                <p className="text-red-600 text-sm mt-1">
+                  Reason: {meeting.cancellationReason}
+                </p>
+              )}
+              <p className="text-xs text-red-500 mt-1">
+                Cancelled on {format(new Date(meeting.cancelledAt), "PPP p")}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Sidebar */}
@@ -408,7 +471,7 @@ export default function MeetingDetailsClient({
             <div className="flex justify-center mb-4">
               <QRCodeDisplay url={meetingUrl} />
             </div>
-            {new Date(meeting.date) > new Date() && (
+            {new Date(meeting.date) > new Date() && !meeting.isCancelled && (
               <div className="text-center">
                 <Link
                   href={`/meetings/${meeting.id}/register`}
@@ -431,6 +494,46 @@ export default function MeetingDetailsClient({
           </div>
         </div>
       </div>
+
+      {/* ─── Cancellation Confirmation Modal ─── */}
+      {showCancelModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h2 className="text-xl font-bold mb-4">Cancel Meeting</h2>
+            <p className="text-gray-600 mb-4">
+              Are you sure you want to cancel <strong>{meeting.title}</strong>?
+            </p>
+            <textarea
+              className="w-full border rounded p-2 mb-4"
+              rows={3}
+              placeholder="Reason for cancellation (optional)"
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              disabled={isCancelling}
+            />
+            {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowCancelModal(false);
+                  setError(null);
+                }}
+                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                disabled={isCancelling}
+              >
+                No, keep it
+              </button>
+              <button
+                onClick={handleCancel}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+                disabled={isCancelling}
+              >
+                {isCancelling ? "Cancelling..." : "Yes, Cancel"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

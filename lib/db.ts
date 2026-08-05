@@ -31,22 +31,24 @@ const poolConnect = pool.connect().catch((err) => {
 export async function safeQuery<T>(
   text: string,
   params: unknown[] = [],
-): Promise<{ rows: T[] }> {
+): Promise<{ rows: T[]; rowCount: number }> {
   try {
-    await poolConnect; // Ensure the pool is connected
+    await poolConnect; // ensure connection
 
     const request = pool.request();
     params.forEach((param, i) => {
       request.input(`p${i + 1}`, param);
     });
 
-    // Execute the query, replacing $1, $2 with @p1, @p2 for parameterized queries
-    const result = await request.query<T>(
-      text.replace(/\$(\d+)/g, (_, i) => `@p${i}`), // convert $1, $2 → @p1, @p2
-    );
+    // Convert $1, $2 to @p1, @p2
+    const sql = text.replace(/\$(\d+)/g, (_, i) => `@p${i}`);
+    const result = await request.query(sql);
 
-    return { rows: result.recordset }; // Return result rows
-  } catch (err: unknown) {
+    return {
+      rows: result.recordset as T[],
+      rowCount: result.rowsAffected?.[0] ?? 0,
+    };
+  } catch (err) {
     console.error("DB query failed:", err);
     throw new DatabaseError();
   }

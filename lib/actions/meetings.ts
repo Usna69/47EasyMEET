@@ -30,6 +30,9 @@ export interface MeetingRow {
   // Aggregated counts (joined)
   attendeeCount: number;
   resourceCount: number;
+  isCancelled: boolean; // BIT → boolean
+  cancelledAt: Date | null;
+  cancellationReason: string | null;
 }
 
 export interface MeetingWithCounts extends Omit<
@@ -52,6 +55,7 @@ export interface MeetingFilters {
   page?: number;
   limit?: number;
   dateFilter?: "upcoming" | "ongoing" | "past" | "all";
+  includeCancelled?: boolean;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -64,6 +68,7 @@ function toMeetingWithCounts(row: MeetingRow): MeetingWithCounts {
   return {
     ...rest,
     restrictedAccess: Boolean(row.restrictedAccess), // bit → boolean
+    isCancelled: Boolean(row.isCancelled), // convert BIT
     _count: {
       attendees: attendeeCount ?? 0,
       resources: resourceCount ?? 0,
@@ -113,45 +118,40 @@ function buildDateFilter(
  * Equivalent to the Prisma call in the original Home page.
  */
 export async function getUpcomingMeetings(): Promise<MeetingWithCounts[]> {
-  try {
-    const now = new Date();
-
-    const query = `
-      SELECT
-        m.id,
-        m.title,
-        m.description,
-        m.date,
-        m.location,
-        m.creatorEmail,
-        m.sector,
-        m.creatorType,
-        m.meetingId,
-        m.meetingType,
-        m.onlineMeetingUrl,
-        m.registrationEnd,
-        m.createdAt,
-        m.updatedAt,
-        m.customLetterhead,
-        m.meetingCategory,
-        m.organization,
-        m.password,
-        m.meetingLevel,
-        m.restrictedAccess,
-        (SELECT COUNT(*) FROM dbo.Attendee a WHERE a.meetingId = m.id) AS attendeeCount,
-        (SELECT COUNT(*) FROM dbo.MeetingResource r WHERE r.meetingId = m.id) AS resourceCount
-      FROM dbo.Meeting m
-      WHERE m.date >= $1
-      ORDER BY m.date ASC
-    `;
-
-    const { rows } = await safeQuery<MeetingRow>(query, [now]);
-    return rows.map(toMeetingWithCounts);
-  } catch (error) {
-    if (error instanceof DatabaseError) throw error;
-    console.error("getUpcomingMeetings failed:", error);
-    throw error;
-  }
+  const now = new Date();
+  const query = `
+     SELECT
+       m.id,
+       m.title,
+       m.description,
+       m.date,
+       m.location,
+       m.creatorEmail,
+       m.sector,
+       m.creatorType,
+       m.meetingId,
+       m.meetingType,
+       m.onlineMeetingUrl,
+       m.registrationEnd,
+       m.createdAt,
+       m.updatedAt,
+       m.customLetterhead,
+       m.meetingCategory,
+       m.organization,
+       m.password,
+       m.meetingLevel,
+       m.restrictedAccess,
+       m.isCancelled,
+       m.cancelledAt,
+       m.cancellationReason,
+       (SELECT COUNT(*) FROM dbo.Attendee a WHERE a.meetingId = m.id) AS attendeeCount,
+       (SELECT COUNT(*) FROM dbo.MeetingResource r WHERE r.meetingId = m.id) AS resourceCount
+     FROM dbo.Meeting m
+     WHERE m.date >= $1 AND m.isCancelled = 0   -- only non‑cancelled
+     ORDER BY m.date ASC
+   `;
+  const { rows } = await safeQuery<MeetingRow>(query, [now]);
+  return rows.map(toMeetingWithCounts);
 }
 
 /**
@@ -170,6 +170,7 @@ export async function getMeetings(
       page = 1,
       limit = 20,
       dateFilter = "all",
+      includeCancelled = false,
     } = filters;
 
     const conditions: string[] = [];
@@ -198,6 +199,10 @@ export async function getMeetings(
       conditions.push(`m.sector = $${pi}`);
       params.push(sector);
       pi++;
+    }
+
+    if (!includeCancelled) {
+      conditions.push(`m.isCancelled = 0`);
     }
 
     // ── Access control ──
@@ -288,7 +293,7 @@ export async function getMeetingById(
   try {
     const query = `
       SELECT
-        m.id,
+      m.id,
         m.title,
         m.description,
         m.date,
@@ -308,6 +313,9 @@ export async function getMeetingById(
         m.password,
         m.meetingLevel,
         m.restrictedAccess,
+        m.isCancelled,
+        m.cancelledAt,
+        m.cancellationReason,
         (SELECT COUNT(*) FROM dbo.Attendee a WHERE a.meetingId = m.id) AS attendeeCount,
         (SELECT COUNT(*) FROM dbo.MeetingResource r WHERE r.meetingId = m.id) AS resourceCount
       FROM dbo.Meeting m
@@ -343,6 +351,25 @@ export interface CreateMeetingInput {
   onlineMeetingUrl?: string;
   registrationEnd?: Date;
   customLetterhead?: string;
+}
+
+export async function cancelMeeting(
+  meetingId: string,
+  reason?: string,
+): Promise<void> {
+  const now = new Date();
+  const query = `
+    UPDATE dbo.Meeting
+    SET
+      isCancelled = 1,
+      cancelledAt = $1,
+      cancellationReason = $2
+    WHERE id = $3 AND isCancelled = 0
+  `;
+  const result = await safeQuery(query, [now, reason || null, meetingId]);
+  if (result.rowCount === 0) {
+    throw new Error("Meeting not found or already cancelled");
+  }
 }
 
 export async function createMeeting(
