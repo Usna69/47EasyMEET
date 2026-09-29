@@ -74,6 +74,8 @@ export async function GET(request: NextRequest) {
       dateFilter,
     });
 
+    console.log(meetings);
+
     // Return a paginated envelope consistent with the original createPaginatedResponse helper
     return json({
       success: true,

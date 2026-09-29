@@ -1,86 +1,89 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import './navheader.css';
+import React from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import "./navheader.css";
 
 export default function HeroSection() {
   const router = useRouter();
   const [meetPosition, setMeetPosition] = React.useState({ x: 0, y: 0 });
   const [isEscaping, setIsEscaping] = React.useState(false);
   const [meetClickCount, setMeetClickCount] = React.useState(0);
-  const [meetAnimation, setMeetAnimation] = React.useState('');
+  const [meetAnimation, setMeetAnimation] = React.useState("");
   const logoRef = React.useRef<HTMLSpanElement>(null);
   const titleRef = React.useRef<HTMLHeadingElement>(null);
-  
+
   // Reset position when mouse leaves the area
   const handleMouseLeave = () => {
     setMeetPosition({ x: 0, y: 0 });
     setIsEscaping(false);
   };
-  
+
   // Handle MEET click animation
   const handleMeetClick = () => {
     // Don't count clicks while animation is active
     if (meetAnimation) return;
-    
+
     // Increment click counter
     const newClickCount = meetClickCount + 1;
     setMeetClickCount(newClickCount);
-    
+
     // On 5th click, trigger the animation sequence
     if (newClickCount === 5) {
       // Temporarily disable mouse escape behavior
       setIsEscaping(false);
-      
+
       // First zoom away to the right
-      setMeetAnimation('zoom-right');
-      
+      setMeetAnimation("zoom-right");
+
       // After zoom completes, drop from above and bounce
       setTimeout(() => {
-        setMeetAnimation('drop-bounce');
+        setMeetAnimation("drop-bounce");
         // Reset click counter after animation completes
         setTimeout(() => {
           setMeetClickCount(0);
-          setMeetAnimation('');
+          setMeetAnimation("");
         }, 1500); // Animation duration
       }, 500); // Zoom duration
     }
   };
-  
+
   // Handle mouse movement to make the MEET text escape
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!logoRef.current) return;
-    
+
     // Get logo position and dimensions
     const logoRect = logoRef.current.getBoundingClientRect();
     const logoCenter = {
       x: logoRect.left + logoRect.width / 2,
-      y: logoRect.top + logoRect.height / 2
+      y: logoRect.top + logoRect.height / 2,
     };
-    
+
     // Get mouse position relative to logo
     const mousePos = { x: e.clientX, y: e.clientY };
-    
+
     // Calculate distance between mouse and logo
     const distance = Math.sqrt(
-      Math.pow(mousePos.x - logoCenter.x, 2) + 
-      Math.pow(mousePos.y - logoCenter.y, 2)
+      Math.pow(mousePos.x - logoCenter.x, 2) +
+        Math.pow(mousePos.y - logoCenter.y, 2),
     );
-    
+
     // If mouse is close enough, make the text escape
     if (distance < 150) {
       // Calculate escape direction (away from mouse)
-      const angle = Math.atan2(logoCenter.y - mousePos.y, logoCenter.x - mousePos.x);
+      const angle = Math.atan2(
+        logoCenter.y - mousePos.y,
+        logoCenter.x - mousePos.x,
+      );
       const escapeDistance = Math.max(0, (150 - distance) / 8);
-      
+
       // Set new position
       setMeetPosition({
         x: Math.cos(angle) * escapeDistance,
-        y: Math.sin(angle) * escapeDistance
+        y: Math.sin(angle) * escapeDistance,
       });
-      
+
       setIsEscaping(true);
     } else {
       // Return to original position
@@ -88,74 +91,82 @@ export default function HeroSection() {
       setIsEscaping(false);
     }
   };
-  
+
   // Add global mouse movement handler to ensure reset when cursor moves far away
   React.useEffect(() => {
     const handleGlobalMouseMove = (e: MouseEvent) => {
       if (!logoRef.current || !titleRef.current) return;
-      
+
       const titleRect = titleRef.current.getBoundingClientRect();
-      
+
       // If mouse is far away from the title area, reset the position
       if (
-        e.clientX < titleRect.left - 100 || 
-        e.clientX > titleRect.right + 100 || 
-        e.clientY < titleRect.top - 100 || 
+        e.clientX < titleRect.left - 100 ||
+        e.clientX > titleRect.right + 100 ||
+        e.clientY < titleRect.top - 100 ||
         e.clientY > titleRect.bottom + 100
       ) {
         setMeetPosition({ x: 0, y: 0 });
         setIsEscaping(false);
       }
     };
-    
+
     // Add global handler
-    document.addEventListener('mousemove', handleGlobalMouseMove);
-    
+    document.addEventListener("mousemove", handleGlobalMouseMove);
+
     // Cleanup
     return () => {
-      document.removeEventListener('mousemove', handleGlobalMouseMove);
+      document.removeEventListener("mousemove", handleGlobalMouseMove);
     };
-  }, []);  // Empty dependency array ensures this only runs once on mount
-  
+  }, []); // Empty dependency array ensures this only runs once on mount
+
   return (
     <div className="bg-[#014a2f] text-white py-20">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 
+          <h1
             ref={titleRef}
-            className="text-4xl md:text-5xl font-bold mb-6" 
+            className="text-4xl md:text-5xl font-bold mb-6"
             onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}>
+            onMouseLeave={handleMouseLeave}
+          >
             <span className="text-[#FFC107]">Easy</span>
-            <span 
+            <span
               ref={logoRef}
               className={`meet-text ${meetAnimation}`}
               onClick={handleMeetClick}
               style={{
-                display: 'inline-block',
-                transform: meetAnimation ? 'none' : `translate(${meetPosition.x}px, ${meetPosition.y}px)`,
-                transition: isEscaping ? 'transform 0.1s ease-out' : 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                position: 'relative',
+                display: "inline-block",
+                transform: meetAnimation
+                  ? "none"
+                  : `translate(${meetPosition.x}px, ${meetPosition.y}px)`,
+                transition: isEscaping
+                  ? "transform 0.1s ease-out"
+                  : "transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                position: "relative",
                 zIndex: 10,
-                cursor: 'pointer'
+                cursor: "pointer",
               }}
-            >MEET</span>
+            >
+              MEET
+            </span>
           </h1>
           <p className="text-xl mb-8 opacity-90">
-            A comprehensive solution for managing meetings and tracking attendee participation in NCCG
+            A comprehensive solution for managing meetings and tracking attendee
+            participation in NCCG
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link 
+            <Link
               href="#meetings"
               className="bg-[#FFC107] hover:bg-[#E0A800] text-[#014a2f] font-medium px-8 py-3 rounded-md transition-colors"
             >
               Browse Meetings
             </Link>
-            <Link 
-              href="/admin/login"
+            <Link
+              href="/admin/meetings/create"
               className="bg-white/10 hover:bg-white/20 text-white font-medium px-8 py-3 rounded-md transition-colors"
             >
-              Creator Login
+              Create Meeting
             </Link>
           </div>
         </div>
