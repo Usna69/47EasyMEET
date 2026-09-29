@@ -152,10 +152,10 @@ export default function HeroSection() {
               Browse Meetings
             </Link>
             <Link 
-              href="/admin/login"
+               href="/admin/meetings/create"
               className="bg-white/10 hover:bg-white/20 text-white font-medium px-8 py-3 rounded-md transition-colors"
             >
-              Creator Login
+              Create Meeting
             </Link>
           </div>
         </div>
